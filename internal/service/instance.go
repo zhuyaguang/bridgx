@@ -40,6 +40,10 @@ func GetInstanceCountByCluster(ctx context.Context, clusters []model.Cluster) ma
 	return retMap
 }
 
+func GetInstanceTypeByName(ctx context.Context, instanceTypeName string) (*model.InstanceType, error) {
+	return model.GetInstanceTypeByName(ctx, instanceTypeName)
+}
+
 func GetInstancesByTaskId(ctx context.Context, taskId string, taskAction string) ([]model.Instance, error) {
 	ret := make([]model.Instance, 0)
 	m := make(map[string]interface{}, 0)
@@ -275,7 +279,7 @@ type InstanceTypeByZone struct {
 
 func ListInstanceType(ctx context.Context, req ListInstanceTypeRequest) (ListInstanceTypeResponse, error) {
 	if len(zoneInsTypeCache) == 0 {
-		RefreshCache(ctx)
+		RefreshCache()
 	}
 	zoneMap, ok := zoneInsTypeCache[req.Provider]
 	if !ok {
@@ -310,20 +314,22 @@ func exchangeStatus(ctx context.Context) error {
 		return err
 	}
 	tx.Commit()
-	err = RefreshCache(ctx)
+	err = RefreshCache()
 	if err != nil {
 		logs.Logger.Infof("RefreshCache error:%v", err)
 	}
 	return nil
 }
 
-func RefreshCache(ctx context.Context) error {
+func RefreshCache() error {
+	ctx := context.Background()
 	ins, err := model.ScanInstanceType(ctx)
 	if err != nil {
 		logs.Logger.Error("RefreshCache Error err:%v", err)
 		return err
 	}
 	if len(ins) == 0 {
+		// TODO: SELECT `provider`,`access_key` FROM ACCOUNT GROUP BY `provider`.
 		err = SyncInstanceTypes(ctx, cloud.ALIYUN)
 		if err != nil {
 			logs.Logger.Error("SyncInstanceTypes Error err:%v", err)
