@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"sort"
 	"time"
 
 	"github.com/galaxy-future/BridgX/internal/constants"
@@ -330,7 +331,7 @@ func RefreshCache() error {
 	}
 	if len(ins) == 0 {
 		// TODO: SELECT `provider`,`access_key` FROM ACCOUNT GROUP BY `provider`.
-		err = SyncInstanceTypes(ctx, cloud.ALIYUN)
+		err = SyncInstanceTypes(ctx, cloud.AlibabaCloud)
 		if err != nil {
 			logs.Logger.Error("SyncInstanceTypes Error err:%v", err)
 			return err
@@ -360,6 +361,23 @@ func RefreshCache() error {
 			Core:               in.Core,
 			Memory:             in.Memory,
 		})
+	}
+	for provider, zoneMap := range zoneInsTypeCache {
+		for zone, typeList := range zoneMap {
+			sort.Slice(typeList, func(i, j int) bool {
+				typeI := typeList[i]
+				typeJ := typeList[j]
+				if typeI.Core < typeJ.Core {
+					return true
+				}
+				if typeI.Core == typeJ.Core && typeI.Memory <= typeJ.Memory {
+					return true
+				}
+				return false
+			})
+			zoneMap[zone] = typeList
+		}
+		zoneInsTypeCache[provider] = zoneMap
 	}
 	return nil
 }
