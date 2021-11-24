@@ -143,6 +143,7 @@ func (p *AlibabaCloud) BatchCreate(m cloud.Params, num int) (instanceIds []strin
 	for _, disk := range m.Disks.DataDisk {
 		dataDisks = append(dataDisks, ecs.RunInstancesDataDisk{Size: strconv.Itoa(disk.Size), Category: disk.Category, PerformanceLevel: disk.PerformanceLevel})
 	}
+	request.DataDisk = &dataDisks
 	request.Amount = requests.NewInteger(num)
 	request.MinAmount = requests.NewInteger(num)
 	if len(m.Tags) > 0 {
