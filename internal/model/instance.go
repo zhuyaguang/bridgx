@@ -149,8 +149,8 @@ func GetUsageInstancesBySpecifyDay(ctx context.Context, clusterName []string, cr
 	//取在createBefore之前&&在deleteAfter之后的实例
 	var instances []Instance
 	whereSql := clients.ReadDBCli.Debug().WithContext(ctx).Where("cluster_name IN (?) AND create_at < ? AND (delete_at >= ? OR delete_at IS NULL)", clusterName, createBefore, deleteAfter)
-	if err := whereSql.Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&instances).Error; err != nil {
-		logErr("GetDeletedInstancesByTime from read db", err)
+	if err := whereSql.Order("id DESC").Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&instances).Error; err != nil {
+		logErr("GetUsageInstancesBySpecifyDay from read db", err)
 		return instances, 0, err
 	}
 	var total int64
