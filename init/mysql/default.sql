@@ -327,7 +327,7 @@ create table `order_202101`
 
 -- init super admin info
 INSERT INTO `user`
-VALUES (1, 'root', '87d9bb400c0634691f0e3baaf1e2fd0d', -1, 'enable', 1, '2021-11-09 12:29:44', '',
+VALUES (1, 'root', '87d9bb400c0634691f0e3baaf1e2fd0d', 1, 'enable', 1, '2021-11-09 12:29:44', '',
         '2021-11-09 12:29:44');
 
 -- init org info

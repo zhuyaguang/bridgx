@@ -4,8 +4,10 @@ import (
 	"net/http"
 
 	"github.com/galaxy-future/BridgX/cmd/api/helper"
+	"github.com/galaxy-future/BridgX/cmd/api/middleware/validation"
 	"github.com/galaxy-future/BridgX/cmd/api/request"
 	"github.com/galaxy-future/BridgX/cmd/api/response"
+	"github.com/galaxy-future/BridgX/internal/constants"
 	"github.com/galaxy-future/BridgX/internal/logs"
 	"github.com/galaxy-future/BridgX/internal/service"
 	"github.com/gin-gonic/gin"
@@ -97,20 +99,25 @@ func EditOrg(ctx *gin.Context) {
 	}
 
 	req := request.EditOrgRequest{}
-	if err := ctx.ShouldBind(&req); err != nil {
-		response.MkResponse(ctx, http.StatusBadRequest, response.ParamInvalid, nil)
-		return
-	}
-	if req.OrgName == "" {
-		response.MkResponse(ctx, http.StatusBadRequest, response.ParamInvalid, nil)
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		response.MkResponse(ctx, http.StatusBadRequest, validation.Translate2Chinese(err), nil)
 		return
 	}
 	if req.OrgId != user.OrgId {
 		response.MkResponse(ctx, http.StatusBadRequest, response.PermissionDenied, nil)
 		return
 	}
+	u, err := service.GetUserById(ctx, user.UserId)
+	if err != nil {
+		response.MkResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+	if u.UserType == constants.UserTypeCommonUser {
+		response.MkResponse(ctx, http.StatusBadRequest, response.PermissionDenied, nil)
+		return
+	}
 
-	err := service.EditOrg(ctx, user.OrgId, req.OrgName)
+	err = service.EditOrg(ctx, user.OrgId, req.OrgName)
 	if err != nil {
 		response.MkResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
 		return
