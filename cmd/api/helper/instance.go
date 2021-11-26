@@ -30,7 +30,7 @@ func ConvertToInstanceThumbList(ctx context.Context, instances []model.Instance,
 			IpOuter:       instance.IpOuter,
 			Provider:      getProvider(instance.ClusterName, clusterMap),
 			ClusterName:   instance.ClusterName,
-			InstanceType:  getInstanceType(instance.ClusterName, clusterMap),
+			InstanceType:  getInstanceTypeDesc(instance.ClusterName, clusterMap),
 			LoginName:     getLoginName(instance.ClusterName, clusterMap),
 			LoginPassword: getLoginPassword(instance.ClusterName, clusterMap),
 			CreateAt:      instance.CreateAt.String(),
@@ -66,6 +66,14 @@ func getInstanceType(clusterName string, m map[string]model.Cluster) string {
 	cluster, ok := m[clusterName]
 	if ok {
 		return cluster.InstanceType
+	}
+	return ""
+}
+func getInstanceTypeDesc(clusterName string, m map[string]model.Cluster) string {
+	cluster, ok := m[clusterName]
+	if ok {
+		instanceType := service.GetInstanceTypeByName(cluster.InstanceType)
+		return instanceType.GetDesc()
 	}
 	return ""
 }
