@@ -1,11 +1,11 @@
 package helper
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/galaxy-future/BridgX/cmd/api/response"
 	"github.com/galaxy-future/BridgX/internal/model"
+	"github.com/galaxy-future/BridgX/internal/service"
 	"github.com/spf13/cast"
 )
 
@@ -26,9 +26,9 @@ func ConvertToClusterThumbList(clusters []model.Cluster, countMap map[string]int
 	return res
 }
 
-func ConvertToInstanceStat(instanceType *model.InstanceType, count int64) response.InstanceStatResponse {
+func ConvertToInstanceStat(instanceType service.InstanceTypeByZone, count int64) response.InstanceStatResponse {
 	return response.InstanceStatResponse{
-		InstanceTypeDesc: fmt.Sprintf("%v核%vG(%v)", instanceType.Core, instanceType.Memory, instanceType.TypeName),
+		InstanceTypeDesc: instanceType.GetDesc(),
 		InstanceCount:    count,
 	}
 }
@@ -36,6 +36,10 @@ func ConvertToInstanceStat(instanceType *model.InstanceType, count int64) respon
 func ConvertToTaskThumbList(tasks []model.Task) []response.TaskThumb {
 	res := make([]response.TaskThumb, 0)
 	for _, task := range tasks {
+		finishTime := time.Now()
+		if task.FinishTime != nil {
+			finishTime = *task.FinishTime
+		}
 		t := response.TaskThumb{
 			TaskId:      cast.ToString(task.Id),
 			TaskName:    cast.ToString(task.TaskName),
@@ -43,7 +47,7 @@ func ConvertToTaskThumbList(tasks []model.Task) []response.TaskThumb {
 			Status:      task.Status,
 			ClusterName: task.TaskFilter,
 			CreateAt:    getStringTime(task.CreateAt),
-			ExecuteTime: int(task.FinishTime.Sub(*task.CreateAt).Seconds()),
+			ExecuteTime: int(finishTime.Sub(*task.CreateAt).Seconds()),
 			FinishAt:    getStringTime(task.FinishTime),
 		}
 		res = append(res, t)

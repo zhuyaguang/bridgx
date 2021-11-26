@@ -16,15 +16,15 @@ type SetExpectInstanceCountRequest struct {
 
 type ExpandClusterRequest struct {
 	TaskName    string `json:"task_name"`
-	ClusterName string `json:"cluster_name"`
-	Count       int    `json:"count"`
+	ClusterName string `json:"cluster_name" binding:"required"`
+	Count       int    `json:"count" binding:"required,min=1,max=10000"`
 }
 
 type ShrinkClusterRequest struct {
 	TaskName    string   `json:"task_name"`
-	ClusterName string   `json:"cluster_name"`
+	ClusterName string   `json:"cluster_name" binding:"required"`
 	IPs         []string `json:"ips"`
-	Count       int      `json:"count"`
+	Count       int      `json:"count" binding:"required,min=1,max=10000"`
 }
 
 type CreateVpcRequest struct {
@@ -87,21 +87,16 @@ func (c *CreateSecurityGroupWithRuleRequest) Check() bool {
 }
 
 type CreateNetworkRequest struct {
-	Provider          string `json:"provider"`
-	RegionId          string `json:"region_id"`
-	CidrBlock         string `json:"cidr_block"`
-	VpcName           string `json:"vpc_name"`
-	ZoneId            string `json:"zone_id"`
-	SwitchCidrBlock   string `json:"switch_cidr_block"`
-	SwitchName        string `json:"switch_name"`
-	SecurityGroupName string `json:"security_group_name"`
+	Provider          string `json:"provider" binding:"required,mustIn=cloud"`
+	RegionId          string `json:"region_id" binding:"required"`
+	CidrBlock         string `json:"cidr_block" binding:"required"`
+	VpcName           string `json:"vpc_name" binding:"required"`
+	ZoneId            string `json:"zone_id" binding:"required"`
+	SwitchCidrBlock   string `json:"switch_cidr_block" binding:"required"`
+	SwitchName        string `json:"switch_name" binding:"required"`
+	SecurityGroupName string `json:"security_group_name" binding:"required"`
 	SecurityGroupType string `json:"security_group_type"`
-	Ak                string `json:"ak"`
-}
-
-func (c *CreateNetworkRequest) Check() bool {
-	return c.Provider != "" && c.RegionId != "" && c.VpcName != "" && c.Ak != "" && c.SwitchName != "" &&
-		c.SwitchCidrBlock != "" && c.ZoneId != "" && c.SecurityGroupName != "" && c.SecurityGroupType != ""
+	Ak                string `json:"ak" binding:"required"`
 }
 
 type LoginRequest struct {
@@ -123,7 +118,7 @@ type EditCloudAccountRequest struct {
 }
 
 type EditOrgRequest struct {
-	OrgId   int64  `json:"org_id"`
+	OrgId   int64  `json:"org_id" binding:"required"`
 	OrgName string `json:"org_name"`
 }
 

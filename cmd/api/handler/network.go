@@ -5,22 +5,21 @@ import (
 	"strconv"
 
 	"github.com/galaxy-future/BridgX/cmd/api/helper"
-	"github.com/galaxy-future/BridgX/internal/types"
-
-	"github.com/galaxy-future/BridgX/cmd/api/response"
-
+	"github.com/galaxy-future/BridgX/cmd/api/middleware/validation"
 	"github.com/galaxy-future/BridgX/cmd/api/request"
+	"github.com/galaxy-future/BridgX/cmd/api/response"
 	"github.com/galaxy-future/BridgX/internal/constants"
 	"github.com/galaxy-future/BridgX/internal/logs"
 	"github.com/galaxy-future/BridgX/internal/service"
+	"github.com/galaxy-future/BridgX/internal/types"
 	"github.com/gin-gonic/gin"
 )
 
 func CreateNetworkConfig(ctx *gin.Context) {
 	req := request.CreateNetworkRequest{}
-	err := ctx.Bind(&req)
-	if err != nil || !req.Check() {
-		response.MkResponse(ctx, http.StatusBadRequest, response.ParamInvalid, nil)
+	err := ctx.ShouldBindJSON(&req)
+	if err != nil {
+		response.MkResponse(ctx, http.StatusBadRequest, validation.Translate2Chinese(err), nil)
 		return
 	}
 	logs.Logger.Infof("req is:%v ", req)
