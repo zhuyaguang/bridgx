@@ -36,6 +36,10 @@ func ConvertToInstanceStat(instanceType *model.InstanceType, count int64) respon
 func ConvertToTaskThumbList(tasks []model.Task) []response.TaskThumb {
 	res := make([]response.TaskThumb, 0)
 	for _, task := range tasks {
+		finishTime := time.Now()
+		if task.FinishTime != nil {
+			finishTime = *task.FinishTime
+		}
 		t := response.TaskThumb{
 			TaskId:      cast.ToString(task.Id),
 			TaskName:    cast.ToString(task.TaskName),
@@ -43,7 +47,7 @@ func ConvertToTaskThumbList(tasks []model.Task) []response.TaskThumb {
 			Status:      task.Status,
 			ClusterName: task.TaskFilter,
 			CreateAt:    getStringTime(task.CreateAt),
-			ExecuteTime: int(task.FinishTime.Sub(*task.CreateAt).Seconds()),
+			ExecuteTime: int(finishTime.Sub(*task.CreateAt).Seconds()),
 			FinishAt:    getStringTime(task.FinishTime),
 		}
 		res = append(res, t)

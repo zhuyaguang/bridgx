@@ -296,7 +296,7 @@ func ExpandCluster(ctx *gin.Context) {
 	req := request.ExpandClusterRequest{}
 	err := ctx.Bind(&req)
 	if err != nil {
-		response.MkResponse(ctx, http.StatusBadRequest, response.ParamInvalid, nil)
+		response.MkResponse(ctx, http.StatusBadRequest, validation.Translate2Chinese(err), nil)
 		return
 	}
 	taskId, err := service.CreateExpandTask(ctx, req.ClusterName, req.Count, req.TaskName, user.UserId)
@@ -317,7 +317,7 @@ func ShrinkCluster(ctx *gin.Context) {
 	req := request.ShrinkClusterRequest{}
 	err := ctx.Bind(&req)
 	if err != nil {
-		response.MkResponse(ctx, http.StatusBadRequest, response.ParamInvalid, nil)
+		response.MkResponse(ctx, http.StatusBadRequest, validation.Translate2Chinese(err), nil)
 		return
 	}
 	taskId, err := service.CreateShrinkTask(ctx, req.ClusterName, req.Count, strings.Join(req.IPs, ","), req.TaskName, user.UserId)

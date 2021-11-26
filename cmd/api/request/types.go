@@ -16,15 +16,15 @@ type SetExpectInstanceCountRequest struct {
 
 type ExpandClusterRequest struct {
 	TaskName    string `json:"task_name"`
-	ClusterName string `json:"cluster_name"`
-	Count       int    `json:"count"`
+	ClusterName string `json:"cluster_name" binding:"required"`
+	Count       int    `json:"count" binding:"required,min=1,max=10000"`
 }
 
 type ShrinkClusterRequest struct {
 	TaskName    string   `json:"task_name"`
-	ClusterName string   `json:"cluster_name"`
+	ClusterName string   `json:"cluster_name" binding:"required"`
 	IPs         []string `json:"ips"`
-	Count       int      `json:"count"`
+	Count       int      `json:"count" binding:"required,min=1,max=10000"`
 }
 
 type CreateVpcRequest struct {
