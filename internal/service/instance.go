@@ -13,6 +13,7 @@ import (
 	"github.com/galaxy-future/BridgX/internal/model"
 	"github.com/galaxy-future/BridgX/internal/types"
 	"github.com/galaxy-future/BridgX/pkg/cloud"
+	"golang.org/x/sync/errgroup"
 )
 
 const instanceTypeTmpl = "%d核%dG(%s)"
@@ -201,9 +202,53 @@ func SyncInstanceTypes(ctx context.Context, provider string) error {
 		return err
 	}
 	ak := getFirstAk(accounts, provider)
+
+	var eg errgroup.Group
+	var instanceTypes  []model.InstanceType
 	instanceInfoMap := make(map[string]*cloud.InstanceInfo)
-	insInfoReq := make([]string, 0, 10)
-	instanceTypes := make([]model.InstanceType, 0, 1000)
+	eg.Go(func() error {
+		instanceTypes, _ = getAvailableResource(regions, provider, ak)
+		return nil
+	})
+	eg.Go(func() error {
+		instanceInfoMap, err = getInstanceTypeFromCloud(provider, ak)
+		return err
+	})
+	if err := eg.Wait(); err != nil {
+		return err
+	}
+	inss := make([]model.InstanceType, 0, 100)
+	for _, insType := range instanceTypes {
+		insInfo := instanceInfoMap[insType.TypeName]
+		if insInfo == nil {
+			continue
+		}
+		insType.Family = insInfo.Family
+		insType.Memory = insInfo.Memory
+		insType.Core = insInfo.Core
+		now := time.Now()
+		insType.CreateAt = &now
+		insType.UpdateAt = &now
+		if len(inss) == 100 {
+			err := BatchCreateInstanceType(ctx, inss)
+			if err != nil {
+				logs.Logger.Errorf("inss[%v] BatchCreateInstanceType failed,err: %v", inss, err)
+			}
+			inss = inss[0:0]
+		}
+		inss = append(inss, insType)
+	}
+	if len(inss) > 0 {
+		err := BatchCreateInstanceType(ctx, inss)
+		if err != nil {
+			logs.Logger.Errorf("inss[%v] BatchCreateInstanceType failed,err: %v", inss, err)
+		}
+	}
+	return exchangeStatus(ctx)
+}
+
+func getAvailableResource(regions []cloud.Region, provider, ak string) ([]model.InstanceType, error) {
+	instanceTypes := make([]model.InstanceType, 0, 16384)
 	for _, region := range regions {
 		p, err := getProvider(provider, ak, region.RegionId)
 		if err != nil {
@@ -217,23 +262,7 @@ func SyncInstanceTypes(ctx context.Context, provider string) error {
 			logs.Logger.Errorf("region[%s] DescribeAvailableResource failed,err: %v", region.RegionId, err)
 		}
 		for zone, ins := range res.InstanceTypes {
-			for i, in := range ins {
-				if _, ok := instanceInfoMap[in.Value]; !ok {
-					instanceInfoMap[in.Value] = new(cloud.InstanceInfo)
-					insInfoReq = append(insInfoReq, in.Value)
-				}
-				if len(insInfoReq) == 10 || len(ins)-1 == i && len(insInfoReq) > 0 {
-					res, err := p.DescribeInstanceTypes(cloud.DescribeInstanceTypesRequest{TypeName: insInfoReq})
-					if err != nil {
-						logs.Logger.Errorf("region[%s] DescribeInstanceTypes failed,err: %v req: %v", region.RegionId, err, insInfoReq)
-					}
-					for _, info := range res.Infos {
-						instanceInfoMap[info.InsTypeName].Family = info.Family
-						instanceInfoMap[info.InsTypeName].Memory = info.Memory
-						instanceInfoMap[info.InsTypeName].Core = info.Core
-					}
-					insInfoReq = insInfoReq[0:0]
-				}
+			for _, in := range ins {
 				instanceTypes = append(instanceTypes, model.InstanceType{
 					Provider: provider,
 					RegionId: region.RegionId,
@@ -244,25 +273,24 @@ func SyncInstanceTypes(ctx context.Context, provider string) error {
 		}
 
 	}
-	inss := make([]model.InstanceType, 0, 100)
-	for i, insType := range instanceTypes {
-		insInfo := instanceInfoMap[insType.TypeName]
-		insType.Family = insInfo.Family
-		insType.Memory = insInfo.Memory
-		insType.Core = insInfo.Core
-		now := time.Now()
-		insType.CreateAt = &now
-		insType.UpdateAt = &now
-		if len(inss) == 100 || len(instanceTypes)-1 == i {
-			err := BatchCreateInstanceType(ctx, inss)
-			if err != nil {
-				logs.Logger.Errorf("inss[%v] BatchCreateInstanceType failed,err: %v", inss, err)
-			}
-			inss = inss[0:0]
-		}
-		inss = append(inss, insType)
+	return instanceTypes, nil
+}
+
+func getInstanceTypeFromCloud(provider, ak string) (map[string]*cloud.InstanceInfo, error) {
+	instanceInfoMap := make(map[string]*cloud.InstanceInfo)
+	p, err := getProvider(provider, ak, DefaultRegion)
+	if err != nil {
+		logs.Logger.Errorf("region[%s] getProvider failed,err: %v", DefaultRegion, err)
+		return instanceInfoMap, err
 	}
-	return exchangeStatus(ctx)
+	res, err := p.DescribeInstanceTypes(cloud.DescribeInstanceTypesRequest{})
+	if err != nil {
+		return instanceInfoMap, err
+	}
+	for _, instanceType := range res.Infos {
+		instanceInfoMap[instanceType.InsTypeName] = &instanceType
+	}
+	return instanceInfoMap, nil
 }
 
 type ListInstanceTypeRequest struct {
