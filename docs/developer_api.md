@@ -91,13 +91,11 @@
     <td>ecs.s6-c1m1.small</td>
   </tr>
   <tr>
-    <td>charge_type</td>
-    <td>string</td>
+    <td>charge_config</td>
+    <td>object{}</td>
     <td>是</td>
-    <td>付费类型：<br>
-PostPaid按量付费 <br>
-PrePaid包年包月</td>
-    <td>PostPaid</td>
+    <td>付费信息配置</td>
+    <td>{}</td>
   </tr>
   <tr>
     <td>image</td>
@@ -141,7 +139,6 @@ PrePaid包年包月</td>
     <td>集群标签</td>
     <td>null</td>
 </table>
-
 
 **network_config中的内容**
 <table>
@@ -192,6 +189,39 @@ PayByTraffic（默认）：按使用流量计费。</td>
   
 </table>
 
+**charge_config中的内容**
+<table>
+  <tr>
+    <td>名称</td>
+    <td>类型</td>
+    <td>必填</td>
+    <td>描述</td>
+    <td>示例值</td>
+  </tr>
+  <tr>
+    <td>charge_type</td>
+    <td>string</td>
+    <td>是</td>
+    <td>付费类型：<br>
+PostPaid按量付费<br>
+PrePaid包年包月</td>
+    <td>PostPaid</td>
+  </tr>
+<tr>
+    <td>period_unit</td>
+    <td>string</td>
+    <td>当charge_type为PrePaid时必填</td>
+    <td>购买资源的时长单位,取值范围:<br>Week: 周<br> Month: 月</td>
+    <td>Month</td>
+  </tr>
+  <tr>
+    <td>period</td>
+    <td>int</td>
+    <td>当charge_type为PrePaid时必填</td>
+    <td>购买资源的时长, 取值范围:<br>period_unit为Week时: [1, 2, 3, 4]<br>period_unit为Month时: [1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 24, 36, 48, 60]</td>
+    <td>1</td>
+  </tr>
+</table>
 
 **disks中的内容**
 <table>

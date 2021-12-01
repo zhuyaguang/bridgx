@@ -13,13 +13,12 @@ import (
 
 type Cluster struct {
 	Base
-	ClusterName  string //uniq_key
-	ClusterDesc  string
-	ExpectCount  int
-	Status       string //ENABLE, DISABLE
-	RegionId     string
-	ZoneId       string
-	InstanceType string
+	ClusterName string //uniq_key
+	ClusterDesc string
+	ExpectCount int
+	Status      string //ENABLE, DISABLE
+	RegionId    string
+	ZoneId      string
 
 	ChargeType string
 	Image      string
