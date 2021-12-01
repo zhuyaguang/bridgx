@@ -21,10 +21,9 @@ type Cluster struct {
 	ZoneId       string
 	InstanceType string
 
-	ChargeType string
-	Image      string
-	Provider   string
-	Password   string
+	Image    string
+	Provider string
+	Password string
 
 	//Advanced Config
 	NetworkConfig string
