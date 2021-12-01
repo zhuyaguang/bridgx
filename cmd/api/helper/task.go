@@ -116,7 +116,7 @@ func defaultTaskDetailByType(task *model.Task) *response.TaskDetailResponse {
 func ConvertToTaskDetailList(ctx context.Context, tasks []model.Task) ([]*response.TaskDetailResponse, error) {
 	detailList := make([]*response.TaskDetailResponse, 0)
 	if len(tasks) == 0 {
-		return nil, nil
+		return detailList, nil
 	}
 	for _, task := range tasks {
 		t := task

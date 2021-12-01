@@ -15,7 +15,9 @@ const (
 
 	BatchMax = 100
 
-	DefaultUsername = "root"
+	DefaultUsername           = "root"
+	DefaultClusterUsageKey    = "usage"
+	DefaultClusterUsageUnused = "unused"
 )
 
 const (

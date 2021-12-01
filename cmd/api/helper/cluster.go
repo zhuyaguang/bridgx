@@ -26,6 +26,37 @@ func ConvertToClusterThumbList(clusters []model.Cluster, countMap map[string]int
 	return res
 }
 
+func ConvertToClusterThumbListWithTag(clusters []model.Cluster, tags map[string]map[string]string) []response.ClusterThumbWithTag {
+	res := make([]response.ClusterThumbWithTag, 0)
+	for _, cluster := range clusters {
+		c := response.ClusterThumbWithTag{
+			ClusterId:   cast.ToString(cluster.Id),
+			ClusterName: cluster.ClusterName,
+			Provider:    cluster.Provider,
+			Tags:        tags[cluster.ClusterName],
+			CreateAt:    cluster.CreateAt.String(),
+			CreateBy:    cluster.CreateBy,
+		}
+		res = append(res, c)
+	}
+	return res
+}
+
+func ConvertToClusterTags(tags []model.ClusterTag) map[string]map[string]string {
+	res := make(map[string]map[string]string, 0)
+	for _, tag := range tags {
+		clusterTags, ok := res[tag.ClusterName]
+		if ok {
+			clusterTags[tag.TagKey] = tag.TagValue
+		} else {
+			clusterTags = make(map[string]string, 0)
+			clusterTags[tag.TagKey] = tag.TagValue
+		}
+		res[tag.ClusterName] = clusterTags
+	}
+	return res
+}
+
 func ConvertToInstanceStat(instanceType service.InstanceTypeByZone, count int64) response.InstanceStatResponse {
 	return response.InstanceStatResponse{
 		InstanceTypeDesc: instanceType.GetDesc(),
