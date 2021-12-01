@@ -1,6 +1,9 @@
 ![z备份 12](https://user-images.githubusercontent.com/94337797/142638151-d38ff88d-e2ad-427d-bef5-2c0345557920.png)
 ======
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/galaxy-future/BridgX)](https://goreportcard.com/report/github.com/galaxy-future/BridgX) &nbsp;
+[![CodeFactor](https://www.codefactor.io/repository/github/galaxy-future/bridgx/badge)](https://www.codefactor.io/repository/github/galaxy-future/bridgx)
+
 BridgX是业界领先的基于全链路Serverless技术的云原生基础架构解决方案，目标是让开发者可以以开发单机应用系统的方式，开发跨云分布式应用系统，在不增加操作复杂度的情况下，兼得云计算的可扩展性和弹性伸缩等好处。将使企业用云成本减少50%以上，研发效率提升10倍。
 
 它具有如下关键特性:
@@ -19,8 +22,8 @@ BridgX是业界领先的基于全链路Serverless技术的云原生基础架构�
 ![image](https://user-images.githubusercontent.com/94337797/142592631-0bed59e6-7840-4c1c-870e-13dd9edd0c9b.png)
 
 微信交流群:<br>
+![image](https://user-images.githubusercontent.com/94337797/144010978-0fc51458-e03f-47c2-bae4-0745841b84f3.png)
 
-![8cm](https://user-images.githubusercontent.com/94337797/142594216-073aaa91-1b05-4551-b5ff-97895e52e11b.jpg)
 
 
 上手指南
