@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 RUN_NAME="gf.bridgx.scheduler"
 mkdir -p output/conf output/bin
 sudo mkdir -p /tmp/bridgx/logs/

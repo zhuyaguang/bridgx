@@ -30,10 +30,6 @@ func CreateCluster(cluster *model.Cluster, username string) error {
 	return model.Create(cluster)
 }
 
-func CreateClusterTags(tags *[]model.ClusterTag) error {
-	return model.Create(tags)
-}
-
 func EditCluster(cluster *model.Cluster, username string) error {
 	clusterInDB, err := model.GetByClusterName(cluster.ClusterName)
 	if err != nil {

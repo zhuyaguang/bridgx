@@ -135,6 +135,16 @@ type ListClustersResponse struct {
 	Pager       Pager          `json:"pager"`
 }
 
+type ListClustersWithTagResponse struct {
+	ClusterList []ClusterThumbWithTag `json:"cluster_list"`
+	Pager       Pager                 `json:"pager"`
+}
+
+type ClusterTagsResponse struct {
+	ClusterTags map[string]map[string]string `json:"cluster_tags"`
+	Pager       Pager                        `json:"pager"`
+}
+
 type Pager struct {
 	PageNumber int `json:"page_number"`
 	PageSize   int `json:"page_size"`
@@ -193,4 +203,13 @@ type ListOrgsResponse struct {
 type InstanceStatResponse struct {
 	InstanceTypeDesc string `json:"instance_type_desc"`
 	InstanceCount    int64  `json:"instance_count"`
+}
+
+type ClusterThumbWithTag struct {
+	ClusterId   string            `json:"cluster_id"`
+	ClusterName string            `json:"cluster_name"`
+	Provider    string            `json:"provider"`
+	Tags        map[string]string `json:"tags"`
+	CreateAt    string            `json:"create_at"`
+	CreateBy    string            `json:"create_by"`
 }

@@ -4,9 +4,16 @@ import (
 	"github.com/galaxy-future/BridgX/internal/service"
 )
 
-type AddTagRequest struct {
-	ClusterName string            `json:"cluster_name"`
-	Tags        map[string]string `json:"tags"`
+type TagRequest struct {
+	ClusterName string            `json:"cluster_name" binding:"required,min=1"`
+	Tags        map[string]string `json:"tags" binding:"required"`
+}
+
+type GetTagsRequest struct {
+	ClusterName string `json:"cluster_name" binding:"required,min=1" form:"cluster_name"`
+	TagKey      string `json:"tag_key" form:"tag_key"`
+	PageNumber  int    `json:"page_number" form:"page_number"`
+	PageSize    int    `json:"page_size" form:"page_size"`
 }
 
 type SetExpectInstanceCountRequest struct {
@@ -146,4 +153,10 @@ type CreateOrgRequest struct {
 	OrgName  string `json:"org_name"`
 	UserName string `json:"username"`
 	Password string `json:"password"`
+}
+
+type ListClusterByTagsRequest struct {
+	Tags       map[string]string `json:"tags" binding:"required"`
+	PageNumber int               `json:"page_number"`
+	PageSize   int               `json:"page_size"`
 }
