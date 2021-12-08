@@ -15,10 +15,17 @@ const (
 
 	BatchMax = 100
 
-	DefaultUsername = "root"
+	DefaultUsername           = "root"
+	DefaultClusterUsageKey    = "usage"
+	DefaultClusterUsageUnused = "unused"
 )
 
 const (
 	ClusterStatusEnable  = "ENABLE"
 	ClusterStatusDisable = "DISABLE"
+)
+
+const (
+	ErrClusterNotExist           = "集群: [%s] 不存在"
+	ErrPrePaidShrinkNotSupported = "不支持对包年包月的集群机器进行缩容操作"
 )

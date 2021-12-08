@@ -32,28 +32,36 @@ type ClusterThumb struct {
 	ClusterId     string `json:"cluster_id"`
 	ClusterName   string `json:"cluster_name"`
 	InstanceCount int64  `json:"instance_count"`
+	InstanceType  string `json:"instance_type"`
+	ChargeType    string `json:"charge_type"`
 	Provider      string `json:"provider"`
 	Account       string `json:"account"`
+	Usage         string `json:"usage"`
 	CreateAt      string `json:"create_at"`
 	CreateBy      string `json:"create_by"`
+	UpdateBy      string `json:"update_by"`
+	UpdateAt      string `json:"update_at"`
 }
 
 type TaskDetailResponse struct {
-	TaskId      string `json:"task_id"`
-	TaskName    string `json:"task_name"`
-	ClusterName string `json:"cluster_name"`
-	TaskStatus  string `json:"task_status"`
-	TaskResult  string `json:"task_result"`
-	TaskAction  string `json:"task_action"`
-	FailReason  string `json:"fail_reason"`
-	RunNum      int    `json:"run_num"`
-	SuspendNum  int    `json:"suspend_num"`
-	SuccessNum  int    `json:"success_num"`
-	FailNum     int    `json:"fail_num"`
-	TotalNum    int    `json:"total_num"`
-	SuccessRate string `json:"success_rate"`
-	ExecuteTime int    `json:"execute_time"`
-	CreateAt    string `json:"create_at"`
+	TaskId              string `json:"task_id"`
+	TaskName            string `json:"task_name"`
+	ClusterName         string `json:"cluster_name"`
+	TaskStatus          string `json:"task_status"`
+	TaskResult          string `json:"task_result"`
+	TaskAction          string `json:"task_action"`
+	FailReason          string `json:"fail_reason"`
+	RunNum              int    `json:"run_num"`
+	SuspendNum          int    `json:"suspend_num"`
+	SuccessNum          int    `json:"success_num"`
+	FailNum             int    `json:"fail_num"`
+	TotalNum            int    `json:"total_num"`
+	SuccessRate         string `json:"success_rate"`
+	ExecuteTime         int    `json:"execute_time"`
+	BeforeInstanceCount int    `json:"before_instance_count"`
+	AfterInstanceCount  int    `json:"after_instance_count"`
+	ExpectInstanceCount int    `json:"expect_instance_count"`
+	CreateAt            string `json:"create_at"`
 }
 
 type TaskDetailListResponse struct {
@@ -113,6 +121,7 @@ type InstanceThumb struct {
 	InstanceType  string `json:"instance_type"`
 	LoginName     string `json:"login_name"`
 	LoginPassword string `json:"login_password"`
+	ChargeType    string `json:"charge_type"`
 }
 
 type InstanceUsage struct {
@@ -135,6 +144,16 @@ type ListClustersResponse struct {
 	Pager       Pager          `json:"pager"`
 }
 
+type ListClustersWithTagResponse struct {
+	ClusterList []ClusterThumbWithTag `json:"cluster_list"`
+	Pager       Pager                 `json:"pager"`
+}
+
+type ClusterTagsResponse struct {
+	ClusterTags map[string]map[string]string `json:"cluster_tags"`
+	Pager       Pager                        `json:"pager"`
+}
+
 type Pager struct {
 	PageNumber int `json:"page_number"`
 	PageSize   int `json:"page_size"`
@@ -153,6 +172,13 @@ type CloudAccount struct {
 	Provider    string `json:"provider"`
 	CreateAt    string `json:"create_at"`
 	CreateBy    string `json:"create_by"`
+}
+
+type EncryptCloudAccountInfo struct {
+	AccountName          string `json:"account_name"`
+	AccountKey           string `json:"account_key"`
+	AccountSecretEncrypt string `json:"account_secret_encrypt"`
+	Provider             string `json:"provider"`
 }
 
 type TaskInstancesResponse struct {
@@ -193,4 +219,13 @@ type ListOrgsResponse struct {
 type InstanceStatResponse struct {
 	InstanceTypeDesc string `json:"instance_type_desc"`
 	InstanceCount    int64  `json:"instance_count"`
+}
+
+type ClusterThumbWithTag struct {
+	ClusterId   string            `json:"cluster_id"`
+	ClusterName string            `json:"cluster_name"`
+	Provider    string            `json:"provider"`
+	Tags        map[string]string `json:"tags"`
+	CreateAt    string            `json:"create_at"`
+	CreateBy    string            `json:"create_by"`
 }

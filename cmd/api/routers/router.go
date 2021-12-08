@@ -40,6 +40,7 @@ func Init() *gin.Engine {
 		{
 			cloudAccountPath.POST("create", handler.CreateCloudAccount)
 			cloudAccountPath.GET("list", handler.ListCloudAccounts)
+			cloudAccountPath.GET("info", handler.GetAccountInfo)
 			cloudAccountPath.POST("edit", handler.EditCloudAccount)
 			cloudAccountPath.DELETE("delete/:ids", handler.DeleteCloudAccount)
 		}
@@ -47,16 +48,23 @@ func Init() *gin.Engine {
 		clusterPath := v1Api.Group("cluster/")
 		{
 			clusterPath.GET("id/:id", handler.GetClusterById)
-			clusterPath.GET("num", handler.GetClusterCount)
-			clusterPath.GET("instance_stat", handler.GetInstanceStat)
 			clusterPath.GET("name/:name", handler.GetClusterByName)
-			clusterPath.GET("describe_all", handler.ListClusters)
 			clusterPath.POST("create", handler.CreateCluster)
 			clusterPath.POST("edit", handler.EditCluster)
+			clusterPath.DELETE("delete/:ids", handler.DeleteClusters)
+			clusterPath.GET("num", handler.GetClusterCount)
+			clusterPath.GET("instance_stat", handler.GetInstanceStat)
+			clusterPath.GET("describe_all", handler.ListClusters)
+
+			clusterPath.POST("list_by_tags", handler.ListClustersByTags)
+			clusterPath.GET("get_tags", handler.GetClusterTags)
 			clusterPath.POST("add_tags", handler.AddClusterTags)
+			clusterPath.POST("edit_tags", handler.EditClusterTags)
+			clusterPath.DELETE("delete_tags", handler.DeleteClusterTags)
+
 			clusterPath.POST("expand", handler.ExpandCluster)
 			clusterPath.POST("shrink", handler.ShrinkCluster)
-			clusterPath.DELETE("delete/:ids", handler.DeleteClusters)
+			clusterPath.POST("shrink_all", handler.ShrinkAllInstances)
 		}
 		vpcPath := v1Api.Group("vpc/")
 		{
@@ -99,6 +107,7 @@ func Init() *gin.Engine {
 			instancePath.GET("describe_all", handler.GetInstanceList)
 			instancePath.GET("usage_total", handler.GetInstanceUsageTotal)
 			instancePath.GET("usage_statistics", handler.GetInstanceUsageStatistics)
+			instancePath.POST("sync_expire_time", handler.SyncInstanceExpireTime)
 		}
 		taskPath := v1Api.Group("task/")
 		{

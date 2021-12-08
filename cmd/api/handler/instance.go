@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/galaxy-future/BridgX/cmd/api/helper"
+	"github.com/galaxy-future/BridgX/cmd/api/middleware/validation"
+	"github.com/galaxy-future/BridgX/cmd/api/request"
 	"github.com/galaxy-future/BridgX/cmd/api/response"
 	"github.com/galaxy-future/BridgX/internal/logs"
 	"github.com/galaxy-future/BridgX/internal/service"
@@ -129,7 +131,7 @@ func GetInstanceUsageStatistics(ctx *gin.Context) {
 	}
 	clusterName := ctx.Query("cluster_name")
 	dateStr := ctx.Query("date")
-	date, err := time.Parse("2006-01-02", dateStr)
+	date, err := time.ParseInLocation("2006-01-02", dateStr, time.Local)
 	if err != nil {
 		response.MkResponse(ctx, http.StatusBadRequest, err.Error(), nil)
 		return
@@ -149,6 +151,27 @@ func GetInstanceUsageStatistics(ctx *gin.Context) {
 		InstanceList: helper.ConvertToInstanceUsageList(ctx, instances),
 		Pager:        pager,
 	})
+	return
+}
+
+func SyncInstanceExpireTime(ctx *gin.Context) {
+	user := helper.GetUserClaims(ctx)
+	if user == nil {
+		response.MkResponse(ctx, http.StatusBadRequest, response.PermissionDenied, nil)
+		return
+	}
+	req := request.SyncInstanceExpireTimeRequest{}
+	err := ctx.Bind(&req)
+	if err != nil {
+		response.MkResponse(ctx, http.StatusBadRequest, validation.Translate2Chinese(err), nil)
+		return
+	}
+	err = service.SyncInstanceExpireTime(ctx, req.ClusterName)
+	if err != nil {
+		response.MkResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+	response.MkResponse(ctx, http.StatusOK, response.Success, nil)
 	return
 }
 

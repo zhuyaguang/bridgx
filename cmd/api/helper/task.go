@@ -58,8 +58,26 @@ func ConvertToTaskDetail(instances []model.Instance, task *model.Task) *response
 		endTime = *task.FinishTime
 	}
 	ret.ExecuteTime = int(endTime.Sub(*task.CreateAt).Seconds())
+	ret.BeforeInstanceCount, ret.AfterInstanceCount, ret.ExpectInstanceCount = getTaskInfoCountDiff(task, success)
 
 	return ret
+}
+
+func getTaskInfoCountDiff(task *model.Task, success int) (before int, after, expect int) {
+	switch task.TaskAction {
+	case constants.TaskActionExpand:
+		info := model.ExpandTaskInfo{}
+		_ = jsoniter.UnmarshalFromString(task.TaskInfo, &info)
+		before, expect = info.GetBeforeAndExpectInstanceCount()
+		after = before + success
+
+	case constants.TaskActionShrink:
+		info := model.ShrinkTaskInfo{}
+		_ = jsoniter.UnmarshalFromString(task.TaskInfo, &info)
+		before, expect = info.GetBeforeAndExpectInstanceCount()
+		after = before - success
+	}
+	return
 }
 
 func defaultTaskDetailByType(task *model.Task) *response.TaskDetailResponse {
@@ -116,7 +134,7 @@ func defaultTaskDetailByType(task *model.Task) *response.TaskDetailResponse {
 func ConvertToTaskDetailList(ctx context.Context, tasks []model.Task) ([]*response.TaskDetailResponse, error) {
 	detailList := make([]*response.TaskDetailResponse, 0)
 	if len(tasks) == 0 {
-		return nil, nil
+		return detailList, nil
 	}
 	for _, task := range tasks {
 		t := task

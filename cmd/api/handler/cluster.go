@@ -9,6 +9,7 @@ import (
 	"github.com/galaxy-future/BridgX/cmd/api/middleware/validation"
 	"github.com/galaxy-future/BridgX/cmd/api/request"
 	"github.com/galaxy-future/BridgX/cmd/api/response"
+	"github.com/galaxy-future/BridgX/internal/constants"
 	"github.com/galaxy-future/BridgX/internal/logs"
 	"github.com/galaxy-future/BridgX/internal/model"
 	"github.com/galaxy-future/BridgX/internal/service"
@@ -82,6 +83,48 @@ func GetClusterCount(ctx *gin.Context) {
 	return
 }
 
+func ListClustersByTags(ctx *gin.Context) {
+	user := helper.GetUserClaims(ctx)
+	if user == nil {
+		response.MkResponse(ctx, http.StatusBadRequest, response.TokenInvalid, nil)
+		return
+	}
+	req := request.ListClusterByTagsRequest{}
+	err := ctx.ShouldBind(&req)
+	if err != nil {
+		response.MkResponse(ctx, http.StatusBadRequest, err.Error(), nil)
+		return
+	}
+	pn, ps := buildPager(req.PageNumber, req.PageSize)
+	clusters, total, err := service.GetClustersByTags(ctx, req.Tags, ps, pn)
+	if err != nil {
+		response.MkResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+	pager := response.Pager{
+		PageNumber: pn,
+		PageSize:   ps,
+		Total:      int(total),
+	}
+	tags, err := service.GetClusterTagsByClusters(ctx, clusters)
+	resp := &response.ListClustersWithTagResponse{
+		ClusterList: helper.ConvertToClusterThumbListWithTag(clusters, tags),
+		Pager:       pager,
+	}
+	response.MkResponse(ctx, http.StatusOK, response.Success, resp)
+	return
+}
+
+func buildPager(pageNumber int, pageSize int) (int, int) {
+	if pageNumber < 1 {
+		pageNumber = 1
+	}
+	if pageSize < 1 || pageSize > constants.DefaultPageSize {
+		pageSize = constants.DefaultPageSize
+	}
+	return pageNumber, pageSize
+}
+
 func ListClusters(ctx *gin.Context) {
 	user := helper.GetUserClaims(ctx)
 	if user == nil {
@@ -116,8 +159,13 @@ func ListClusters(ctx *gin.Context) {
 		PageSize:   ps,
 		Total:      total,
 	}
+	tags, err := service.GetClusterTagsByClusters(ctx, clusters)
+	if err != nil {
+		response.MkResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
 	resp := &response.ListClustersResponse{
-		ClusterList: helper.ConvertToClusterThumbList(clusters, instanceCountMap),
+		ClusterList: helper.ConvertToClusterThumbList(clusters, instanceCountMap, tags),
 		Pager:       pager,
 	}
 	response.MkResponse(ctx, http.StatusOK, response.Success, resp)
@@ -163,13 +211,17 @@ func CreateCluster(ctx *gin.Context) {
 		response.MkResponse(ctx, http.StatusBadRequest, err.Error(), err)
 		return
 	}
-	err = service.CreateCluster(m, user.Name)
-	if err != nil {
-		response.MkResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
-		return
-	}
 	tags := make([]model.ClusterTag, 0)
+	tags = append(tags, model.ClusterTag{
+		ClusterName: clusterInput.Name,
+		TagKey:      constants.DefaultClusterUsageKey,
+		TagValue:    constants.DefaultClusterUsageUnused,
+	})
 	for k, v := range clusterInput.Tags {
+		if k == "" || v == "" {
+			response.MkResponse(ctx, http.StatusBadRequest, "empty key/value for tags", nil)
+			return
+		}
 		tag := model.ClusterTag{
 			ClusterName: clusterInput.Name,
 			TagKey:      k,
@@ -177,8 +229,13 @@ func CreateCluster(ctx *gin.Context) {
 		}
 		tags = append(tags, tag)
 	}
+	err = service.CreateCluster(m, user.Name)
+	if err != nil {
+		response.MkResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
 	if len(tags) > 0 {
-		err = service.CreateClusterTags(&tags)
+		err = service.CreateClusterTags(tags)
 		if err != nil {
 			response.MkResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
 			return
@@ -246,14 +303,18 @@ func convertToClusterModel(clusterInput *types.ClusterInfo) (*model.Cluster, err
 }
 
 func AddClusterTags(ctx *gin.Context) {
-	req := request.AddTagRequest{}
+	req := request.TagRequest{}
 	err := ctx.Bind(&req)
 	if err != nil {
-		response.MkResponse(ctx, http.StatusBadRequest, response.ParamInvalid, nil)
+		response.MkResponse(ctx, http.StatusBadRequest, err.Error(), nil)
 		return
 	}
 	tags := make([]model.ClusterTag, 0)
 	for k, v := range req.Tags {
+		if k == "" || v == "" {
+			response.MkResponse(ctx, http.StatusBadRequest, "empty key/value for tags", nil)
+			return
+		}
 		tag := model.ClusterTag{
 			ClusterName: req.ClusterName,
 			TagKey:      k,
@@ -261,7 +322,83 @@ func AddClusterTags(ctx *gin.Context) {
 		}
 		tags = append(tags, tag)
 	}
-	err = service.CreateClusterTags(&tags)
+	err = service.CreateClusterTags(tags)
+	if err != nil {
+		response.MkResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+	response.MkResponse(ctx, http.StatusOK, response.Success, nil)
+	return
+}
+
+func GetClusterTags(ctx *gin.Context) {
+	req := request.GetTagsRequest{}
+	err := ctx.Bind(&req)
+	if err != nil {
+		response.MkResponse(ctx, http.StatusBadRequest, err.Error(), nil)
+		return
+	}
+	pn, ps := buildPager(req.PageNumber, req.PageSize)
+	ret, total, err := service.GetClusterTags(ctx, req.ClusterName, req.TagKey, pn, ps)
+	if err != nil {
+		response.MkResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+	pager := response.Pager{PageNumber: pn, PageSize: ps, Total: int(total)}
+	resp := response.ClusterTagsResponse{ClusterTags: helper.ConvertToClusterTags(ret), Pager: pager}
+	response.MkResponse(ctx, http.StatusOK, response.Success, resp)
+	return
+}
+
+func EditClusterTags(ctx *gin.Context) {
+	req := request.TagRequest{}
+	err := ctx.Bind(&req)
+	if err != nil {
+		response.MkResponse(ctx, http.StatusBadRequest, err.Error(), nil)
+		return
+	}
+	tags := make([]model.ClusterTag, 0)
+	for k, v := range req.Tags {
+		if k == "" || v == "" {
+			response.MkResponse(ctx, http.StatusBadRequest, "empty key/value for tags", nil)
+			return
+		}
+		tag := model.ClusterTag{
+			ClusterName: req.ClusterName,
+			TagKey:      k,
+			TagValue:    v,
+		}
+		tags = append(tags, tag)
+	}
+	err = service.EditClusterTags(tags)
+	if err != nil {
+		response.MkResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+	response.MkResponse(ctx, http.StatusOK, response.Success, nil)
+	return
+}
+
+func DeleteClusterTags(ctx *gin.Context) {
+	req := request.TagRequest{}
+	err := ctx.Bind(&req)
+	if err != nil {
+		response.MkResponse(ctx, http.StatusBadRequest, err.Error(), nil)
+		return
+	}
+	tags := make([]model.ClusterTag, 0)
+	for k, v := range req.Tags {
+		if k == "" {
+			continue
+		}
+		tag := model.ClusterTag{
+			ClusterName: req.ClusterName,
+			TagKey:      k,
+			TagValue:    v,
+		}
+		tags = append(tags, tag)
+	}
+	err = service.DeleteClusterTags(tags)
 	if err != nil {
 		response.MkResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
 		return
@@ -321,6 +458,27 @@ func ShrinkCluster(ctx *gin.Context) {
 		return
 	}
 	taskId, err := service.CreateShrinkTask(ctx, req.ClusterName, req.Count, strings.Join(req.IPs, ","), req.TaskName, user.UserId)
+	if err != nil {
+		response.MkResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+	response.MkResponse(ctx, http.StatusOK, response.Success, taskId)
+	return
+}
+
+func ShrinkAllInstances(ctx *gin.Context) {
+	user := helper.GetUserClaims(ctx)
+	if user == nil {
+		response.MkResponse(ctx, http.StatusBadRequest, response.PermissionDenied, nil)
+		return
+	}
+	req := request.ShrinkAllInstancesRequest{}
+	err := ctx.Bind(&req)
+	if err != nil {
+		response.MkResponse(ctx, http.StatusBadRequest, validation.Translate2Chinese(err), nil)
+		return
+	}
+	taskId, err := service.CreateShrinkAllTask(ctx, req.ClusterName, req.TaskName, user.UserId)
 	if err != nil {
 		response.MkResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
 		return

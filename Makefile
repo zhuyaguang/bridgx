@@ -1,5 +1,14 @@
-check:
-	go vet ./...
+vet:
+	@echo "go vet ."
+	@go vet $$(go list ./...) ; if [ $$? -eq 1 ]; then \
+		echo ""; \
+		echo "Vet found suspicious constructs. Please check the reported constructs"; \
+		echo "and fix them if necessary before submitting the code for review."; \
+		exit 1; \
+	fi
+
+check: vet
+
 format:
 	#go get golang.org/x/tools/cmd/goimports
 	find . -name '*.go' | grep -Ev 'vendor|thrift_gen' | xargs goimports -w
