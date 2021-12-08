@@ -43,9 +43,9 @@ BridgX是业界领先的基于全链路Serverless技术的云原生基础架构�
 
 * (1)源码下载
   - 后端工程：
-  > git clone https://github.com/galaxy-future/BridgX.git
+  > git clone https://github.com/galaxy-future/bridgx.git
   - 前端工程：
-  > git clone https://github.com/galaxy-future/BridgX_FE.git
+  > git clone https://github.com/galaxy-future/comandx.git
 
 * (2)macOS系统部署
   - 后端部署,在BridgX目录下运行
@@ -87,20 +87,20 @@ BridgX是业界领先的基于全链路Serverless技术的云原生基础架构�
 
     
 #### 3、快速上手  
-通过[快速上手指南](https://github.com/galaxy-future/BridgX/blob/master/docs/getting-started.md)，可以掌握基本的快速扩缩容操作流程。  
+通过[快速上手指南](https://github.com/galaxy-future/bridgx/blob/master/docs/getting-started.md)，可以掌握基本的快速扩缩容操作流程。  
 
 
 #### 4、用户手册  
-通过[用户手册](https://github.com/galaxy-future/BridgX/blob/master/docs/user-manual.md)，用户可以掌握BridgX的功能使用全貌，方便快速查找使用感兴趣的功能。
+通过[用户手册](https://github.com/galaxy-future/bridgx/blob/master/docs/user-manual.md)，用户可以掌握BridgX的功能使用全貌，方便快速查找使用感兴趣的功能。
 
 #### 5、开发者API手册
-通过[开发者API手册](https://github.com/galaxy-future/BridgX/blob/master/docs/developer_api.md)，用户可以快速查看各项开发功能的API接口和调用方法，使开发者能够将BridgX集成到第三方平台上。
+通过[开发者API手册](https://github.com/galaxy-future/bridgx/blob/master/docs/developer_api.md)，用户可以快速查看各项开发功能的API接口和调用方法，使开发者能够将BridgX集成到第三方平台上。
 
 行为准则
 ------
-[贡献者公约](https://github.com/galaxy-future/BridgX/blob/master/CODE_OF_CONDUCT)
+[贡献者公约](https://github.com/galaxy-future/bridgx/blob/master/CODE_OF_CONDUCT)
 
 授权
 -----
 
-BridgX使用[Apache License 2.0](https://github.com/galaxy-future/BridgX/blob/master/LICENSE)授权协议进行授权
+BridgX使用[Apache License 2.0](https://github.com/galaxy-future/bridgx/blob/master/LICENSE)授权协议进行授权
