@@ -129,6 +129,7 @@ func (p *AlibabaCloud) BatchCreate(m cloud.Params, num int) (instanceIds []strin
 
 	request.RegionId = m.Region
 	request.ImageId = m.ImageId
+	request.ZoneId = m.Zone
 	request.InstanceType = m.InstanceType
 	request.SecurityGroupId = m.Network.SecurityGroup
 	request.VSwitchId = m.Network.SubnetId
