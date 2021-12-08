@@ -5,10 +5,9 @@ import (
 )
 
 const (
-	Pending                   = "Pending"
-	TaskId                    = "TaskId"
-	ClusterName               = "ClusterName"
-	InstanceChargeTypePrePaid = "PrePaid"
+	Pending     = "Pending"
+	TaskId      = "TaskId"
+	ClusterName = "ClusterName"
 )
 
 const (
