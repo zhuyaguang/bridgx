@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/galaxy-future/BridgX/cmd/api/handler"
+	gf_cluster "github.com/galaxy-future/BridgX/cmd/api/handler/gf-cluster"
 	"github.com/galaxy-future/BridgX/cmd/api/middleware/authorization"
 	"github.com/galaxy-future/BridgX/config"
 	"github.com/gin-contrib/pprof"
@@ -137,6 +138,9 @@ func Init() *gin.Engine {
 		{
 			imagePath.GET("list", handler.GetImageList)
 		}
+
+		gfCluster := v1Api.Group("galaxy_cloud")
+		gf_cluster.RegisterHandler(gfCluster)
 	}
 	return router
 }

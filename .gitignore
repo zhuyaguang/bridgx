@@ -1,4 +1,6 @@
 config.yml.local
+bridgx-api.yaml.local
+bridgx-scheduler.yaml.local
 output
 .idea
 standalone-logs
