@@ -43,6 +43,7 @@ func CreateCluster(params gf_cluster.ClusterBuilderParams) {
 	updateInstallStep(params.KubernetesId, gf_cluster.KubernetesStepInstallFlannel)
 	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		err = initFlannel(master, FlannelData{
 			AccessKey:    params.AccessKey,
 			AccessSecret: params.AccessSecret,
@@ -52,7 +53,6 @@ func CreateCluster(params gf_cluster.ClusterBuilderParams) {
 		if err != nil {
 			failed(params.KubernetesId, "flannel init err:"+err.Error())
 		}
-		wg.Done()
 	}()
 
 	//安装master节点
@@ -63,6 +63,7 @@ func CreateCluster(params gf_cluster.ClusterBuilderParams) {
 			masterNode, machineList = Pop(machineList)
 			wg.Add(1)
 			go func(masterMachine gf_cluster.ClusterBuildMachine) {
+				defer wg.Done()
 				resetMachine(masterMachine)
 				_, err = Run(masterMachine, masterCmd)
 				recordStep(params.KubernetesId, masterMachine.IP, gf_cluster.KubernetesStepInstallMaster+masterMachine.Hostname, err)
@@ -70,7 +71,6 @@ func CreateCluster(params gf_cluster.ClusterBuilderParams) {
 					failed(params.KubernetesId, "add master err:"+err.Error())
 				}
 				taintMaster(master, masterMachine.Hostname)
-				wg.Done()
 			}(masterNode)
 		}
 	}
@@ -83,13 +83,13 @@ func CreateCluster(params gf_cluster.ClusterBuilderParams) {
 		node, machineList = Pop(machineList)
 		wg.Add(1)
 		go func(nodeMachine gf_cluster.ClusterBuildMachine) {
+			defer wg.Done()
 			resetMachine(nodeMachine)
 			_, err = Run(nodeMachine, nodeCmd)
 			recordStep(params.KubernetesId, nodeMachine.IP, gf_cluster.KubernetesStepInstallNode+nodeMachine.Hostname, err)
 			if err != nil {
 				failed(params.KubernetesId, "add node err:"+err.Error())
 			}
-			wg.Done()
 		}(node)
 	}
 
