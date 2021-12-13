@@ -3,12 +3,14 @@ package cluster_builder
 import (
 	"bytes"
 	"fmt"
+	"sync"
 
 	gf_cluster "github.com/galaxy-future/BridgX/pkg/gf-cluster"
 	"golang.org/x/crypto/ssh"
 )
 
 func CreateCluster(params gf_cluster.ClusterBuilderParams) {
+	var wg sync.WaitGroup
 	updateInstallStep(params.KubernetesId, gf_cluster.KubernetesStepInitializeCluster)
 	machineList := params.MachineList
 	master, machineList := Pop(machineList)
@@ -39,6 +41,7 @@ func CreateCluster(params gf_cluster.ClusterBuilderParams) {
 
 	//安装flannel
 	updateInstallStep(params.KubernetesId, gf_cluster.KubernetesStepInstallFlannel)
+	wg.Add(1)
 	go func() {
 		err = initFlannel(master, FlannelData{
 			AccessKey:    params.AccessKey,
@@ -49,6 +52,7 @@ func CreateCluster(params gf_cluster.ClusterBuilderParams) {
 		if err != nil {
 			failed(params.KubernetesId, "flannel init err:"+err.Error())
 		}
+		wg.Done()
 	}()
 
 	//安装master节点
@@ -57,6 +61,7 @@ func CreateCluster(params gf_cluster.ClusterBuilderParams) {
 		for i := 0; i < 2; i++ {
 			var masterNode gf_cluster.ClusterBuildMachine
 			masterNode, machineList = Pop(machineList)
+			wg.Add(1)
 			go func(masterMachine gf_cluster.ClusterBuildMachine) {
 				resetMachine(masterMachine)
 				_, err = Run(masterMachine, masterCmd)
@@ -65,6 +70,7 @@ func CreateCluster(params gf_cluster.ClusterBuilderParams) {
 					failed(params.KubernetesId, "add master err:"+err.Error())
 				}
 				taintMaster(master, masterMachine.Hostname)
+				wg.Done()
 			}(masterNode)
 		}
 	}
@@ -75,6 +81,7 @@ func CreateCluster(params gf_cluster.ClusterBuilderParams) {
 	for i := 0; i < length; i++ {
 		var node gf_cluster.ClusterBuildMachine
 		node, machineList = Pop(machineList)
+		wg.Add(1)
 		go func(nodeMachine gf_cluster.ClusterBuildMachine) {
 			resetMachine(nodeMachine)
 			_, err = Run(nodeMachine, nodeCmd)
@@ -82,12 +89,14 @@ func CreateCluster(params gf_cluster.ClusterBuilderParams) {
 			if err != nil {
 				failed(params.KubernetesId, "add node err:"+err.Error())
 			}
+			wg.Done()
 		}(node)
 	}
 
 	//给节点打标签
 	labelCluster(master, params.MachineList)
 
+	wg.Wait()
 	updateInstallStep(params.KubernetesId, gf_cluster.KubernetesStepDone)
 	recordStep(params.KubernetesId, "", gf_cluster.KubernetesStepDone, nil)
 	updateStatus(params.KubernetesId, gf_cluster.KubernetesStatusRunning)
