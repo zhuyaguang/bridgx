@@ -1,8 +1,8 @@
 package instance
 
 import (
-	"encoding/json"
 	"fmt"
+	jsoniter "github.com/json-iterator/go"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -24,13 +24,8 @@ func HandleCreateInstanceGroup(c *gin.Context) {
 	begin := time.Now()
 
 	//1. 解析请求
-	data, err := ioutil.ReadAll(c.Request.Body)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse("无效的请求格式"))
-		return
-	}
 	var group gf_cluster.InstanceGroupCreateRequest
-	err = json.Unmarshal(data, &group)
+	err := c.ShouldBindJSON(&group)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(fmt.Sprintf("无效的请求格式, err : %s", err.Error())))
 		return
@@ -72,7 +67,7 @@ func HandleCreateInstanceGroup(c *gin.Context) {
 		cost := time.Now().Sub(begin).Milliseconds()
 		err := instance.AddInstanceForm(&instanceGroup, cost, createdUserId, createdUserName, gf_cluster.OptTypeExpand, instanceGroup.InstanceCount, err)
 		if err != nil {
-			logs.Logger.Errorf("增加实例记录失败", zap.Error(err))
+			logs.Logger.Error("增加实例记录失败", zap.Error(err))
 			return
 		}
 	}()
@@ -88,15 +83,9 @@ func HandleCreateInstanceGroup(c *gin.Context) {
 
 //HandleBatchCreateInstanceGroup 批量新建实例组
 func HandleBatchCreateInstanceGroup(c *gin.Context) {
-
 	//解析请求
-	data, err := ioutil.ReadAll(c.Request.Body)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse("无效的请求格式"))
-		return
-	}
 	var instanceGroups []gf_cluster.InstanceGroupCreateRequest
-	err = json.Unmarshal(data, &instanceGroups)
+	err := c.ShouldBindJSON(&instanceGroups)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(fmt.Sprintf("无效的请求格式, err : %s", err.Error())))
 		return
@@ -160,7 +149,7 @@ func HandleBatchCreateInstanceGroup(c *gin.Context) {
 		}
 	}
 	if len(failInstanceGroups) != 0 {
-		failMessage, _ := json.Marshal(failInstanceGroups)
+		failMessage, _ := jsoniter.Marshal(failInstanceGroups)
 		c.JSON(http.StatusInternalServerError, gf_cluster.NewFailedResponse(string(failMessage)))
 		return
 	}
@@ -213,7 +202,7 @@ func HandleDeleteInstanceGroup(c *gin.Context) {
 		cost := time.Now().Sub(begin).Milliseconds()
 		err = instance.AddInstanceForm(instanceGroup, cost, createdUserId, createdUserName, gf_cluster.OptTypeShrink, instanceGroup.InstanceCount, err)
 		if err != nil {
-			logs.Logger.Errorf("增加实例记录失败", zap.Error(err))
+			logs.Logger.Error("增加实例记录失败", zap.Error(err))
 		}
 	}()
 
@@ -223,13 +212,8 @@ func HandleDeleteInstanceGroup(c *gin.Context) {
 //HandleBatchDeleteInstanceGroup 批量删除集群
 func HandleBatchDeleteInstanceGroup(c *gin.Context) {
 	//解析请求体
-	data, err := ioutil.ReadAll(c.Request.Body)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse("无效的请求格式"))
-		return
-	}
 	var request gf_cluster.InstanceGroupBatchDeleteRequest
-	err = json.Unmarshal(data, &request)
+	err := c.ShouldBindJSON(&request)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(fmt.Sprintf("无效的请求格式, err : %s", err.Error())))
 		return
@@ -270,7 +254,7 @@ func HandleBatchDeleteInstanceGroup(c *gin.Context) {
 		}
 	}
 	if len(failInstanceGroups) != 0 {
-		failMessage, _ := json.Marshal(failInstanceGroups)
+		failMessage, _ := jsoniter.Marshal(failInstanceGroups)
 		c.JSON(http.StatusInternalServerError, gf_cluster.NewFailedResponse(string(failMessage)))
 		return
 	}
@@ -295,13 +279,9 @@ func HandleGetInstanceGroup(c *gin.Context) {
 
 //HandleUpdateInstanceGroup 更新实例组信息
 func HandleUpdateInstanceGroup(c *gin.Context) {
-	data, err := ioutil.ReadAll(c.Request.Body)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse("无效的请求格式"))
-		return
-	}
+
 	var group gf_cluster.InstanceGroupUpdateRequest
-	err = json.Unmarshal(data, &group)
+	err := c.ShouldBindJSON(&group)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(fmt.Sprintf("无效的请求格式, err: %s", err.Error())))
 		return
@@ -329,13 +309,8 @@ func HandleUpdateInstanceGroup(c *gin.Context) {
 //HandleExpandInstanceGroup 扩容实例组
 func HandleExpandInstanceGroup(c *gin.Context) {
 	//读取请求体
-	data, err := ioutil.ReadAll(c.Request.Body)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse("无效的请求体"))
-		return
-	}
 	var request gf_cluster.InstanceGroupExpandRequest
-	err = json.Unmarshal(data, &request)
+	err := c.ShouldBindJSON(&request)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(fmt.Sprintf("无效的请求体,err:%s", err.Error())))
 		return
@@ -366,17 +341,13 @@ func HandleExpandInstanceGroup(c *gin.Context) {
 
 //HandleShrinkInstanceGroup 缩容实例组
 func HandleShrinkInstanceGroup(c *gin.Context) {
-	data, err := ioutil.ReadAll(c.Request.Body)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse("无效的请求体"))
-		return
-	}
 	var request gf_cluster.InstanceGroupShrinkRequest
-	err = json.Unmarshal(data, &request)
+	err := c.ShouldBindJSON(&request)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(fmt.Sprintf("无效的请求体,err:%s", err.Error())))
 		return
 	}
+
 	instanceGroup, err := instance.GetInstanceGroup(request.InstanceGroupId)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gf_cluster.NewFailedResponse(err.Error()))
@@ -409,7 +380,7 @@ func HandleExpandOrShrinkInstanceGroup(c *gin.Context) {
 		return
 	}
 	var request gf_cluster.InstanceGroupExpandOrShrinkRequest
-	err = json.Unmarshal(data, &request)
+	err = jsoniter.Unmarshal(data, &request)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(fmt.Sprintf("无效的请求体,err:%s", err.Error())))
 		return

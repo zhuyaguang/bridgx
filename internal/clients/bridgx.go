@@ -3,8 +3,9 @@ package clients
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
+	jsoniter "github.com/json-iterator/go"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -46,7 +47,7 @@ func (client *Client) GetUnusedCluster(token string, pageNumber, pageSize int) (
 		PageSize:   pageSize,
 	}
 
-	data, err := json.Marshal(&request)
+	data, err := jsoniter.Marshal(&request)
 	if err != nil {
 		logs.Logger.Error("marshall request failed", zap.Error(err))
 		return nil, err
@@ -63,13 +64,15 @@ func (client *Client) GetUnusedCluster(token string, pageNumber, pageSize int) (
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
 	respData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
 	var response gf_cluster.ListBirdgxClusterByClusterResponse
-	err = json.Unmarshal(respData, &response)
+	err = jsoniter.Unmarshal(respData, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +89,7 @@ func (client *Client) UpdateBridgxClusterUsingTag(token string, clusterName stri
 		request.Tags[gf_cluster.UsageKey] = gf_cluster.UnusedValue
 	}
 
-	data, err := json.Marshal(&request)
+	data, err := jsoniter.Marshal(&request)
 	if err != nil {
 		logs.Logger.Error("marshall request failed", zap.Error(err))
 		return nil, err
@@ -103,23 +106,26 @@ func (client *Client) UpdateBridgxClusterUsingTag(token string, clusterName stri
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
 	respData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
 	var response gf_cluster.EditBridgxClusterTagResponse
-	err = json.Unmarshal(respData, &response)
+	err = jsoniter.Unmarshal(respData, &response)
 	if err != nil {
 		return nil, err
 	}
 	return &response, nil
 }
 
-func (client *Client) GetBridgxClusterInstances(token string, clusterName string, pageSize, pageNum int) (*gf_cluster.GetBridgxClusterInstanceResponse, error) {
+func (client *Client) GetBridgxClusterInstances(token string, clusterName string, pageNum, pageSize int) (*gf_cluster.GetBridgxClusterInstanceResponse, error) {
 
 	data := "{}"
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/instance/describe_all?cluster_name=%s&status=running", client.ServerAddress, clusterName), strings.NewReader(data))
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/instance/describe_all?cluster_name=%s&status=running&page_number=%d&page_size=%d", client.ServerAddress, clusterName,pageNum,pageSize),
+		strings.NewReader(data))
 	if err != nil {
 		return nil, err
 	}
@@ -129,13 +135,15 @@ func (client *Client) GetBridgxClusterInstances(token string, clusterName string
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
 	respData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
 	var response gf_cluster.GetBridgxClusterInstanceResponse
-	err = json.Unmarshal(respData, &response)
+	err = jsoniter.Unmarshal(respData, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -183,13 +191,15 @@ func (client *Client) GetBriodgxClusterDetails(token string, clusterName string)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
 	respData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
 	var response gf_cluster.BridgxClusterDetailsResponse
-	err = json.Unmarshal(respData, &response)
+	err = jsoniter.Unmarshal(respData, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -208,13 +218,15 @@ func (client *Client) GetAKSKClusterDetails(token string, clusterName string) (*
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
 	respData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
 	var response gf_cluster.GetAKSKResponse
-	err = json.Unmarshal(respData, &response)
+	err = jsoniter.Unmarshal(respData, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -228,13 +240,15 @@ func (client *Client) Login(username string, password string) (token string, err
 		Password string
 	}{Username: username, Password: password}
 
-	data, _ := json.Marshal(&request)
+	data, _ := jsoniter.Marshal(&request)
 
 	resp, err := client.httpClient.Post(fmt.Sprintf("%s/user/login", client.ServerAddress), "application/json", bytes.NewReader(data))
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
 	respData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
@@ -245,12 +259,12 @@ func (client *Client) Login(username string, password string) (token string, err
 		Msg  string
 		Data string
 	}{}
-	err = json.Unmarshal(respData, &response)
+	err = jsoniter.Unmarshal(respData, &response)
 	if err != nil {
 		return "", err
 	}
 	if response.Code != 200 {
-		return "", fmt.Errorf("Wrong code: %v, response : %s", err, respData)
+		return "", fmt.Errorf("wrong code: %v, response : %s", err, respData)
 	}
 	return response.Data, nil
 }

@@ -1,9 +1,7 @@
 package instance
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"sort"
 	"strconv"
@@ -23,18 +21,13 @@ import (
 
 //HandleRestartInstance  c重启实例
 func HandleRestartInstance(c *gin.Context) {
-
-	data, err := ioutil.ReadAll(c.Request.Body)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse("无效的请求体"))
-		return
-	}
 	var request gf_cluster.InstanceRestartRequest
-	err = json.Unmarshal(data, &request)
+	err := c.ShouldBindJSON(&request)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(fmt.Sprintf("无效的请求体, err : %s", err.Error())))
 		return
 	}
+
 	claims := helper.GetUserClaims(c)
 	if claims == nil {
 		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse("校验身份出错"))
@@ -64,13 +57,8 @@ func HandleDeleteInstance(c *gin.Context) {
 	createdUserName := claims.Name
 
 	//读取请求体
-	data, err := ioutil.ReadAll(c.Request.Body)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse("无效的请求体"))
-		return
-	}
 	var request gf_cluster.InstanceDeleteRequest
-	err = json.Unmarshal(data, &request)
+	err := c.ShouldBindJSON(&request)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(fmt.Sprintf("无效的请求体, err : %s", err.Error())))
 		return

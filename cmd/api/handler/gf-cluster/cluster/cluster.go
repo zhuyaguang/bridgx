@@ -1,9 +1,7 @@
 package cluster
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"runtime/debug"
 	"sort"
@@ -27,14 +25,8 @@ import (
 //HandleCreateCluster 创建集群
 func HandleCreateCluster(c *gin.Context) {
 	//读取请求体
-	//TODO 封装统一方法读取请求体
-	data, err := ioutil.ReadAll(c.Request.Body)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse("无效的请求体"))
-		return
-	}
 	var buildRequest gf_cluster.BridgxClusterBuildRequest
-	err = json.Unmarshal(data, &buildRequest)
+	err := c.ShouldBindJSON(&buildRequest)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(fmt.Sprintf("无效的请求体, err : %s", err.Error())))
 		return
@@ -372,5 +364,4 @@ func HandleListClusterPodsSummary(c *gin.Context) {
 		PageSize:   pageSize,
 		Total:      len(result),
 	}))
-
 }
