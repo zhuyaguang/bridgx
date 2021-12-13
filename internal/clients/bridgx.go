@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	jsoniter "github.com/json-iterator/go"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
+
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/galaxy-future/BridgX/internal/logs"
 	gf_cluster "github.com/galaxy-future/BridgX/pkg/gf-cluster"
@@ -124,7 +125,7 @@ func (client *Client) UpdateBridgxClusterUsingTag(token string, clusterName stri
 func (client *Client) GetBridgxClusterInstances(token string, clusterName string, pageNum, pageSize int) (*gf_cluster.GetBridgxClusterInstanceResponse, error) {
 
 	data := "{}"
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/instance/describe_all?cluster_name=%s&status=running&page_number=%d&page_size=%d", client.ServerAddress, clusterName,pageNum,pageSize),
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/instance/describe_all?cluster_name=%s&status=running&page_number=%d&page_size=%d", client.ServerAddress, clusterName, pageNum, pageSize),
 		strings.NewReader(data))
 	if err != nil {
 		return nil, err

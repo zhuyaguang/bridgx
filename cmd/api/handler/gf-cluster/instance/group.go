@@ -2,11 +2,12 @@ package instance
 
 import (
 	"fmt"
-	jsoniter "github.com/json-iterator/go"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
+
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/galaxy-future/BridgX/pkg/encrypt"
 
