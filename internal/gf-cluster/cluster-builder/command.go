@@ -12,6 +12,7 @@ func CreateCluster(params gf_cluster.ClusterBuilderParams) {
 	updateInstallStep(params.KubernetesId, gf_cluster.KubernetesStepInitializeCluster)
 	machineList := params.MachineList
 	master, machineList := Pop(machineList)
+	defer taintMaster(master, master.Hostname)
 
 	updateStatus(params.KubernetesId, gf_cluster.KubernetesStatusInitializing)
 
@@ -38,48 +39,50 @@ func CreateCluster(params gf_cluster.ClusterBuilderParams) {
 
 	//安装flannel
 	updateInstallStep(params.KubernetesId, gf_cluster.KubernetesStepInstallFlannel)
-	err = initFlannel(master, FlannelData{
-		AccessKey:    params.AccessKey,
-		AccessSecret: params.AccessSecret,
-		PodCidr:      params.PodCidr,
-	})
-	recordStep(params.KubernetesId, master.IP, gf_cluster.KubernetesStepInstallFlannel, err)
-	if err != nil {
-		failed(params.KubernetesId, "flannel init err:"+err.Error())
-		return
-	}
+	go func() {
+		err = initFlannel(master, FlannelData{
+			AccessKey:    params.AccessKey,
+			AccessSecret: params.AccessSecret,
+			PodCidr:      params.PodCidr,
+		})
+		recordStep(params.KubernetesId, master.IP, gf_cluster.KubernetesStepInstallFlannel, err)
+		if err != nil {
+			failed(params.KubernetesId, "flannel init err:"+err.Error())
+		}
+	}()
 
-	taintMaster(master, master.Hostname)
 	//安装master节点
 	if params.Mode == gf_cluster.ClusterMode {
+		updateInstallStep(params.KubernetesId, gf_cluster.KubernetesStepInstallMaster)
 		for i := 0; i < 2; i++ {
 			var masterNode gf_cluster.ClusterBuildMachine
 			masterNode, machineList = Pop(machineList)
-			updateInstallStep(params.KubernetesId, gf_cluster.KubernetesStepInstallMaster)
-			resetMachine(masterNode)
-			_, err = Run(masterNode, masterCmd)
-			recordStep(params.KubernetesId, masterNode.IP, gf_cluster.KubernetesStepInstallMaster+masterNode.Hostname, err)
-			if err != nil {
-				failed(params.KubernetesId, "add master err:"+err.Error())
-				return
-			}
-			taintMaster(master, masterNode.Hostname)
+			go func(masterMachine gf_cluster.ClusterBuildMachine) {
+				resetMachine(masterMachine)
+				_, err = Run(masterMachine, masterCmd)
+				recordStep(params.KubernetesId, masterMachine.IP, gf_cluster.KubernetesStepInstallMaster+masterMachine.Hostname, err)
+				if err != nil {
+					failed(params.KubernetesId, "add master err:"+err.Error())
+				}
+				taintMaster(master, masterMachine.Hostname)
+			}(masterNode)
 		}
 	}
 
 	//安装node节点
 	length := len(machineList)
+	updateInstallStep(params.KubernetesId, gf_cluster.KubernetesStepInstallNode)
 	for i := 0; i < length; i++ {
 		var node gf_cluster.ClusterBuildMachine
 		node, machineList = Pop(machineList)
-		updateInstallStep(params.KubernetesId, gf_cluster.KubernetesStepInstallNode)
-		resetMachine(node)
-		_, err = Run(node, nodeCmd)
-		recordStep(params.KubernetesId, node.IP, gf_cluster.KubernetesStepInstallNode+node.Hostname, err)
-		if err != nil {
-			failed(params.KubernetesId, "add node err:"+err.Error())
-			return
-		}
+		go func(nodeMachine gf_cluster.ClusterBuildMachine) {
+			resetMachine(nodeMachine)
+			_, err = Run(nodeMachine, nodeCmd)
+			recordStep(params.KubernetesId, nodeMachine.IP, gf_cluster.KubernetesStepInstallNode+nodeMachine.Hostname, err)
+			if err != nil {
+				failed(params.KubernetesId, "add node err:"+err.Error())
+			}
+		}(node)
 	}
 
 	//给节点打标签

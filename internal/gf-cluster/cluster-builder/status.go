@@ -5,23 +5,23 @@ import (
 	gf_cluster "github.com/galaxy-future/BridgX/pkg/gf-cluster"
 )
 
-func updateStatus(id int64, status string) error {
+func updateStatus(id int64, status string) {
 	kubernetes := gf_cluster.KubernetesInfo{
 		Id:     id,
 		Status: status,
 	}
 
-	return update(kubernetes)
+	_ = update(kubernetes)
 }
 
 //deprecated
-func updateInstallStep(id int64, step string) error {
+func updateInstallStep(id int64, step string) {
 	kubernetes := gf_cluster.KubernetesInfo{
 		Id:          id,
 		InstallStep: step,
 	}
 
-	return update(kubernetes)
+	_ = update(kubernetes)
 }
 
 func recordStep(kubernetesId int64, ip, step string, err error) {
@@ -56,14 +56,14 @@ func recordConfig(id int64, config string) error {
 	return update(kubernetes)
 }
 
-func failed(id int64, message string) error {
+func failed(id int64, message string) {
 	kubernetes := gf_cluster.KubernetesInfo{
 		Id:      id,
 		Status:  gf_cluster.KubernetesStatusFailed,
 		Message: message,
 	}
 
-	return update(kubernetes)
+	_ = update(kubernetes)
 }
 
 func update(kubernetes gf_cluster.KubernetesInfo) error {
