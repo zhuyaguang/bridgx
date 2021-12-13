@@ -118,6 +118,7 @@ func HandleListInstance(c *gin.Context) {
 func HandleListMyInstance(c *gin.Context) {
 	nodeIp := c.Query("node_ip")
 	podIp := c.Query("pod_ip")
+	instanceGroupName := c.Query("instance_group_name")
 	claims := helper.GetUserClaims(c)
 	if claims == nil {
 		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse("校验身份出错"))
@@ -129,34 +130,18 @@ func HandleListMyInstance(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(err.Error()))
 		return
 	}
-
 	pageNumber, pageSize := helper.GetPagerParamFromQuery(c)
 	var result gf_cluster.ClusterPodsSummaryArray
-	kubernetesMap := make(map[int64][]string)
-	for _, group := range groups {
-		kubernetesMap[group.KubernetesId] = append(kubernetesMap[group.KubernetesId], group.Name)
-	}
+	kubernetesMap := getKubernetesMap(groups)
 	for kubernetesId, groupNames := range kubernetesMap {
 		pods, err := cluster.ListClusterPodsSummary(kubernetesId)
 		if err != nil {
 			logs.Logger.Errorw("failed to list pods from kubernetes cluster.", zap.Int64("kubernetes_id", kubernetesId), zap.Error(err))
 			continue
 		}
-		for _, pod := range pods {
-			if nodeIp != "" && strings.Index(pod.NodeIp, nodeIp) != 0 {
-				continue
-			}
-			if podIp != "" && strings.Index(pod.PodIP, podIp) != 0 {
-				continue
-			}
-			if arrays.ContainsString(groupNames, pod.GroupName) == -1 {
-				continue
-			}
-			result = append(result, pod)
-		}
+		result = filterPods(pods, nodeIp, podIp, groupNames, instanceGroupName, result)
 	}
 	sort.Sort(result)
-
 	start := (pageNumber - 1) * pageSize
 	if start >= len(result) {
 		c.JSON(http.StatusOK, gf_cluster.NewListClusterPodsDetailResponse(nil, gf_cluster.Pager{
@@ -166,7 +151,6 @@ func HandleListMyInstance(c *gin.Context) {
 		}))
 		return
 	}
-
 	end := pageNumber * pageSize
 	if end >= len(result) {
 		end = len(result)
@@ -176,7 +160,35 @@ func HandleListMyInstance(c *gin.Context) {
 		PageSize:   pageSize,
 		Total:      len(result),
 	}))
+}
 
+//getKubernetesMap 获取kubernetes集群&实例组map
+func getKubernetesMap(groups []*gf_cluster.InstanceGroup) map[int64][]string {
+	kubernetesMap := make(map[int64][]string, len(groups))
+	for _, group := range groups {
+		kubernetesMap[group.KubernetesId] = append(kubernetesMap[group.KubernetesId], group.Name)
+	}
+	return kubernetesMap
+}
+
+//filterPods 过滤pod列表
+func filterPods(pods gf_cluster.ClusterPodsSummaryArray, nodeIp string, podIp string, groupNames []string, instanceGroupName string, result gf_cluster.ClusterPodsSummaryArray) gf_cluster.ClusterPodsSummaryArray {
+	for _, pod := range pods {
+		if nodeIp != "" && strings.Index(pod.NodeIp, nodeIp) != 0 {
+			continue
+		}
+		if podIp != "" && strings.Index(pod.PodIP, podIp) != 0 {
+			continue
+		}
+		if arrays.ContainsString(groupNames, pod.GroupName) == -1 {
+			continue
+		}
+		if instanceGroupName != "" && strings.Index(pod.GroupName, instanceGroupName) != 0 {
+			continue
+		}
+		result = append(result, pod)
+	}
+	return result
 }
 
 //HandleListInstanceForm 列出所有集群
