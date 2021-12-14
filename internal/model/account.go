@@ -4,9 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/galaxy-future/BridgX/internal/logs"
-	"github.com/galaxy-future/BridgX/pkg/encrypt"
-
 	"github.com/galaxy-future/BridgX/internal/clients"
 	"gorm.io/gorm"
 )
@@ -14,14 +11,18 @@ import (
 // Account cloud provider account info
 type Account struct {
 	Base
-	AccountName   string `json:"account_name"`
-	AccountKey    string `json:"account_key"`
-	AccountSecret string `json:"account_secret"`
-	Provider      string `json:"provider"`
-	OrgId         int64  `json:"org_id"`
-	CreateBy      string `json:"create_by"`
-	UpdateBy      string `json:"update_by"`
-	DeletedAt     gorm.DeletedAt
+	AccountName            string `json:"account_name"`
+	AccountKey             string `json:"account_key"`
+	EncryptedAccountSecret string `json:"encrypted_account_secret"`
+	Salt                   string `json:"salt"`
+	Provider               string `json:"provider"`
+	OrgId                  int64  `json:"org_id"`
+	CreateBy               string `json:"create_by"`
+	UpdateBy               string `json:"update_by"`
+	DeletedAt              gorm.DeletedAt
+
+	// the value of this field will not be empty only after decryption function called.
+	AccountSecret string `json:"account_secret" gorm:"-"`
 }
 
 // TableName table name in DB
@@ -29,76 +30,28 @@ func (a Account) TableName() string {
 	return "account"
 }
 
-//AfterFind decrypt account secret
-func (a *Account) AfterFind(tx *gorm.DB) (err error) {
-	if a == nil {
-		return nil
-	}
-	if a.AccountKey != "" && a.AccountSecret != "" {
-		res, err := encrypt.AESDecrypt(a.AccountKey+encrypt.AesKeySalt, a.AccountSecret)
-		if err != nil {
-			logs.Logger.Errorf("decrypt sk failed.err: %s", err.Error())
-			return err
-		}
-		a.AccountSecret = res
-	}
-	return nil
-}
-
-//BeforeSave encrypt account secret before insert DB
-func (a *Account) BeforeSave(tx *gorm.DB) (err error) {
-	if a == nil {
-		return nil
-	}
-	if a.AccountKey != "" && a.AccountSecret != "" {
-		res, err := encrypt.AESEncrypt(a.AccountKey+encrypt.AesKeySalt, a.AccountSecret)
-		if err != nil {
-			logs.Logger.Errorf("encrypt sk failed.err: %s", err.Error())
-			return err
-		}
-		a.AccountSecret = res
-	}
-	return nil
-}
-
 //GetAccounts search accounts by condition
-func GetAccounts(provider, accountName, accountKey string, pageNum, pageSize int) ([]Account, int64, error) {
-	res := make([]Account, 0)
-
-	sql := clients.ReadDBCli.Where(map[string]interface{}{})
+func GetAccounts(provider, accountName, accountKey string, pageNum, pageSize int) ([]*Account, int64, error) {
+	res := make([]*Account, 0)
+	query := clients.ReadDBCli.Table(Account{}.TableName())
 	if accountName != "" {
-		sql.Where("account_name LIKE ?", fmt.Sprintf("%%%v%%", accountName))
+		query.Where("account_name LIKE ?", fmt.Sprintf("%%%v%%", accountName))
 	}
 	if provider != "" {
-		sql.Where("provider = ?", provider)
+		query.Where("provider = ?", provider)
 	}
 	if accountKey != "" {
-		sql.Where("account_key = ?", accountKey)
+		query.Where("account_key = ?", accountKey)
 	}
-	err := sql.Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&res).Error
+	count, err := QueryWhere(query, pageNum, pageSize, &res, "id Desc", true)
 	if err != nil {
-		return res, 0, err
+		return nil, 0, err
 	}
-	var cnt int64
-	err = sql.Offset(-1).Limit(-1).Count(&cnt).Error
-	if err != nil {
-		return res, 0, err
-	}
-	return res, cnt, err
-}
-
-//GetAccountSecretByAccountKey get sk(decrypt) by ak
-func GetAccountSecretByAccountKey(ak string) string {
-	var ac Account
-	if err := clients.ReadDBCli.Where("account_key = ?", ak).First(&ac).Error; err != nil {
-		logErr("GetAccountSecretByAccountKey from read db", err)
-		return ""
-	}
-	return ac.AccountSecret
+	return res, count, nil
 }
 
 //GetAccountsByOrgId get accounts belongs to specify orgId
-func GetAccountsByOrgId(orgId int64) (accounts []Account, err error) {
+func GetAccountsByOrgId(orgId int64) (accounts []*Account, err error) {
 	if err := clients.ReadDBCli.Where("org_id = ?", orgId).Find(&accounts).Error; err != nil {
 		logErr("GetAccountSecretByAccountKey from read db", err)
 		return nil, err
@@ -107,8 +60,9 @@ func GetAccountsByOrgId(orgId int64) (accounts []Account, err error) {
 }
 
 //GetDefaultAccountByProvider return default accounts by provider
-func GetDefaultAccountByProvider(provider string) (account Account, err error) {
-	if err := clients.ReadDBCli.Where("provider = ?", provider).First(&account).Error; err != nil {
+func GetDefaultAccountByProvider(provider string) (account *Account, err error) {
+	account = &Account{}
+	if err := clients.ReadDBCli.Where("provider = ?", provider).First(account).Error; err != nil {
 		logErr("GetAccountSecretByAccountKey from read db", err)
 		return account, err
 	}
@@ -136,8 +90,8 @@ func GetAksByOrgAkProvider(ctx context.Context, orgId int64, ak, provider string
 	return aks, nil
 }
 
-// GetAccountsByAk get first account by ak
-func GetAccountsByAk(ctx context.Context, ak string) (a Account, err error) {
+// GetAccountByAk get first account by ak
+func GetAccountByAk(ctx context.Context, ak string) (a Account, err error) {
 	err = clients.ReadDBCli.WithContext(ctx).
 		Where("account_key = ?", ak).
 		First(&a).Error

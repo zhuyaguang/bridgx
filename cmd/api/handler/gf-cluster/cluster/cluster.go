@@ -18,6 +18,7 @@ import (
 	"github.com/galaxy-future/BridgX/internal/gf-cluster/instance"
 	"github.com/galaxy-future/BridgX/internal/logs"
 	"github.com/galaxy-future/BridgX/internal/model"
+	"github.com/galaxy-future/BridgX/internal/service"
 	"github.com/galaxy-future/BridgX/pkg/encrypt"
 	gf_cluster "github.com/galaxy-future/BridgX/pkg/gf-cluster"
 	"github.com/gin-gonic/gin"
@@ -88,7 +89,7 @@ func HandleCreateCluster(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(fmt.Sprintf("获取集群信息认证时失败,错误信息： %s", clusterResponse.Msg)))
 		return
 	}
-	descryptRes, err := encrypt.AESDecrypt(akskResponse.Data.AccountKey+"bridgx", akskResponse.Data.AccountSecretEncrypt)
+	descryptRes, err := service.DecryptAccount(encrypt.AesKeyPepper, akskResponse.Data.Salt, akskResponse.Data.AccountKey, akskResponse.Data.AccountSecretEncrypt)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(fmt.Sprintf("解密集群信息认证时失败,错误信息： %s", err.Error())))
 		return

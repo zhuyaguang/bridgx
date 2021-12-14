@@ -3,13 +3,12 @@ package helper
 import (
 	"github.com/galaxy-future/BridgX/cmd/api/response"
 	"github.com/galaxy-future/BridgX/internal/model"
-	"github.com/galaxy-future/BridgX/pkg/encrypt"
 	"github.com/spf13/cast"
 )
 
 // ConvertToCloudAccountList convert to account list display format
-func ConvertToCloudAccountList(accounts []model.Account) []response.CloudAccount {
-	res := make([]response.CloudAccount, 0)
+func ConvertToCloudAccountList(accounts []*model.Account) []response.CloudAccount {
+	res := make([]response.CloudAccount, 0, len(accounts))
 	if len(accounts) == 0 {
 		return res
 	}
@@ -25,18 +24,4 @@ func ConvertToCloudAccountList(accounts []model.Account) []response.CloudAccount
 		res = append(res, ca)
 	}
 	return res
-}
-
-// ConvertToEncryptAccountInfo convert account_secret to encrypt account_secret
-func ConvertToEncryptAccountInfo(account *model.Account) (*response.EncryptCloudAccountInfo, error) {
-	accountSecretEncrypt, err := encrypt.AESEncrypt(account.AccountKey+encrypt.AesKeySalt, account.AccountSecret)
-	if err != nil {
-		return nil, err
-	}
-	return &response.EncryptCloudAccountInfo{
-		AccountName:          account.AccountName,
-		AccountKey:           account.AccountKey,
-		AccountSecretEncrypt: accountSecretEncrypt,
-		Provider:             account.Provider,
-	}, nil
 }
