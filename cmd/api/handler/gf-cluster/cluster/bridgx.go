@@ -46,7 +46,7 @@ func HandleListUnusedBridgxCluster(c *gin.Context) {
 
 		//获取集群实例列表
 		//TODO 使用原生接口
-		instanceResponse, err := clients.GetClient().GetBridgxClusterInstances(token, cluster.ClusterName, pageNumber, pageSize)
+		instanceResponse, err := clients.GetClient().GetBridgxClusterInstances(token, cluster.ClusterName, 1, 10)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(err.Error()))
 			return
