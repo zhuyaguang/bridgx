@@ -15,37 +15,33 @@ type InstanceGroup struct {
 }
 
 type InstanceGroupCreateRequest struct {
-	KubernetesId  int64  `json:"kubernetes_id"`
-	Name          string `json:"name"`
+	KubernetesId  int64  `json:"kubernetes_id" binding:"required"`
+	Name          string `json:"name" binding:"required,lowercaseOrNumeric"`
 	Image         string `json:"image"`
-	Cpu           string `json:"cpu"`
-	Memory        string `json:"memory"`
-	Disk          string `json:"disk"`
-	InstanceCount int    `json:"instance_count"`
+	Cpu           string `json:"cpu" binding:"required"`
+	Memory        string `json:"memory" binding:"required"`
+	Disk          string `json:"disk" binding:"required"`
+	InstanceCount int    `json:"instance_count" binding:"required"`
 	CreatedUser   string `json:"created_user"`
 	CreatedUserId int64  `json:"created_user_id"`
-	SshPwd        string `json:"ssh_pwd"`
+	SshPwd        string `json:"ssh_pwd" binding:"min=1,max=6"`
 }
 
 type InstanceGroupBatchDeleteRequest struct {
-	Ids []int64 `json:"ids"`
+	Ids []int64 `json:"ids" binding:"min=1"`
 }
 
 type InstanceGroupUpdateRequest struct {
-	Id            int64  `json:"id"`
-	KubernetesId  int64  `json:"kubernetes_id"`
-	Name          string `json:"name"`
+	Id            int64  `json:"id" binding:"required"`
+	KubernetesId  int64  `json:"kubernetes_id" binding:"required"`
+	Name          string `json:"name" binding:"required,lowercaseOrNumeric"`
 	Image         string `json:"image"`
-	Cpu           string `json:"cpu"`
-	Memory        string `json:"memory"`
-	Disk          string `json:"disk"`
-	InstanceCount int    `json:"instance_count"`
+	Cpu           string `json:"cpu" binding:"required"`
+	Memory        string `json:"memory" binding:"required"`
+	Disk          string `json:"disk" binding:"required"`
+	InstanceCount int    `json:"instance_count" binding:"required"`
 	CreatedUser   string `json:"created_user"`
 	CreatedUserId int64  `json:"created_user_id"`
-}
-
-type InstanceGroupGetRequest struct {
-	InstanceGroupID string `json:"instance_group_id"`
 }
 
 type InstanceGroupGetResponse struct {
@@ -76,13 +72,8 @@ func NewListInstanceGroupResponse(instanceGroups []*InstanceGroup, pager Pager) 
 
 // instances
 type InstanceGroupExpandRequest struct {
-	InstanceGroupId int64 `json:"instance_group_id"`
-	Count           int   `json:"count"`
-}
-
-type InstanceListRequest struct {
-	InstanceGroupId string `json:"instance_group_id"`
-	Name            string `json:"name"`
+	InstanceGroupId int64 `json:"instance_group_id" binding:"required"`
+	Count           int   `json:"count" binding:"required"`
 }
 
 type InstanceListResponse struct {
@@ -98,23 +89,23 @@ func NewInstanceListResponse(instances []*Instance) *InstanceListResponse {
 }
 
 type InstanceGroupExpandOrShrinkRequest struct {
-	InstanceGroupId int64 `json:"instance_group_id"`
-	Count           int   `json:"count"`
+	InstanceGroupId int64 `json:"instance_group_id" binding:"required"`
+	Count           int   `json:"count" binding:"required"`
 }
 
 type InstanceRestartRequest struct {
-	InstanceGroupId int64  `json:"instance_group_id"`
-	InstanceName    string `json:"instance_name"`
+	InstanceGroupId int64  `json:"instance_group_id" binding:"required"`
+	InstanceName    string `json:"instance_name" binding:"required"`
 }
 
 type InstanceDeleteRequest struct {
-	InstanceGroupId int64  `json:"instance_group_id"`
-	InstanceName    string `json:"instance_name"`
+	InstanceGroupId int64  `json:"instance_group_id" binding:"required"`
+	InstanceName    string `json:"instance_name" binding:"required"`
 }
 
 type InstanceGroupShrinkRequest struct {
-	InstanceGroupId int64 `json:"instance_group_id"`
-	Count           int   `json:"count"`
+	InstanceGroupId int64 `json:"instance_group_id" binding:"required"`
+	Count           int   `json:"count" binding:"required"`
 }
 
 type Instance struct {
