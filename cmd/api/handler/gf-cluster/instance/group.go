@@ -100,7 +100,7 @@ func HandleBatchCreateInstanceGroup(c *gin.Context) {
 	createdUserId := claims.UserId
 	createdUserName := claims.Name
 	failInstanceGroups := make(map[string]string)
-	//同步创建集群
+	//同步创建实例组
 	for _, group := range instanceGroups {
 		begin := time.Now()
 		instanceGroup := gf_cluster.InstanceGroup{
