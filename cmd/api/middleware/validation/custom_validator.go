@@ -21,8 +21,8 @@ const (
 	mustInCloudParam = "cloud"
 	delimiter        = "、"
 
-	LowercaseOrNumeric       = "lowercaseOrNumeric"
-	LowercaseOrNumericRegStr = "^[a-z0-9]+$"
+	lowercaseOrNumeric       = "lowercaseOrNumeric"
+	lowercaseOrNumericRegStr = "^[a-z0-9]+$"
 )
 
 var (
@@ -60,7 +60,7 @@ func RegisterCustomValidators() {
 		},
 		Validation{
 			validateFunc: validateLowercaseOrNumeric,
-			tag:          LowercaseOrNumeric,
+			tag:          lowercaseOrNumeric,
 		},
 	)
 }
@@ -141,13 +141,8 @@ func getMustInErrMsg(param string) string {
 }
 
 func validateLowercaseOrNumeric(fl validator.FieldLevel) bool {
-	defer func() {
-		if r := recover(); r != nil {
-			logs.Logger.Errorf("validateLowercaseOrNumeric recover:%v ", r)
-		}
-	}()
 	field := fl.Field().String()
-	bool, err := regexp.MatchString(LowercaseOrNumericRegStr, field)
+	bool, err := regexp.MatchString(lowercaseOrNumericRegStr, field)
 	if err != nil {
 		logs.Logger.Errorf("validateLowercaseOrNumeric err:%v ", err)
 		return false
