@@ -409,6 +409,23 @@ CREATE TABLE `operation_log` (
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='操作日志';
 
+drop table if exists pod;
+CREATE TABLE `pod` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `pod_name` VARCHAR(255) NOT NULL,
+  `pod_ip` VARCHAR(255) NOT NULL,
+  `node_name` VARCHAR(255) NOT NULL,
+  `node_ip` VARCHAR(255) NOT NULL,
+  `allocated_cpu_cores` FLOAT NOT NULL DEFAULT '0',
+  `allocated_memory_gi` FLOAT NOT NULL DEFAULT '0',
+  `allocated_disk_gi` FLOAT NOT NULL DEFAULT '0',
+  `running_time` VARCHAR(255) NOT NULL,
+  `status` VARCHAR(255) NOT NULL,
+  `group_id` INT(11) NOT NULL,
+  `start_time` INT(11) NOT NULL,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
 -- init super admin info
 INSERT INTO `user`
 VALUES (1, 'root', '87d9bb400c0634691f0e3baaf1e2fd0d', 1, 'enable', 1, '2021-11-09 12:29:44', '',
