@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/galaxy-future/BridgX/cmd/api/middleware/authorization"
+	"github.com/galaxy-future/BridgX/internal/constants"
 	"github.com/galaxy-future/BridgX/internal/model"
 	"github.com/galaxy-future/BridgX/internal/types"
 	gf_cluster "github.com/galaxy-future/BridgX/pkg/gf-cluster"
@@ -29,7 +30,7 @@ func GetBridgxUnusedCluster(ctx context.Context, user *authorization.CustomClaim
 		if err != nil {
 			return nil, 0, err
 		}
-		_, instances, total, err := GetInstancesByAccounts(ctx, accountKeys, []string{"running"}, 1, 10, "", "", cluster.ClusterName)
+		_, instances, total, err := GetInstancesByAccounts(ctx, accountKeys, []string{string(constants.Running)}, 1, 10, "", "", cluster.ClusterName)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -50,11 +51,7 @@ func TagBridgxClusterUsage(clusterName, systemName string) error {
 		TagKey:      gf_cluster.UsageKey,
 		TagValue:    systemName,
 	}
-	err := EditClusterTags([]model.ClusterTag{tag})
-	if err != nil {
-		return err
-	}
-	return nil
+	return EditClusterTags([]model.ClusterTag{tag})
 }
 
 //GetClusterInfo 根据集群名称获取集群名称
@@ -98,16 +95,16 @@ func getClusterInstances(ctx context.Context, user *authorization.CustomClaims, 
 	if err != nil {
 		return nil, 0, err
 	}
-	_, instances, total, err := GetInstancesByAccounts(ctx, accountKeys, []string{"running"}, 1, 10, "", "", clusterName)
+	_, instances, total, err := GetInstancesByAccounts(ctx, accountKeys, []string{"running"}, pageNum, pageSize, "", "", clusterName)
 	if err != nil {
 		return nil, 0, err
 	}
-	return instances, int(total), err
+	return instances, int(total), nil
 
 }
 
-//GetClusterAKSK 根据集群获取aksk
-func GetClusterAKSK(ctx *gin.Context, clusterName string) (*model.Account, error) {
+//GetClusterAccount 根据集群获取Account信息
+func GetClusterAccount(ctx *gin.Context, clusterName string) (*model.Account, error) {
 	cluster, err := GetClusterByName(ctx, clusterName)
 	if err != nil {
 		return nil, err
@@ -116,6 +113,8 @@ func GetClusterAKSK(ctx *gin.Context, clusterName string) (*model.Account, error
 	if account == nil {
 		return nil, fmt.Errorf("account not found")
 	}
-
-	return account, err
+	if err != nil {
+		return nil, err
+	}
+	return account, nil
 }

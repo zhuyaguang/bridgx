@@ -3,9 +3,8 @@ package cluster
 import (
 	"net/http"
 
-	"github.com/galaxy-future/BridgX/internal/service"
-
 	"github.com/galaxy-future/BridgX/cmd/api/helper"
+	"github.com/galaxy-future/BridgX/internal/service"
 	gf_cluster "github.com/galaxy-future/BridgX/pkg/gf-cluster"
 	"github.com/gin-gonic/gin"
 )

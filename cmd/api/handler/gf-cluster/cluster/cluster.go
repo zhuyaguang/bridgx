@@ -61,7 +61,7 @@ func HandleCreateCluster(c *gin.Context) {
 	}
 
 	//5. 获取AKSK信息
-	aksk, err := service.GetClusterAKSK(c, buildRequest.BridgxClusterName)
+	aksk, err := service.GetClusterAccount(c, buildRequest.BridgxClusterName)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(fmt.Sprintf("获取集群信息认证时失败,错误信息： %s", err.Error())))
 		return
@@ -140,7 +140,7 @@ func HandleCreateCluster(c *gin.Context) {
 		defer func() {
 			if r := recover(); r != nil {
 				logs.Logger.Errorf("HandleCreateCluster err:%v ", r)
-				logs.Logger.Errorf("HandleCreateCluster panic", zap.String("stack", string(debug.Stack())))
+				logs.Logger.Error("HandleCreateCluster panic", zap.String("stack", string(debug.Stack())))
 			}
 		}()
 		cluster_builder.CreateCluster(buildParams)
