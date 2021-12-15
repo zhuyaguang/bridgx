@@ -124,6 +124,7 @@ type BridgxUnusedCluster struct {
 	ClusterName string   `json:"cluster_name"`
 	CloudType   string   `json:"cloud_type"`
 	Nodes       []string `json:"nodes"`
+	Total       int      `json:"total"`
 }
 
 //ListUnusedBridgxClusterResponse 未被占用集群list相应体
