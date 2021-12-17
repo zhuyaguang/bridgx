@@ -51,9 +51,10 @@ func (InstanceType) TableName() string {
 	return "instance_type"
 }
 
-func UpdateInstanceTypeIStatus(ctx context.Context, tx *gorm.DB, status int) error {
+func UpdateInstanceTypeIStatus(ctx context.Context, tx *gorm.DB, provider string, status int) error {
 	err := tx.WithContext(ctx).Table(InstanceType{}.TableName()).
 		Where("i_status = ?", status-1).
+		Where("provider=?", provider).
 		Update("i_status", status).Error
 	return err
 }

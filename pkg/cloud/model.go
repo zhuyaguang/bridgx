@@ -5,14 +5,13 @@ import (
 )
 
 const (
-	Pending     = "Pending"
-	TaskId      = "TaskId"
-	ClusterName = "ClusterName"
+	InstanceChargeTypePrePaid  = "PrePaid"
+	InstanceChargeTypePostPaid = "PostPaid"
 )
 
 const (
-	InstanceChargeTypePrePaid  = "PrePaid"
-	InstanceChargeTypePostPaid = "PostPaid"
+	InternetChargeTypePayByTraffic   = "PayByTraffic"
+	InternetChargeTypePayByBandwidth = "PayByBandwidth"
 )
 
 type Params struct {
@@ -51,6 +50,7 @@ type Network struct {
 	SecurityGroup           string `json:"security_group"`
 	InternetChargeType      string `json:"internet_charge_type"`
 	InternetMaxBandwidthOut int    `json:"internet_max_bandwidth_out"`
+	InternetIpType          string `json:"internet_ip_type"`
 }
 
 type Charge struct {
@@ -111,6 +111,7 @@ type CreateSwitchRequest struct {
 	CidrBlock   string
 	VSwitchName string
 	VpcId       string
+	GatewayIp   string
 }
 type CreateSwitchResponse struct {
 	SwitchId  string
@@ -134,7 +135,8 @@ type AddSecurityGroupRuleRequest struct {
 	VpcId           string
 	SecurityGroupId string
 	IpProtocol      string
-	PortRange       string
+	PortFrom        int
+	PortTo          int
 	GroupId         string
 	CidrIp          string
 	PrefixListId    string
@@ -174,6 +176,7 @@ type Switch struct {
 	CreateAt                string
 	ZoneId                  string
 	CidrBlock               string
+	GatewayIp               string
 }
 
 type GetSwitchResponse struct {
@@ -203,9 +206,8 @@ type Zone struct {
 }
 
 type InstanceType struct {
-	Status         string
-	StatusCategory string
-	Value          string
+	InstanceInfo
+	Status string
 }
 
 type InstanceInfo struct {
@@ -236,7 +238,9 @@ type DescribeInstanceTypesResponse struct {
 	Infos []InstanceInfo
 }
 type DescribeImagesRequest struct {
-	RegionId string
+	RegionId  string
+	InsType   string
+	ImageType string
 }
 
 type DescribeImagesResponse struct {

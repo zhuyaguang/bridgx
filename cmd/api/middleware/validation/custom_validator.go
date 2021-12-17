@@ -2,10 +2,12 @@ package validation
 
 import (
 	"fmt"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
 
+	"github.com/galaxy-future/BridgX/internal/logs"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 )
@@ -18,6 +20,9 @@ const (
 	mustInTransErr   = "必须是 [%s] 之一"
 	mustInCloudParam = "cloud"
 	delimiter        = "、"
+
+	lowercaseOrNumeric       = "lowercaseOrNumeric"
+	lowercaseOrNumericRegStr = "^[a-z0-9]+$"
 )
 
 var (
@@ -52,6 +57,10 @@ func RegisterCustomValidators() {
 			translateFunc:    translateMustIn,
 			translateRegFunc: defaultTranslateRegFunc,
 			tag:              mustIn,
+		},
+		Validation{
+			validateFunc: validateLowercaseOrNumeric,
+			tag:          lowercaseOrNumeric,
 		},
 	)
 }
@@ -129,4 +138,14 @@ func getMustInErrMsg(param string) string {
 		mustInErrMsgCacheRWLock.Unlock()
 	}
 	return msg
+}
+
+func validateLowercaseOrNumeric(fl validator.FieldLevel) bool {
+	field := fl.Field().String()
+	bool, err := regexp.MatchString(lowercaseOrNumericRegStr, field)
+	if err != nil {
+		logs.Logger.Errorf("validateLowercaseOrNumeric err:%v ", err)
+		return false
+	}
+	return bool
 }

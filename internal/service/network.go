@@ -28,7 +28,8 @@ const (
 	TargetTypeAccount
 	TargetTypeInstanceType
 
-	DefaultRegion = "cn-qingdao"
+	DefaultRegion       = "cn-qingdao"
+	DefaultRegionHuaWei = "cn-north-4"
 )
 
 var H *SimpleTaskHandler
@@ -101,7 +102,7 @@ func (s *SimpleTaskHandler) run() {
 				s.lock.Unlock()
 			case t = <-s.Tasks:
 			}
-			if t != nil && (t.VpcId != "" || t.AccountKey != "" && t.TargetType == TargetTypeAccount) {
+			if t != nil {
 				s.taskHandle(t)
 			}
 		}
@@ -139,6 +140,11 @@ func (s *SimpleTaskHandler) taskHandle(t *SimpleTask) {
 }
 
 func refreshInstanceType(t *SimpleTask) error {
+	err := SyncInstanceTypes(context.Background(), t.ProviderName)
+	if err != nil {
+		logs.Logger.Error("SyncInstanceTypes failed :%v", err)
+		return err
+	}
 	return RefreshCache()
 }
 
@@ -155,6 +161,7 @@ func refreshAccount(t *SimpleTask) error {
 	if err != nil {
 		return err
 	}
+
 	vpcs := updateOrCreateVpcs(ctx, regions, t)
 	updateOrCreateSwitch(ctx, vpcs, t)
 	groups := updateOrCreateSecurityGroups(ctx, vpcs, t)
@@ -345,31 +352,38 @@ func cloud2ModelRules(rules []cloud.SecurityGroupRule) []model.SecurityGroupRule
 }
 
 func refreshVpc(t *SimpleTask) error {
+	if t.VpcId == "" {
+		return nil
+	}
+
 	res, err := t.Provider.GetVPC(cloud.GetVpcRequest{
 		VpcId:    t.VpcId,
 		RegionId: t.RegionId,
 		VpcName:  t.VpcName,
 	})
 	if err != nil {
-		logs.Logger.Errorf("refreshVpc failed.task: [%v]", t)
-		return nil
+		return err
 	}
 	vpc := res.Vpc
 	return model.UpdateVpc(context.Background(), vpc.VpcId, vpc.CidrBlock, vpc.Status, vpc.SwitchIds)
 }
 
 func refreshSwitch(t *SimpleTask) error {
+	if t.SwitchId == "" {
+		return nil
+	}
+
 	res, err := t.Provider.GetSwitch(cloud.GetSwitchRequest{
 		SwitchId: t.SwitchId,
 	})
 	if err != nil {
-		return nil
+		return err
 	}
 	vswitch := res.Switch
 	return model.UpdateSwitch(context.Background(),
 		vswitch.AvailableIpAddressCount, vswitch.IsDefault,
 		vswitch.VpcId, vswitch.SwitchId, vswitch.Name,
-		vswitch.VStatus, vswitch.CidrBlock)
+		vswitch.VStatus, vswitch.CidrBlock, vswitch.GatewayIp)
 }
 
 const (
@@ -626,6 +640,7 @@ type CreateSwitchRequest struct {
 	ZoneId     string
 	VpcId      string
 	CidrBlock  string
+	GatewayIp  string
 }
 
 func CreateSwitch(ctx context.Context, req CreateSwitchRequest) (switchId string, err error) {
@@ -664,8 +679,10 @@ func CreateSwitch(ctx context.Context, req CreateSwitchRequest) (switchId string
 		CidrBlock:   req.CidrBlock,
 		VSwitchName: req.SwitchName,
 		VpcId:       vpcId,
+		GatewayIp:   req.GatewayIp,
 	})
 	if err != nil {
+		logs.Logger.Errorf("CreateSwitch failed, %s", err.Error())
 		return "", errs.ErrCreateSwitchFailed
 	}
 
@@ -680,6 +697,7 @@ func CreateSwitch(ctx context.Context, req CreateSwitchRequest) (switchId string
 		ZoneId:    req.ZoneId,
 		Name:      req.SwitchName,
 		CidrBlock: req.CidrBlock,
+		GatewayIp: req.GatewayIp,
 		IsDel:     0,
 	})
 	if err != nil {
@@ -688,6 +706,7 @@ func CreateSwitch(ctx context.Context, req CreateSwitchRequest) (switchId string
 	}
 	H.SubmitTask(&SimpleTask{
 		VpcId:      req.VpcId,
+		SwitchId:   res.SwitchId,
 		RegionId:   vpc.RegionId,
 		Provider:   p,
 		TargetType: TargetTypeSwitch,
@@ -820,6 +839,7 @@ func CreateSecurityGroup(ctx context.Context, req CreateSecurityGroupRequest) (s
 		SecurityGroupType: req.SecurityGroupType,
 	})
 	if err != nil {
+		logs.Logger.Errorf("CreateSecurityGroup failed, %s", err.Error())
 		return "", errs.ErrCreateSecurityGroupFailed
 	}
 	now := time.Now()
@@ -917,7 +937,8 @@ type AddSecurityGroupRuleRequest struct {
 
 type GroupRule struct {
 	Protocol     string `json:"protocol"`
-	PortRange    string `json:"port_range"`
+	PortFrom     int    `json:"port_from"`
+	PortTo       int    `json:"port_to"`
 	Direction    string `json:"direction"`
 	GroupId      string `json:"group_id"`
 	CidrIp       string `json:"cidr_ip"`
@@ -961,7 +982,8 @@ func AddSecurityGroupRule(ctx context.Context, req AddSecurityGroupRuleRequest) 
 			VpcId:           vpcId,
 			SecurityGroupId: groupIdStruct.SecurityGroupId,
 			IpProtocol:      rule.Protocol,
-			PortRange:       rule.PortRange,
+			PortFrom:        rule.PortFrom,
+			PortTo:          rule.PortTo,
 			GroupId:         rule.GroupId,
 			CidrIp:          rule.CidrIp,
 			PrefixListId:    rule.PrefixListId,
@@ -971,8 +993,11 @@ func AddSecurityGroupRule(ctx context.Context, req AddSecurityGroupRuleRequest) 
 			err = p.AddIngressSecurityGroupRule(addRuleReq)
 		case DirectionOut:
 			err = p.AddEgressSecurityGroupRule(addRuleReq)
+		default:
+			err = fmt.Errorf("invalid direction %s", rule.Direction)
 		}
 		if err != nil {
+			logs.Logger.Errorf("addSecurityGroupRule failed, %s", err.Error())
 			continue
 		}
 		now := time.Now()
@@ -983,7 +1008,7 @@ func AddSecurityGroupRule(ctx context.Context, req AddSecurityGroupRuleRequest) 
 			},
 			VpcId:           vpcId,
 			SecurityGroupId: groupIdStruct.SecurityGroupId,
-			PortRange:       rule.PortRange,
+			PortRange:       fmt.Sprintf("%d-%d", rule.PortFrom, rule.PortTo),
 			Protocol:        rule.Protocol,
 			Direction:       rule.Direction,
 			GroupId:         rule.GroupId,
@@ -1007,7 +1032,8 @@ type GetRegionsRequest struct {
 
 func GetRegions(ctx context.Context, req GetRegionsRequest) ([]cloud.Region, error) {
 	ak := getFirstAk(req.Account, req.Provider)
-	p, err := getProvider(req.Provider, ak, DefaultRegion)
+	regionId := getDefaultRegion(req.Provider)
+	p, err := getProvider(req.Provider, ak, regionId)
 	if err != nil {
 		return nil, err
 	}
@@ -1034,6 +1060,7 @@ func GetZones(ctx context.Context, req GetZonesRequest) ([]cloud.Zone, error) {
 		RegionId: req.RegionId,
 	})
 	if err != nil {
+		logs.Logger.Errorf("GetZones failed, %s", err.Error())
 		return nil, errs.ErrGetZonesFailed
 	}
 	return zones.Zones, nil
@@ -1046,4 +1073,15 @@ func getFirstAk(account *types.OrgKeys, provider string) string {
 		}
 	}
 	return ""
+}
+
+func getDefaultRegion(provider string) string {
+	regionId := ""
+	switch provider {
+	case cloud.AlibabaCloud:
+		regionId = DefaultRegion
+	case cloud.HuaweiCloud:
+		regionId = DefaultRegionHuaWei
+	}
+	return regionId
 }

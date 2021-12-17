@@ -109,6 +109,7 @@ type AKSKData struct {
 	AccountKey           string `json:"account_key"`
 	AccountSecretEncrypt string `json:"account_secret_encrypt"`
 	Provider             string `json:"provider"`
+	Salt                 string `json:"salt"`
 }
 
 //GetAKSKResponse 获得AKSKresponse
@@ -123,6 +124,7 @@ type BridgxUnusedCluster struct {
 	ClusterName string   `json:"cluster_name"`
 	CloudType   string   `json:"cloud_type"`
 	Nodes       []string `json:"nodes"`
+	Total       int      `json:"total"`
 }
 
 //ListUnusedBridgxClusterResponse 未被占用集群list相应体

@@ -8,9 +8,11 @@ import (
 )
 
 type GetImagesRequest struct {
-	Account  *types.OrgKeys
-	Provider string
-	RegionId string
+	Account   *types.OrgKeys
+	Provider  string
+	RegionId  string
+	InsType   string
+	ImageType string
 }
 
 func GetImages(ctx context.Context, req GetImagesRequest) ([]cloud.Image, error) {
@@ -19,7 +21,11 @@ func GetImages(ctx context.Context, req GetImagesRequest) ([]cloud.Image, error)
 	if err != nil {
 		return []cloud.Image{}, err
 	}
-	imagesRes, err := p.DescribeImages(cloud.DescribeImagesRequest{RegionId: req.RegionId})
+	imagesRes, err := p.DescribeImages(cloud.DescribeImagesRequest{
+		RegionId:  req.RegionId,
+		InsType:   req.InsType,
+		ImageType: req.ImageType,
+	})
 	if err != nil {
 		return []cloud.Image{}, err
 	}

@@ -23,7 +23,7 @@ func CreateCloudAccount(ctx *gin.Context) {
 		response.MkResponse(ctx, http.StatusBadRequest, response.ParamInvalid, nil)
 		return
 	}
-	validErr := service.CheckAccountValid(req.AccountKey, req.AccountSecret)
+	validErr := service.CheckAccountValid(req.AccountKey, req.AccountSecret, req.Provider)
 	if validErr != nil {
 		response.MkResponse(ctx, http.StatusBadRequest, validErr.Error(), nil)
 		return
@@ -118,11 +118,12 @@ func GetAccountInfo(ctx *gin.Context) {
 		response.MkResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
-	resp, err := helper.ConvertToEncryptAccountInfo(account)
-	if err != nil {
-		response.MkResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
-		return
-	}
-	response.MkResponse(ctx, http.StatusOK, response.Success, resp)
+	response.MkResponse(ctx, http.StatusOK, response.Success, &response.EncryptCloudAccountInfo{
+		AccountName:          account.AccountName,
+		AccountKey:           account.AccountKey,
+		AccountSecretEncrypt: account.EncryptedAccountSecret,
+		Provider:             account.Provider,
+		Salt:                 account.Salt,
+	})
 	return
 }

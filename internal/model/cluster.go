@@ -27,6 +27,7 @@ type Cluster struct {
 	Password string
 
 	//Advanced Config
+	ImageConfig   string
 	NetworkConfig string
 	StorageConfig string
 	ChargeConfig  string

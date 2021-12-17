@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"runtime/debug"
 	"strconv"
 	"sync"
@@ -11,13 +12,13 @@ import (
 	"github.com/Rican7/retry"
 	"github.com/Rican7/retry/backoff"
 	"github.com/Rican7/retry/strategy"
-
 	"github.com/galaxy-future/BridgX/internal/constants"
 	"github.com/galaxy-future/BridgX/internal/logs"
 	"github.com/galaxy-future/BridgX/internal/model"
 	"github.com/galaxy-future/BridgX/internal/types"
 	"github.com/galaxy-future/BridgX/pkg/cloud"
 	"github.com/galaxy-future/BridgX/pkg/cloud/alibaba"
+	"github.com/galaxy-future/BridgX/pkg/cloud/huawei"
 )
 
 var clientMap sync.Map
@@ -47,6 +48,7 @@ func ExpandAndRepair(c *types.ClusterInfo, num int, taskId int64) ([]string, err
 		needExpandNum -= len(ids)
 	}
 	if len(expandInstanceIds) != num {
+		logs.Logger.Infof("len(expandInstanceIds) %d, num %d", len(expandInstanceIds), num)
 		_ = RepairCluster(c, taskId, expandInstanceIds)
 	}
 	return expandInstanceIds, err
@@ -127,7 +129,7 @@ func Expand(clusterInfo *types.ClusterInfo, tags []cloud.Tag, num int) (instance
 	cur := num
 	provider, err := getProvider(clusterInfo.Provider, clusterInfo.AccountKey, clusterInfo.RegionId)
 	if err != nil {
-		return
+		return nil, err
 	}
 	params, err := generateParams(clusterInfo, tags)
 	for ; cur > 0; cur -= constants.BatchMax {
@@ -137,6 +139,7 @@ func Expand(clusterInfo *types.ClusterInfo, tags []cloud.Tag, num int) (instance
 				if bErr := recover(); bErr != nil {
 					logs.Logger.Errorf("[cloud.Expand] recover error. error: %v", bErr)
 					logs.Logger.Errorf("stacktrace from panic: \n" + string(debug.Stack()))
+					createdError <- fmt.Errorf("panic %v", bErr)
 				}
 			}()
 			batchInstanceIds := make([]string, 0)
@@ -164,7 +167,7 @@ func Expand(clusterInfo *types.ClusterInfo, tags []cloud.Tag, num int) (instance
 			err = cErr
 		}
 	}
-	return
+	return instanceIds, err
 }
 
 func GetInstanceByTag(c *types.ClusterInfo, tags []cloud.Tag) (instances []cloud.Instance, err error) {
@@ -177,12 +180,16 @@ func GetInstanceByTag(c *types.ClusterInfo, tags []cloud.Tag) (instances []cloud
 
 func generateParams(clusterInfo *types.ClusterInfo, tags []cloud.Tag) (params cloud.Params, err error) {
 	params.ImageId = clusterInfo.Image
+	if clusterInfo.ImageConfig.Id != "" {
+		params.ImageId = clusterInfo.ImageConfig.Id
+	}
 	params.Network = &cloud.Network{
 		VpcId:                   clusterInfo.NetworkConfig.Vpc,
 		SubnetId:                clusterInfo.NetworkConfig.SubnetId,
 		SecurityGroup:           clusterInfo.NetworkConfig.SecurityGroup,
 		InternetChargeType:      clusterInfo.NetworkConfig.InternetChargeType,
 		InternetMaxBandwidthOut: clusterInfo.NetworkConfig.InternetMaxBandwidthOut,
+		InternetIpType:          clusterInfo.NetworkConfig.InternetIpType,
 	}
 	params.InstanceType = clusterInfo.InstanceType
 	params.Password = clusterInfo.Password
@@ -207,30 +214,35 @@ func getBatch(num, eachMax int) int {
 }
 
 func getProvider(provider, ak, regionId string) (cloud.Provider, error) {
-	switch provider {
-	case alibaba.CloudName:
-		return getAlibabaCloudClient(ak, regionId)
-	default:
-		return nil, errors.New("unavailable provider")
-	}
-}
-
-func getAlibabaCloudClient(ak, region string) (cloud.Provider, error) {
-	key := ak + region
+	var client cloud.Provider
+	key := provider + ak + regionId
 	v, exist := clientMap.Load(key)
 	if exist {
-		cast, ok := v.(*alibaba.AlibabaCloud)
-		if ok {
-			return cast, nil
-		}
+		return v.(cloud.Provider), nil
 	}
-	sk := model.GetAccountSecretByAccountKey(ak)
+
+	ctx := context.Background()
+	sk, err := GetAccountSecretByAccountKey(ctx, ak)
+	if err != nil {
+		return nil, fmt.Errorf("found sk failed, %s", err.Error())
+	}
 	if sk == "" {
 		return nil, errors.New("no sk found")
 	}
-	client, err := alibaba.New(ak, sk, region)
+
+	switch provider {
+	case cloud.AlibabaCloud:
+		client, err = alibaba.New(ak, sk, regionId)
+	case cloud.HuaweiCloud:
+		client, err = huawei.New(ak, sk, regionId)
+	default:
+		return nil, errors.New("invalid provider")
+	}
+	if err != nil {
+		return nil, err
+	}
 	clientMap.Store(key, client)
-	return client, err
+	return client, nil
 }
 
 func Shrink(clusterInfo *types.ClusterInfo, instanceIds []string) error {

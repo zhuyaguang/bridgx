@@ -12,13 +12,14 @@ type ClusterInfo struct {
 	RegionId     string `json:"region_id" binding:"required"`
 	ZoneId       string `json:"zone_id" binding:"required"`
 	InstanceType string `json:"instance_type" binding:"required"`
-	Image        string `json:"image" binding:"required"`
+	Image        string `json:"image"`
 	Provider     string `json:"provider" binding:"required,mustIn=cloud"`
 	Username     string `json:"username"`
 	Password     string `json:"password" binding:"required,min=8,max=30,charTypeGT3"`
 	AccountKey   string `json:"account_key" binding:"required"` //阿里云ak
 
 	//Advanced Config
+	ImageConfig   *ImageConfig   `json:"image_config"`
 	NetworkConfig *NetworkConfig `json:"network_config"`
 	StorageConfig *StorageConfig `json:"storage_config"`
 	ChargeConfig  *ChargeConfig  `json:"charge_config"`
@@ -30,12 +31,19 @@ type ClusterInfo struct {
 	InstanceMemory int `json:"instance_memory"` // 内存大小,单位 G
 }
 
+type ImageConfig struct {
+	Id   string `json:"id"`
+	Name string `json:"name"`
+	Type string `json:"type"`
+}
+
 type NetworkConfig struct {
 	Vpc                     string `json:"vpc" binding:"required"`
 	SubnetId                string `json:"subnet_id" binding:"required"`
 	SecurityGroup           string `json:"security_group" binding:"required"`
 	InternetChargeType      string `json:"internet_charge_type"`
 	InternetMaxBandwidthOut int    `json:"internet_max_bandwidth_out"`
+	InternetIpType          string `json:"internet_ip_type"`
 }
 
 type StorageConfig struct {

@@ -2,29 +2,16 @@ package helper
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/galaxy-future/BridgX/internal/constants"
 	gf_cluster "github.com/galaxy-future/BridgX/pkg/gf-cluster"
 	"github.com/gin-gonic/gin"
+	"github.com/spf13/cast"
 )
 
 func GetPagerParamFromQuery(c *gin.Context) (pageNumber int, pageSize int) {
-	pageNumberContent := c.Query("page_number")
-	PageSizeContent := c.Query("page_size")
-
-	if pageNumberContent != "" {
-		value, err := strconv.ParseInt(pageNumberContent, 10, 60)
-		if err == nil {
-			pageNumber = int(value)
-		}
-	}
-	if PageSizeContent != "" {
-		value, err := strconv.ParseInt(PageSizeContent, 10, 60)
-		if err == nil {
-			pageSize = int(value)
-		}
-	}
+	pageNumber = cast.ToInt(c.Query("page_number"))
+	pageSize = cast.ToInt(c.Query("page_size"))
 
 	if pageNumber < 1 {
 		pageNumber = 1

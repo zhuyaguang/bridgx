@@ -1,8 +1,6 @@
 package kubernetes
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"net/http"
 	"strconv"
 
@@ -14,13 +12,8 @@ import (
 //HandleRegisterKubernetes 注册集群，用于支持已有k8s集群注册
 //后期用于其他集群直接录入
 func HandleRegisterKubernetes(c *gin.Context) {
-	data, err := ioutil.ReadAll(c.Request.Body)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "read request body failed"})
-		return
-	}
 	var theCluster gf_cluster.KubernetesInfo
-	err = json.Unmarshal(data, &theCluster)
+	err := c.ShouldBindJSON(&theCluster)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(err.Error()))
 		return
@@ -66,14 +59,8 @@ func HandleGetKubernetes(c *gin.Context) {
 
 //HandleUpdateKubernetes 更新集群信息
 func HandleUpdateKubernetes(c *gin.Context) {
-
-	data, err := ioutil.ReadAll(c.Request.Body)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse("无效的请求信息"))
-		return
-	}
 	var cluster gf_cluster.KubernetesInfo
-	err = json.Unmarshal(data, &cluster)
+	err := c.ShouldBindJSON(&cluster)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(err.Error()))
 		return

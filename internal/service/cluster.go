@@ -172,9 +172,17 @@ func GetEnabledClusterNamesByAccounts(ctx context.Context, accountKeys []string)
 
 //ConvertToClusterInfo 将cluster，和tags转换为一个Cloud clusterInfo
 func ConvertToClusterInfo(m *model.Cluster, tags []model.ClusterTag) (*types.ClusterInfo, error) {
+	imageConfig := &types.ImageConfig{}
 	networkConfig := &types.NetworkConfig{}
 	storageConfig := &types.StorageConfig{}
 	chargeConfig := &types.ChargeConfig{}
+	if m.ImageConfig != "" {
+		err := jsoniter.UnmarshalFromString(m.ImageConfig, imageConfig)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	err := jsoniter.UnmarshalFromString(m.NetworkConfig, networkConfig)
 	if err != nil {
 		return nil, err
@@ -204,6 +212,7 @@ func ConvertToClusterInfo(m *model.Cluster, tags []model.ClusterTag) (*types.Clu
 		Username:       constants.DefaultUsername,
 		Password:       m.Password,
 		AccountKey:     m.AccountKey,
+		ImageConfig:    imageConfig,
 		NetworkConfig:  networkConfig,
 		StorageConfig:  storageConfig,
 		ChargeConfig:   chargeConfig,
@@ -369,7 +378,7 @@ func queryAndSaveExpandIPs(c *types.ClusterInfo, err error, expandInstanceIds []
 	for k := 0; k < constants.Interval; k++ {
 		expandInstances, err = GetInstances(c, expandInstanceIds)
 		logs.Logger.Infof("[queryAndSaveExpandIPs] expandInstances: %v, err: %v", expandInstances, err)
-		if err == nil && len(expandInstances) == len(expandInstanceIds) && judgeInstancesIsReady(expandInstances) {
+		if err == nil && len(expandInstances) == len(expandInstanceIds) && judgeInstancesIsReady(expandInstances, c.NetworkConfig) {
 			break
 		}
 		time.Sleep(constants.Delay * time.Second)
@@ -500,9 +509,17 @@ func publishShrinkConfig(clusterName string) error {
 	return err
 }
 
-func judgeInstancesIsReady(instances []cloud.Instance) bool {
+func judgeInstancesIsReady(instances []cloud.Instance, chargeConfig *types.NetworkConfig) bool {
+	var internetChargeType string
+	if chargeConfig != nil {
+		internetChargeType = chargeConfig.InternetChargeType
+	}
+	needCheckIpOuter := internetChargeType == cloud.InternetChargeTypePayByTraffic || internetChargeType == cloud.InternetChargeTypePayByBandwidth
 	for _, instance := range instances {
-		if instance.Status == cloud.Pending || instance.IpInner == "" {
+		if instance.Status == cloud.EcsBuilding || instance.IpInner == "" {
+			return false
+		}
+		if needCheckIpOuter && instance.IpOuter == "" {
 			return false
 		}
 	}

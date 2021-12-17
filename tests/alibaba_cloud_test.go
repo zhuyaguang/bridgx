@@ -11,18 +11,52 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetAlibabaCloudClient(t *testing.T) {
-	c, err := alibaba.New("a", "b", "cn-beijing")
-	t.Logf("err:%v\n", err)
-	region, err := c.GetRegions()
+func getAlibabaClient() (*alibaba.AlibabaCloud, error) {
+	c, err := alibaba.New("ak", "sk", "cn-beijing")
+	if err != nil {
+		return nil, err
+	}
 
-	t.Logf("err:%v\n", err)
-	t.Logf("regions:%v\n", region)
+	return c, nil
+}
 
+func TestDescribeAvailableResource(t *testing.T) {
+	cli, err := getAlibabaClient()
+	if err != nil {
+		t.Log(err.Error())
+		return
+	}
+
+	var res interface{}
+	var resStr []byte
+
+	res, err = cli.DescribeAvailableResource(cloud.DescribeAvailableResourceRequest{RegionId: "cn-beijing", ZoneId: ""})
+	if err != nil {
+		t.Log(err.Error())
+		return
+	}
+	resStr, _ = json.Marshal(res)
+	t.Log(string(resStr))
+
+	res, err = cli.DescribeInstanceTypes(cloud.DescribeInstanceTypesRequest{TypeName: []string{"ecs.g6.large"}})
+	if err != nil {
+		t.Log(err.Error())
+		return
+	}
+	resStr, _ = json.Marshal(res)
+	t.Log(string(resStr))
+
+	res, err = cli.DescribeImages(cloud.DescribeImagesRequest{RegionId: "cn-beijing", InsType: "ecs.g6.large"})
+	if err != nil {
+		t.Log(err.Error())
+		return
+	}
+	resStr, _ = json.Marshal(res)
+	t.Log(string(resStr))
 }
 
 func TestQueryOrders(t *testing.T) {
-	cloudCli, err := alibaba.New("a", "b", "cn-beijing")
+	cli, err := getAlibabaClient()
 	if err != nil {
 		t.Log(err.Error())
 		return
@@ -36,7 +70,7 @@ func TestQueryOrders(t *testing.T) {
 	pageNum := 1
 	pageSize := 100
 	for {
-		res, err := cloudCli.GetOrders(cloud.GetOrdersRequest{StartTime: startTime, EndTime: endTime,
+		res, err := cli.GetOrders(cloud.GetOrdersRequest{StartTime: startTime, EndTime: endTime,
 			PageNum: pageNum, PageSize: pageSize})
 		if err != nil {
 			t.Log(err.Error())
@@ -46,7 +80,7 @@ func TestQueryOrders(t *testing.T) {
 		t.Log("len:", len(res.Orders))
 		for _, row := range res.Orders {
 			cnt += 1
-			if cnt > alibaba.SubOrderNumPerMain {
+			if cnt > 3 {
 				t.Log("---------------")
 				break
 			}

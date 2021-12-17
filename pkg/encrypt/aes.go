@@ -5,11 +5,11 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/md5"
-	"encoding/hex"
+	"encoding/base64"
 	"errors"
 )
 
-const AesKeySalt = "bridgx"
+const AesKeyPepper = "bridgx"
 
 var (
 	ErrEncryptFailed = errors.New("encrypt failed")
@@ -23,7 +23,6 @@ func AESEncrypt(key, plaintext string) (text string, err error) {
 			return
 		}
 	}()
-	// 注意,这里的 key必须是 16, 24, or 32 bytes
 	keyB := ensureKeyLength(key)
 	block, err := aes.NewCipher(keyB)
 	if err != nil {
@@ -36,7 +35,7 @@ func AESEncrypt(key, plaintext string) (text string, err error) {
 	blockMode := cipher.NewCBCEncrypter(block, iv)
 	cryptText := make([]byte, len(origData))
 	blockMode.CryptBlocks(cryptText, origData)
-	return hex.EncodeToString(cryptText), nil
+	return base64.StdEncoding.EncodeToString(cryptText), nil
 }
 
 func AESDecrypt(key string, ct16 string) (text string, err error) {
@@ -46,7 +45,7 @@ func AESDecrypt(key string, ct16 string) (text string, err error) {
 			return
 		}
 	}()
-	ciphertext, err := hex.DecodeString(ct16)
+	ciphertext, err := base64.StdEncoding.DecodeString(ct16)
 	if err != nil {
 		return "", err
 	}

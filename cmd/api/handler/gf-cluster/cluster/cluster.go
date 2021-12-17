@@ -1,9 +1,7 @@
 package cluster
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"runtime/debug"
 	"sort"
@@ -12,12 +10,12 @@ import (
 	"time"
 
 	"github.com/galaxy-future/BridgX/cmd/api/helper"
-	"github.com/galaxy-future/BridgX/internal/clients"
 	"github.com/galaxy-future/BridgX/internal/gf-cluster/cluster"
 	cluster_builder "github.com/galaxy-future/BridgX/internal/gf-cluster/cluster-builder"
 	"github.com/galaxy-future/BridgX/internal/gf-cluster/instance"
 	"github.com/galaxy-future/BridgX/internal/logs"
 	"github.com/galaxy-future/BridgX/internal/model"
+	"github.com/galaxy-future/BridgX/internal/service"
 	"github.com/galaxy-future/BridgX/pkg/encrypt"
 	gf_cluster "github.com/galaxy-future/BridgX/pkg/gf-cluster"
 	"github.com/gin-gonic/gin"
@@ -27,14 +25,8 @@ import (
 //HandleCreateCluster 创建集群
 func HandleCreateCluster(c *gin.Context) {
 	//读取请求体
-	//TODO 封装统一方法读取请求体
-	data, err := ioutil.ReadAll(c.Request.Body)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse("无效的请求体"))
-		return
-	}
 	var buildRequest gf_cluster.BridgxClusterBuildRequest
-	err = json.Unmarshal(data, &buildRequest)
+	err := c.ShouldBindJSON(&buildRequest)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(fmt.Sprintf("无效的请求体, err : %s", err.Error())))
 		return
@@ -54,41 +46,27 @@ func HandleCreateCluster(c *gin.Context) {
 		return
 	}
 
-	token, err := helper.GetUserToken(c)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(err.Error()))
-		return
-	}
-
 	//3. 获取所选 Bridgx集群信息
-	clusterResponse, err := clients.GetClient().GetBriodgxClusterDetails(token, buildRequest.BridgxClusterName)
+	clusterInfo, err := service.GetClusterInfo(c, buildRequest.BridgxClusterName)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(fmt.Sprintf("获取集群信息时失败,错误信息： %s", err.Error())))
 		return
 	}
-	if clusterResponse.Code != http.StatusOK {
-		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(fmt.Sprintf("获取集群信息时失败,错误信息： %s", clusterResponse.Msg)))
-		return
-	}
 
 	//4. 获取Bridgx集群实例信息
-	instanceResponse, err := clients.GetClient().GetBridgxClusterAllInstances(token, buildRequest.BridgxClusterName)
+	instances, err := service.GetAllInstanceInCluster(c, claims, buildRequest.BridgxClusterName)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(fmt.Sprintf("获取集群实例时失败,错误信息： %s", err.Error())))
 		return
 	}
 
 	//5. 获取AKSK信息
-	akskResponse, err := clients.GetClient().GetAKSKClusterDetails(token, buildRequest.BridgxClusterName)
+	aksk, err := service.GetClusterAccount(c, buildRequest.BridgxClusterName)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(fmt.Sprintf("获取集群信息认证时失败,错误信息： %s", err.Error())))
 		return
 	}
-	if akskResponse.Code != http.StatusOK {
-		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(fmt.Sprintf("获取集群信息认证时失败,错误信息： %s", clusterResponse.Msg)))
-		return
-	}
-	descryptRes, err := encrypt.AESDecrypt(akskResponse.Data.AccountKey+"bridgx", akskResponse.Data.AccountSecretEncrypt)
+	descryptRes, err := service.DecryptAccount(encrypt.AesKeyPepper, aksk.Salt, aksk.AccountKey, aksk.EncryptedAccountSecret)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(fmt.Sprintf("解密集群信息认证时失败,错误信息： %s", err.Error())))
 		return
@@ -96,14 +74,14 @@ func HandleCreateCluster(c *gin.Context) {
 
 	//6. 集群搭建策略
 	if buildRequest.ClusterType == gf_cluster.KubernetesHA {
-		if len(instanceResponse) < gf_cluster.KubernetesHAMinMachineCount {
+		if len(instances) < gf_cluster.KubernetesHAMinMachineCount {
 			c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(fmt.Sprintf("高可用集群要求最少%d台物理机", gf_cluster.KubernetesHAMinMachineCount)))
 			return
 		}
 	}
 
 	//7. 机器相关校验
-	if len(instanceResponse) == 0 {
+	if len(instances) == 0 {
 		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse("集群机器数量为0"))
 		return
 	}
@@ -116,8 +94,8 @@ func HandleCreateCluster(c *gin.Context) {
 	clusterRecord := gf_cluster.KubernetesInfo{
 		Id:                0,
 		Name:              buildRequest.ClusterName,
-		Region:            clusterResponse.Data.RegionId,
-		CloudType:         clusterResponse.Data.Provider,
+		Region:            clusterInfo.RegionId,
+		CloudType:         clusterInfo.Provider,
 		Status:            gf_cluster.KubernetesStatusInitializing,
 		Config:            "",
 		BridgxClusterName: buildRequest.BridgxClusterName,
@@ -132,16 +110,11 @@ func HandleCreateCluster(c *gin.Context) {
 	}
 
 	//9. Bridgx 占用集群
-	useResponse, err := clients.GetClient().UpdateBridgxClusterUsingTag(token, buildRequest.BridgxClusterName, true)
+	err = service.TagBridgxClusterUsage(buildRequest.BridgxClusterName, gf_cluster.GalaxyfutureCloudUsage)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(fmt.Sprintf("请求占用集群时出错，失败信息: %s", err.Error())))
 		return
 	}
-	if useResponse.Code != http.StatusOK {
-		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(fmt.Sprintf("请求占用集群时出错，失败信息: %s", useResponse.Msg)))
-		return
-	}
-
 	//10 搭建集群
 	buildParams := gf_cluster.ClusterBuilderParams{
 		PodCidr:      buildRequest.PodCidr,
@@ -149,17 +122,17 @@ func HandleCreateCluster(c *gin.Context) {
 		MachineList:  nil,
 		Mode:         gf_cluster.String2BuildMode(buildRequest.ClusterType),
 		KubernetesId: clusterRecord.Id,
-		AccessKey:    akskResponse.Data.AccountKey,
+		AccessKey:    aksk.AccountKey,
 		AccessSecret: descryptRes,
 	}
 
-	for _, theInstance := range instanceResponse {
+	for _, theInstance := range instances {
 		buildParams.MachineList = append(buildParams.MachineList, gf_cluster.ClusterBuildMachine{
 			IP:       theInstance.IpInner,
 			Hostname: theInstance.InstanceId,
 			Username: "root",
-			Password: clusterResponse.Data.Password,
-			Labels:   map[string]string{gf_cluster.ClusterInstanceTypeKey: theInstance.InstanceType, gf_cluster.ClusterInstanceProviderLabelKey: theInstance.Provider, gf_cluster.ClusterInstanceClusterLabelKey: clusterResponse.Data.Name},
+			Password: clusterInfo.Password,
+			Labels:   map[string]string{gf_cluster.ClusterInstanceTypeKey: clusterInfo.InstanceType, gf_cluster.ClusterInstanceProviderLabelKey: clusterInfo.Provider, gf_cluster.ClusterInstanceClusterLabelKey: clusterInfo.Name},
 		})
 	}
 
@@ -167,7 +140,7 @@ func HandleCreateCluster(c *gin.Context) {
 		defer func() {
 			if r := recover(); r != nil {
 				logs.Logger.Errorf("HandleCreateCluster err:%v ", r)
-				logs.Logger.Errorf("HandleCreateCluster panic", zap.String("stack", string(debug.Stack())))
+				logs.Logger.Error("HandleCreateCluster panic", zap.String("stack", string(debug.Stack())))
 			}
 		}()
 		cluster_builder.CreateCluster(buildParams)
@@ -217,10 +190,9 @@ func HandleDeleteKubernetes(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse("未指定集群Id"))
 		return
 	}
-	//获得用户token，与bridgx交互
-	token, err := helper.GetUserToken(c)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(err.Error()))
+	claims := helper.GetUserClaims(c)
+	if claims == nil {
+		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse("校验身份出错"))
 		return
 	}
 	//获取当前集群信息
@@ -244,13 +216,9 @@ func HandleDeleteKubernetes(c *gin.Context) {
 	}
 
 	//释放Bridgx集群
-	useResponse, err := clients.GetClient().UpdateBridgxClusterUsingTag(token, theCluster.BridgxClusterName, false)
+	err = service.TagBridgxClusterUsage(theCluster.BridgxClusterName, gf_cluster.UnusedValue)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gf_cluster.NewFailedResponse(fmt.Sprintf("释放集群时出错，失败信息: %s", err.Error())))
-		return
-	}
-	if useResponse.Code != http.StatusOK {
-		c.JSON(http.StatusInternalServerError, gf_cluster.NewFailedResponse(fmt.Sprintf("释放集群时出错，失败信息: %s", useResponse.Msg)))
+		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(fmt.Sprintf("请求占用集群时出错，失败信息: %s", err.Error())))
 		return
 	}
 
@@ -372,5 +340,4 @@ func HandleListClusterPodsSummary(c *gin.Context) {
 		PageSize:   pageSize,
 		Total:      len(result),
 	}))
-
 }
