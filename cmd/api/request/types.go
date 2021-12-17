@@ -56,6 +56,7 @@ type CreateSwitchRequest struct {
 	RegionId   string `json:"region_id"`
 	VpcId      string `json:"vpc_id"`
 	CidrBlock  string `json:"cidr_block"`
+	GatewayIp  string `json:"gateway_ip"`
 	ZoneId     string `json:"zone_id"`
 }
 

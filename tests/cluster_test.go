@@ -12,7 +12,6 @@ import (
 	"github.com/galaxy-future/BridgX/internal/service"
 	"github.com/galaxy-future/BridgX/internal/types"
 	"github.com/galaxy-future/BridgX/pkg/cloud"
-	"github.com/galaxy-future/BridgX/pkg/cloud/alibaba"
 	"github.com/galaxy-future/BridgX/pkg/utils"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
@@ -31,9 +30,9 @@ func TestCreateClusterByApi(t *testing.T) {
 		//ZoneId:       "cn-beijing-h",
 		InstanceType: "ecs.g6.large",
 		Image:        "centos_8_4_uefi_x64_20G_alibase_20210611.vhd",
-		Provider:     alibaba.CloudName,
-		Password:     "ASDqwe123",
-		AccountKey:   "LTAI5tAwAMpXAQ78pePcRb6t",
+		Provider:     cloud.AlibabaCloud,
+		Password:     "xxx",
+		AccountKey:   "xxx",
 		NetworkConfig: &types.NetworkConfig{
 			Vpc:           "vpc-2zelmmlfd5c5duibc2xb2",
 			SubnetId:      "vsw-2zennaxawzq6sa2fdj8l5",
@@ -83,9 +82,9 @@ func TestExpandClusterUseMockCluster(t *testing.T) {
 		ZoneId:       "cn-beijing-h",
 		InstanceType: "ecs.s6-c1m1.small",
 		Image:        "centos_7_9_x64_20G_alibase_20210623.vhd",
-		Provider:     alibaba.CloudName,
-		Password:     "ASDqwe123",
-		AccountKey:   "LTAI5tAwAMpXAQ78pePcRb6t",
+		Provider:     cloud.AlibabaCloud,
+		Password:     "xxx",
+		AccountKey:   "xxx",
 		NetworkConfig: &types.NetworkConfig{
 			Vpc:           "vpc-2zelmmlfd5c5duibc2xb2",
 			SubnetId:      "vsw-2zennaxawzq6sa2fdj8l5",
@@ -110,8 +109,8 @@ func TestExpandClusterUseMockCluster(t *testing.T) {
 func TestGetInstance(t *testing.T) {
 	cluster := types.ClusterInfo{
 		RegionId:   "cn-beijing",
-		Provider:   alibaba.CloudName,
-		AccountKey: "LTAI5tAwAMpXAQ78pePcRb6t",
+		Provider:   cloud.AlibabaCloud,
+		AccountKey: "xxx",
 	}
 	res, err := service.GetInstances(&cluster, []string{"i-2ze5ysm1hx7o9q3mz218", "i-2ze5ysm1hx7o9q3mz219"})
 	t.Logf("infos: %v", res)
@@ -121,8 +120,8 @@ func TestGetInstance(t *testing.T) {
 func TestShrink(t *testing.T) {
 	cluster := types.ClusterInfo{
 		RegionId:   "cn-beijing",
-		Provider:   alibaba.CloudName,
-		AccountKey: "LTAI5tAwAMpXAQ78pePcRb6t",
+		Provider:   cloud.AlibabaCloud,
+		AccountKey: "xxx",
 	}
 	err := service.Shrink(&cluster, []string{"i-2ze5ysm1hx7o9q3mz218", "i-2ze5ysm1hx7o9q3mz219"})
 	t.Log("err: ", err)

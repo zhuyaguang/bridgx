@@ -272,6 +272,10 @@ func EditCluster(ctx *gin.Context) {
 }
 
 func convertToClusterModel(clusterInput *types.ClusterInfo) (*model.Cluster, error) {
+	ic := ""
+	if clusterInput.ImageConfig != nil {
+		ic, _ = jsoniter.MarshalToString(clusterInput.ImageConfig)
+	}
 	if clusterInput.NetworkConfig == nil {
 		return nil, errors.New("missing network config")
 	}
@@ -295,6 +299,7 @@ func convertToClusterModel(clusterInput *types.ClusterInfo) (*model.Cluster, err
 		Provider:     clusterInput.Provider,
 		AccountKey:   clusterInput.AccountKey,
 
+		ImageConfig:   ic,
 		NetworkConfig: nc,
 		StorageConfig: sc,
 		ChargeConfig:  cc,

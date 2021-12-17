@@ -23,7 +23,7 @@ func CreateCloudAccount(ctx *gin.Context) {
 		response.MkResponse(ctx, http.StatusBadRequest, response.ParamInvalid, nil)
 		return
 	}
-	validErr := service.CheckAccountValid(req.AccountKey, req.AccountSecret)
+	validErr := service.CheckAccountValid(req.AccountKey, req.AccountSecret, req.Provider)
 	if validErr != nil {
 		response.MkResponse(ctx, http.StatusBadRequest, validErr.Error(), nil)
 		return

@@ -12,7 +12,9 @@ import (
 	"github.com/galaxy-future/BridgX/internal/model"
 	"github.com/galaxy-future/BridgX/internal/types"
 	"github.com/galaxy-future/BridgX/pkg"
+	"github.com/galaxy-future/BridgX/pkg/cloud"
 	"github.com/galaxy-future/BridgX/pkg/cloud/alibaba"
+	"github.com/galaxy-future/BridgX/pkg/cloud/huawei"
 	"github.com/galaxy-future/BridgX/pkg/encrypt"
 )
 
@@ -104,8 +106,18 @@ func GetDefaultAccount(provider string) (*types.OrgKeys, error) {
 	return &account, err
 }
 
-func CheckAccountValid(ak, sk string) error {
-	cli, err := alibaba.New(ak, sk, DefaultRegion)
+func CheckAccountValid(ak, sk, provider string) error {
+	var err error
+	var cli cloud.Provider
+	switch provider {
+	case cloud.AlibabaCloud:
+		cli, err = alibaba.New(ak, sk, DefaultRegion)
+	case cloud.HuaweiCloud:
+		cli, err = huawei.New(ak, sk, DefaultRegionHuaWei)
+	default:
+		return errors.New("invalid provider")
+	}
+
 	if err != nil {
 		return err
 	}

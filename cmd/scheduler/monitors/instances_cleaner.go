@@ -41,12 +41,12 @@ func (cleaner *InstanceCleaner) Run() {
 
 		info, err := service.ConvertToClusterInfo(cluster, tags)
 		if err != nil {
-			return fmt.Errorf("failed to convert cluster to cluster info , %w", err)
+			return fmt.Errorf("failed to convert cluster to cluster info, %s, %w", cleaner.clusterName, err)
 		}
 		_, err = service.CleanClusterUnusedInstances(info)
 		return err
 	})
-	if err != concurrency.ErrLocked {
+	if err != nil && err != concurrency.ErrLocked {
 		logs.Logger.Errorf("failed to clean cluster unused instance err:%v", err)
 		return
 	}

@@ -65,8 +65,8 @@ docker-compose-build:
 	docker-compose build
 
 docker-tag:
-	docker tag bridgx_api galaxyfuture/bridgx-api:latest
-	docker tag bridgx_scheduler galaxyfuture/bridgx-scheduler:latest
+	docker tag bridgx_api:latest galaxyfuture/bridgx-api:latest
+	docker tag bridgx_scheduler:latest galaxyfuture/bridgx-scheduler:latest
 
 docker-push-hub:
 	docker push galaxyfuture/bridgx-api:latest

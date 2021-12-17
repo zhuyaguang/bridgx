@@ -106,6 +106,7 @@ func CreateSwitch(ctx *gin.Context) {
 		ZoneId:     req.ZoneId,
 		VpcId:      req.VpcId,
 		CidrBlock:  req.CidrBlock,
+		GatewayIp:  req.GatewayIp,
 	})
 	if err != nil {
 		response.MkResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
