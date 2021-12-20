@@ -47,9 +47,15 @@ func ExpandCustomInstanceGroup(instanceGroup *gf_cluster.InstanceGroup, count in
 			Name: pod.Name,
 			Ip:   pod.Status.PodIP,
 		})
+		// 3 Pod信息写入数据库
+		err = createPod(instanceGroup, pod)
+		if err != nil {
+			logs.Logger.Errorw("failed to create pod", zap.String("pod_name", name), zap.Error(err))
+			continue
+		}
 		logs.Logger.Infow("expand instance success", zap.String("instance_group_name", instanceGroup.Name), zap.String("instance_name", name))
 	}
-	// 3 更新实例组实例数
+	// 4 更新实例组实例数
 	err = model.UpdateInstanceGroupInstanceCountFromDB(count, instanceGroup.Id)
 	if err != nil {
 		return err
@@ -83,6 +89,11 @@ func ShrinkCustomInstanceGroup(instanceGroup *gf_cluster.InstanceGroup, count in
 			err := client.ClientSet.CoreV1().Pods("default").Delete(context.Background(), instance.Name, v1.DeleteOptions{})
 			if err != nil {
 				logs.Logger.Errorw("failed to shrink instance.", zap.String("instance_group_name", instanceGroup.Name), zap.String("instance_name", instance.Name), zap.Error(err))
+				return
+			}
+			err = deletePodByPodName(instance.Name)
+			if err != nil {
+				logs.Logger.Errorw("failed to delete pod.", zap.String("instance_group_name", instanceGroup.Name), zap.String("instance_name", instance.Name), zap.Error(err))
 				return
 			}
 			logs.Logger.Infow("shrink instance success", zap.String("instance_group_name", instanceGroup.Name), zap.String("instance_name", instance.Name))
@@ -127,9 +138,13 @@ func RestartInstance(instanceGroupId int64, name string) error {
 	}
 	go func() {
 		time.Sleep(time.Duration(2) * time.Second)
-		_, err = createInstance(client, instanceGroup, name)
+		pod, err := createInstance(client, instanceGroup, name)
 		if err != nil {
-			logs.Logger.Errorw("server run failed ", zap.Error(err))
+			logs.Logger.Errorw("failed to restart instance ", zap.Error(err))
+		}
+		err = updatePodByPodName(pod)
+		if err != nil {
+			logs.Logger.Errorw("failed to update pod by pod_name", zap.Error(err))
 		}
 	}()
 	return nil
@@ -142,6 +157,10 @@ func DeleteInstance(instanceGroup *gf_cluster.InstanceGroup, name string) error 
 		return err
 	}
 	err = client.ClientSet.CoreV1().Pods("default").Delete(context.Background(), name, v1.DeleteOptions{})
+	if err != nil {
+		return err
+	}
+	err = deletePodByPodName(name)
 	if err != nil {
 		return err
 	}

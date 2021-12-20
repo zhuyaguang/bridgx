@@ -45,7 +45,7 @@ func RegisterHandler(route *gin.RouterGroup) {
 		instanceRoute := route.Group("/instance")
 		instanceRoute.POST("/restart", instance.HandleRestartInstance)
 		instanceRoute.GET("/:instanceGroup", instance.HandleListInstance)
-		instanceRoute.GET("/self", instance.HandleListMyInstance)
+		instanceRoute.GET("/self", instance.HandleListMyInstanceFromDB)
 		instanceRoute.POST("/delete", instance.HandleDeleteInstance)
 		instanceRoute.GET("/form", instance.HandleListInstanceForm)
 	}
@@ -58,8 +58,8 @@ func RegisterHandler(route *gin.RouterGroup) {
 		clusterRoute.GET("/summary", cluster.HandleListClusterSummary)
 		clusterRoute.GET("/summary/:clusterId", cluster.HandleGetClusterSummary)
 		clusterRoute.GET("/nodes/:clusterId", cluster.HandleListNodesSummary)
-		clusterRoute.GET("/pods/:clusterId", cluster.HandleListClusterPodsSummary)
 		clusterRoute.GET("/logs/:clusterId", cluster.HandleListClusterLogsSummary)
+		clusterRoute.GET("/pods/:clusterId", cluster.HandleListClusterPodsSummaryFromDB)
 	}
 
 }

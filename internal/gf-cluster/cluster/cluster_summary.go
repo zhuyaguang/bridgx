@@ -151,12 +151,12 @@ func createInstanceLabels() map[string]string {
 	}
 }
 
-func cpuQuantity2Float(cpu resource.Quantity) float64 {
+func CpuQuantity2Float(cpu resource.Quantity) float64 {
 	memoryContent := cpu.ScaledValue(resource.Milli)
 	return float64(memoryContent) / 1000.0
 }
 
-func storageQuantity2Float(mem resource.Quantity) float64 {
+func StorageQuantity2Float(mem resource.Quantity) float64 {
 	memoryContent := mem.ScaledValue(resource.Mega)
 	return float64(memoryContent) / 1024.0
 }

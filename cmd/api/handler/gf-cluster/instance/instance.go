@@ -102,7 +102,7 @@ func HandleListInstance(c *gin.Context) {
 	c.JSON(http.StatusOK, gf_cluster.NewInstanceListResponse(items))
 }
 
-//HandleListMyInstance 列出我的实例
+// Deprecated: Use HandleListMyInstanceFromDB instead.
 func HandleListMyInstance(c *gin.Context) {
 	nodeIp := c.Query("node_ip")
 	podIp := c.Query("pod_ip")
@@ -147,6 +147,30 @@ func HandleListMyInstance(c *gin.Context) {
 		PageNumber: pageNumber,
 		PageSize:   pageSize,
 		Total:      len(result),
+	}))
+}
+
+// HandleListMyInstanceFromDB 分页查询当前用户实例列表
+func HandleListMyInstanceFromDB(c *gin.Context) {
+	nodeIp := c.Query("node_ip")
+	podIp := c.Query("pod_ip")
+	instanceGroupName := c.Query("instance_group_name")
+	claims := helper.GetUserClaims(c)
+	if claims == nil {
+		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse("校验身份出错"))
+		return
+	}
+	pageNumber, pageSize := helper.GetPagerParamFromQuery(c)
+
+	result, total, err := instance.ListPodByCreatedUserId(podIp, nodeIp, instanceGroupName, claims.UserId, pageNumber, pageSize)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, gf_cluster.NewListClusterPodsDetailResponse(result, gf_cluster.Pager{
+		PageNumber: pageNumber,
+		PageSize:   pageSize,
+		Total:      total,
 	}))
 }
 

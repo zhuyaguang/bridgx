@@ -83,9 +83,9 @@ func getClusterNodeInfo(info *gf_cluster.KubernetesInfo) ([]*gf_cluster.ClusterN
 		//	nodeStorage.Sub(*kubeUsed.Storage)
 		//}
 
-		cpuSize := cpuQuantity2Float(nodeCpu)
-		memorySize := storageQuantity2Float(nodeMemory)
-		storageSize := storageQuantity2Float(nodeStorage)
+		cpuSize := CpuQuantity2Float(nodeCpu)
+		memorySize := StorageQuantity2Float(nodeMemory)
+		storageSize := StorageQuantity2Float(nodeStorage)
 
 		role, exists := node.Labels[gf_cluster.KubernetesRoleKey]
 		if !exists {

@@ -60,8 +60,3 @@ const (
 	OptTypeExpand = "EXPAND"
 	OptTypeShrink = "SHRINK"
 )
-
-const (
-	ExpandAndShrinkDefaultUser   = "bridgx"
-	ExpandAndShrinkDefaultUserId = 0
-)

@@ -10,11 +10,12 @@ type Pod struct {
 	AllocatedCpuCores float64 `json:"allocated_cpu_cores"`
 	AllocatedMemoryGi float64 `json:"allocated_memory_gi"`
 	AllocatedDiskGi   float64 `json:"allocated_disk_gi"`
-	GroupName         string  `json:"group_name"`
+	InstanceGroupName string  `json:"instance_group_name"`
 	RunningTime       string  `json:"running_time"`
 	Status            string  `json:"status"`
-	GroupId           int64   `json:"group_id"`
+	InstanceGroupId   int64   `json:"instance_group_id"`
 	StartTime         int64   `json:"start_time"`
+	CreatedUserId     int64   `json:"created_user_id"`
 }
 
 func (Pod) TableName() string {

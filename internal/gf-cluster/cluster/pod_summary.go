@@ -22,7 +22,7 @@ func ListClusterPodsSummary(clusterId int64) (gf_cluster.ClusterPodsSummaryArray
 	if err != nil {
 		return nil, err
 	}
-	pods, err := getClusterPodInfo(cluster)
+	pods, _, err := model.ListPodByClusterIdFromDB("", "", cluster.Id, 2, -1)
 	if err != nil {
 		return nil, err
 	}
@@ -30,8 +30,7 @@ func ListClusterPodsSummary(clusterId int64) (gf_cluster.ClusterPodsSummaryArray
 
 }
 
-//getClusterPodInfo 获取集群pod信息，当前使用clientset直接查询kubernetes集群，有性能压力
-//TODO 使用client-to watcher/informer机制，缓存对象，防止频繁获取信息对与k8s集群的压力
+// Deprecated: getClusterPodInfo 获取集群pod信息，当前使用clientset直接查询kubernetes集群，有性能压力
 func getClusterPodInfo(info *gf_cluster.KubernetesInfo) ([]*gf_cluster.PodSummary, error) {
 
 	if info.Status != gf_cluster.KubernetesStatusRunning {
@@ -78,17 +77,17 @@ func getClusterPodInfo(info *gf_cluster.KubernetesInfo) ([]*gf_cluster.PodSummar
 		}
 		groupId, err := strconv.ParseInt(groupIdStr, 10, 64)
 		if err != nil {
-			logs.Logger.Error("获取GroupId失败", zap.String("value", cpuResource.String()), zap.Error(err))
+			logs.Logger.Error("获取GroupId失败", zap.String("value", groupIdStr), zap.Error(err))
 		}
-		cpuUsed := cpuQuantity2Float(*cpuResource)
-		memoryUsed := storageQuantity2Float(*memoryResource)
-		storageUSed := storageQuantity2Float(*storageResource)
+		cpuUsed := CpuQuantity2Float(*cpuResource)
+		memoryUsed := StorageQuantity2Float(*memoryResource)
+		storageUSed := StorageQuantity2Float(*storageResource)
 
 		status := pod.Status.Phase
 
 		runningTime := ""
 		if pod.Status.StartTime != nil {
-			runningTime = formatHumanReadableDuration(time.Now().Sub(pod.Status.StartTime.Time))
+			runningTime = FormatHumanReadableDuration(time.Now().Sub(pod.Status.StartTime.Time))
 		}
 		var startTime int64
 		if pod.Status.StartTime != nil {
@@ -114,7 +113,7 @@ func getClusterPodInfo(info *gf_cluster.KubernetesInfo) ([]*gf_cluster.PodSummar
 
 }
 
-func formatHumanReadableDuration(duration time.Duration) string {
+func FormatHumanReadableDuration(duration time.Duration) string {
 	duration = duration.Round(time.Minute)
 	d := duration / (time.Hour * 24)
 	duration -= d * time.Hour * 24
