@@ -4,7 +4,11 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"sync"
 	"time"
+
+	"github.com/galaxy-future/BridgX/cmd/api/response"
+	"github.com/galaxy-future/BridgX/pkg/utils"
 
 	"github.com/Rican7/retry"
 	"github.com/Rican7/retry/backoff"
@@ -524,4 +528,37 @@ func judgeInstancesIsReady(instances []cloud.Instance, chargeConfig *types.Netwo
 		}
 	}
 	return true
+}
+
+// CheckMachine 检测机器连通性
+func CheckMachine(reqMachines []model.MachineRequest) response.CheckMachineResponse {
+	resMachines := make([]*model.MachineResponse, 0)
+	ch := make(chan *model.MachineResponse, len(reqMachines))
+	var wg sync.WaitGroup
+	for _, req := range reqMachines {
+		wg.Add(1)
+		go func(req model.MachineRequest) {
+			defer wg.Done()
+			isPass := utils.SshCheck(req.Ip, req.Username, req.Password)
+			machine := &model.MachineResponse{
+				Ip:     req.Ip,
+				IsPass: isPass,
+			}
+			ch <- machine
+		}(req)
+	}
+	wg.Wait()
+	isAllPass := true
+	for i := 0; i < len(reqMachines); i++ {
+		machine := <-ch
+		if !machine.IsPass {
+			isAllPass = false
+		}
+		resMachines = append(resMachines, machine)
+	}
+	res := response.CheckMachineResponse{
+		IsAllPass:   isAllPass,
+		MachineList: resMachines,
+	}
+	return res
 }

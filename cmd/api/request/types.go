@@ -1,6 +1,7 @@
 package request
 
 import (
+	"github.com/galaxy-future/BridgX/internal/model"
 	"github.com/galaxy-future/BridgX/internal/service"
 )
 
@@ -169,4 +170,8 @@ type ListClusterByTagsRequest struct {
 
 type SyncInstanceExpireTimeRequest struct {
 	ClusterName string `json:"cluster_name" binding:"required"`
+}
+
+type CheckMachineRequest struct {
+	MachineList []model.MachineRequest `json:"machine_list" binding:"min=1"`
 }
