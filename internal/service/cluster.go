@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 	"errors"
+	"go.uber.org/zap"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
@@ -537,7 +539,13 @@ func CheckMachine(reqMachines []model.MachineRequest) response.CheckMachineRespo
 	for _, req := range reqMachines {
 		wg.Add(1)
 		go func(req model.MachineRequest) {
-			defer wg.Done()
+			defer func() {
+				if r := recover(); r != nil {
+					logs.Logger.Errorf("CheckMachine err:%v ", r)
+					logs.Logger.Errorw("CheckMachine panic", zap.String("stack", string(debug.Stack())))
+				}
+				wg.Done()
+			}()
 			isPass := utils.SshCheck(req.Ip, req.Username, req.Password)
 			machine := &model.MachineResponse{
 				Ip:     req.Ip,
