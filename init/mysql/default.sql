@@ -403,8 +403,7 @@ CREATE TABLE `operation_log` (
     `create_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
     `update_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='操作日志'
-
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='操作日志';
 
 -- init super admin info
 INSERT INTO `user`
