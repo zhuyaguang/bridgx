@@ -67,6 +67,22 @@ BridgX是业界领先的基于全链路Serverless技术的云原生基础架构�
 #### 5、前端界面操作
 如果需要进行前端操作，请安装[ComandX](https://github.com/galaxy-future/comandx/blob/main/README.md)
 
+视频教程
+------
+[BridgX安装](https://www.bilibili.com/video/BV1n34y167o8/) <br>
+[添加云账户](https://www.bilibili.com/video/BV1Jr4y1S7q4/)  <br>
+[创建集群](https://www.bilibili.com/video/BV1Wb4y1v7jw/)   <br>
+[手动扩缩容](https://www.bilibili.com/video/BV1bm4y197QD/)  <br>
+
+
+技术文章
+------
+[《云原生技术如何每分钟级迁移TB级数据》](https://zhuanlan.zhihu.com/p/442746588)<br>
+[《企业迁移到K8s的最佳实践》](https://zhuanlan.zhihu.com/p/445131885) <br>
+[《来自一线大厂的十大云原生成本优化手段》](https://zhuanlan.zhihu.com/p/448405809)<br>
+
+
+
 行为准则
 ------
 [贡献者公约](https://github.com/galaxy-future/bridgx/blob/master/CODE_OF_CONDUCT)
