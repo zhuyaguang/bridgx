@@ -491,3 +491,15 @@ func ShrinkAllInstances(ctx *gin.Context) {
 	response.MkResponse(ctx, http.StatusOK, response.Success, taskId)
 	return
 }
+
+func CheckMachine(ctx *gin.Context) {
+	req := request.CheckMachineRequest{}
+	err := ctx.Bind(&req)
+	if err != nil {
+		response.MkResponse(ctx, http.StatusBadRequest, err.Error(), nil)
+		return
+	}
+	res := service.CheckMachine(req.MachineList)
+	response.MkResponse(ctx, http.StatusOK, response.Success, res)
+	return
+}

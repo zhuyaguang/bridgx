@@ -3,12 +3,16 @@ package service
 import (
 	"context"
 	"errors"
+	"go.uber.org/zap"
+	"runtime/debug"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Rican7/retry"
 	"github.com/Rican7/retry/backoff"
 	"github.com/Rican7/retry/strategy"
+	"github.com/galaxy-future/BridgX/cmd/api/response"
 	"github.com/galaxy-future/BridgX/config"
 	"github.com/galaxy-future/BridgX/internal/bcc"
 	"github.com/galaxy-future/BridgX/internal/clients"
@@ -17,6 +21,7 @@ import (
 	"github.com/galaxy-future/BridgX/internal/model"
 	"github.com/galaxy-future/BridgX/internal/types"
 	"github.com/galaxy-future/BridgX/pkg/cloud"
+	"github.com/galaxy-future/BridgX/pkg/utils"
 	jsoniter "github.com/json-iterator/go"
 )
 
@@ -524,4 +529,43 @@ func judgeInstancesIsReady(instances []cloud.Instance, chargeConfig *types.Netwo
 		}
 	}
 	return true
+}
+
+// CheckMachine 检测机器连通性
+func CheckMachine(reqMachines []model.MachineRequest) response.CheckMachineResponse {
+	resMachines := make([]*model.MachineResponse, 0)
+	ch := make(chan *model.MachineResponse, len(reqMachines))
+	var wg sync.WaitGroup
+	for _, req := range reqMachines {
+		wg.Add(1)
+		go func(req model.MachineRequest) {
+			defer func() {
+				if r := recover(); r != nil {
+					logs.Logger.Errorf("CheckMachine err:%v ", r)
+					logs.Logger.Errorw("CheckMachine panic", zap.String("stack", string(debug.Stack())))
+				}
+				wg.Done()
+			}()
+			isPass := utils.SshCheck(req.Ip, req.Username, req.Password)
+			machine := &model.MachineResponse{
+				Ip:     req.Ip,
+				IsPass: isPass,
+			}
+			ch <- machine
+		}(req)
+	}
+	wg.Wait()
+	isAllPass := true
+	for i := 0; i < len(reqMachines); i++ {
+		machine := <-ch
+		if !machine.IsPass {
+			isAllPass = false
+		}
+		resMachines = append(resMachines, machine)
+	}
+	res := response.CheckMachineResponse{
+		IsAllPass:   isAllPass,
+		MachineList: resMachines,
+	}
+	return res
 }

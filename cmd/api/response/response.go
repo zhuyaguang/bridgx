@@ -1,5 +1,7 @@
 package response
 
+import "github.com/galaxy-future/BridgX/internal/model"
+
 type ClusterCountResponse struct {
 	ClusterNum int64 `json:"cluster_num"`
 }
@@ -231,4 +233,9 @@ type ClusterThumbWithTag struct {
 	Tags        map[string]string `json:"tags"`
 	CreateAt    string            `json:"create_at"`
 	CreateBy    string            `json:"create_by"`
+}
+
+type CheckMachineResponse struct {
+	IsAllPass   bool                     `json:"is_all_pass"`
+	MachineList []*model.MachineResponse `json:"machine_list"`
 }
