@@ -102,6 +102,8 @@ func HandleCreateCluster(c *gin.Context) {
 		Type:              buildRequest.ClusterType,
 		CreatedUser:       claims.Name,
 		CreatedTime:       time.Now().Unix(),
+		PodCidr:           buildRequest.PodCidr,
+		ServiceCidr:       buildRequest.ServiceCidr,
 	}
 	err = model.RegisterKubernetesCluster(&clusterRecord)
 	if err != nil {
@@ -340,4 +342,15 @@ func HandleListClusterPodsSummary(c *gin.Context) {
 		PageSize:   pageSize,
 		Total:      len(result),
 	}))
+}
+
+// HandleGetClusterConfigInfoByName 查询单个集群配置信息
+func HandleGetClusterConfigInfoByName(c *gin.Context) {
+	clusterName := c.Query("cluster_name")
+	cluster, err := cluster.GetClusterConfigInfo(clusterName)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gf_cluster.NewFailedResponse(err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, gf_cluster.NewKubernetesInfoGetResponse(cluster))
 }
