@@ -24,21 +24,22 @@ func Init() error {
 				LockerClient: locker,
 			},
 		},
-		// 自动监控当前实例数量与预期实例数量是否相等并执行扩缩容，待启用
-		{
-			Interval: constants.DefaultClusterMonitorInterval,
-			Monitor: &monitors.ClusterMonitor{
-				LockerClient: locker,
-			},
-		},
+		// 自动监控云厂商异常实例并执行Clean操作，待启用
+		//{
+		//	Interval: constants.DefaultClusterMonitorInterval,
+		//	Monitor: &monitors.ClusterMonitor{
+		//		LockerClient: locker,
+		//	},
+		//},
 		{
 			Interval: constants.DefaultKillExpireRunningTaskInterval,
 			Monitor:  &monitors.TaskKiller{},
 		},
-		{
-			Interval: constants.DefaultQueryOrderInterval,
-			Monitor:  &monitors.QueryOrderJobs{},
-		}}
+		//{
+		//	Interval: constants.DefaultQueryOrderInterval,
+		//	Monitor:  &monitors.QueryOrderJobs{},
+		//}
+	}
 	return nil
 }
 
