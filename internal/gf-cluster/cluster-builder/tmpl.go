@@ -260,7 +260,6 @@ kubeadm init \
         --service-dns-domain cluster.local \
         --upload-certs
 `
-
 var initConfig = `__EOF__
 #!/usr/bin/env bash
 sudo modprobe br_netfilter
@@ -271,6 +270,8 @@ cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
 net.bridge.bridge-nf-call-ip6tables = 1
 net.bridge.bridge-nf-call-iptables = 1
 EOF
+
+echo 1 > /proc/sys/net/bridge/bridge-nf-call-iptables
 
 setenforce 0
 sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
