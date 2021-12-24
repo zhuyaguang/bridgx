@@ -267,6 +267,10 @@ func cloud2ModelVpc(vpcs []cloud.VPC, ak, provider string) []model.Vpc {
 	res := make([]model.Vpc, 0, len(vpcs))
 	for _, vpc := range vpcs {
 		createAt, _ := time.Parse("2006-01-02T15:04:05Z", vpc.CreateAt)
+		var sw string
+		if len(vpc.SwitchIds) > 0 {
+			sw = strings.Join(vpc.SwitchIds, ",")
+		}
 		now := time.Now()
 		res = append(res, model.Vpc{
 			Base: model.Base{
@@ -278,7 +282,7 @@ func cloud2ModelVpc(vpcs []cloud.VPC, ak, provider string) []model.Vpc {
 			VpcId:     vpc.VpcId,
 			Name:      vpc.VpcName,
 			CidrBlock: vpc.CidrBlock,
-			SwitchIds: strings.Join(vpc.SwitchIds, ","),
+			SwitchIds: sw,
 			Provider:  provider,
 			VStatus:   vpc.Status,
 		})
@@ -546,8 +550,7 @@ type GetVPCRequest struct {
 	VpcName    string
 	PageNumber int
 	PageSize   int
-
-	Account *types.OrgKeys
+	AccountKey string
 }
 type VPCResponse struct {
 	Vpcs  []Vpc
@@ -589,17 +592,8 @@ func model2VpcResponse(vpcs []model.Vpc, pageNumber, pageSize, total int) VPCRes
 
 func GetVPC(ctx context.Context, req GetVPCRequest) (resp VPCResponse, err error) {
 	// TODO: cache
-	aks := make([]string, 0, len(req.Account.Info))
-	for _, info := range req.Account.Info {
-		aks = append(aks, info.AK)
-		if req.Provider != "" {
-			if info.Provider != req.Provider {
-				continue
-			}
-		}
-	}
 	vs, total, err := model.FindVpcsWithPage(ctx, model.FindVpcConditions{
-		Aks:        aks,
+		AccountKey: req.AccountKey,
 		VpcName:    req.VpcName,
 		RegionId:   req.RegionId,
 		PageNumber: req.PageNumber,
@@ -718,6 +712,7 @@ func CreateSwitch(ctx context.Context, req CreateSwitchRequest) (switchId string
 type GetSwitchRequest struct {
 	SwitchName string
 	VpcId      string
+	ZoneId     string
 	PageNumber int
 	PageSize   int
 }
@@ -782,6 +777,7 @@ func GetSwitch(ctx context.Context, req GetSwitchRequest) (resp SwitchResponse, 
 	vpcId := vpc.VpcId
 	s, total, err := model.FindSwitchesWithPage(ctx, model.FindSwitchesConditions{
 		VpcId:      vpcId,
+		ZoneId:     req.ZoneId,
 		SwitchName: req.SwitchName,
 		PageNumber: req.PageNumber,
 		PageSize:   req.PageSize,

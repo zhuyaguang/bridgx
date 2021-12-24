@@ -5,6 +5,7 @@ import (
 
 	"github.com/galaxy-future/BridgX/cmd/api/handler"
 	gf_cluster "github.com/galaxy-future/BridgX/cmd/api/handler/gf-cluster"
+	"github.com/galaxy-future/BridgX/cmd/api/handler/gf-cluster/cluster"
 	"github.com/galaxy-future/BridgX/cmd/api/middleware/authorization"
 	"github.com/galaxy-future/BridgX/config"
 	"github.com/gin-contrib/pprof"
@@ -26,6 +27,8 @@ func Init() *gin.Engine {
 	router.GET("/", func(context *gin.Context) {
 		context.String(http.StatusOK, "hello world!")
 	})
+
+	router.GET("/api/v1/galaxy_cloud/cluster/config", cluster.HandleGetClusterConfigInfoByName)
 
 	user := router.Group("/user")
 	{
@@ -51,11 +54,14 @@ func Init() *gin.Engine {
 			clusterPath.GET("id/:id", handler.GetClusterById)
 			clusterPath.GET("name/:name", handler.GetClusterByName)
 			clusterPath.POST("create", handler.CreateCluster)
+			clusterPath.POST("create_custom_public", handler.CreateCustomPublic)
+			clusterPath.POST("create_custom_private", handler.CreateCustomPrivate)
 			clusterPath.POST("edit", handler.EditCluster)
 			clusterPath.DELETE("delete/:ids", handler.DeleteClusters)
 			clusterPath.GET("num", handler.GetClusterCount)
 			clusterPath.GET("instance_stat", handler.GetInstanceStat)
 			clusterPath.GET("describe_all", handler.ListClusters)
+			clusterPath.GET("custom/detail", handler.CustomClusterDetail)
 
 			clusterPath.POST("list_by_tags", handler.ListClustersByTags)
 			clusterPath.GET("get_tags", handler.GetClusterTags)
@@ -66,6 +72,8 @@ func Init() *gin.Engine {
 			clusterPath.POST("expand", handler.ExpandCluster)
 			clusterPath.POST("shrink", handler.ShrinkCluster)
 			clusterPath.POST("shrink_all", handler.ShrinkAllInstances)
+
+			clusterPath.POST("instance/check", handler.CheckInstanceConnectable)
 		}
 		vpcPath := v1Api.Group("vpc/")
 		{
@@ -106,6 +114,7 @@ func Init() *gin.Engine {
 			instancePath.GET("num", handler.GetInstanceCount)
 			instancePath.GET("id/describe", handler.GetInstance)
 			instancePath.GET("describe_all", handler.GetInstanceList)
+			instancePath.GET("list_custom", handler.GetCustomInstanceList)
 			instancePath.GET("usage_total", handler.GetInstanceUsageTotal)
 			instancePath.GET("usage_statistics", handler.GetInstanceUsageStatistics)
 			instancePath.POST("sync_expire_time", handler.SyncInstanceExpireTime)
@@ -137,6 +146,10 @@ func Init() *gin.Engine {
 		imagePath := v1Api.Group("image/")
 		{
 			imagePath.GET("list", handler.GetImageList)
+		}
+		logPath := v1Api.Group("log/")
+		{
+			logPath.GET("extract", handler.ExtractLog)
 		}
 
 		gfCluster := v1Api.Group("galaxy_cloud")

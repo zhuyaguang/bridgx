@@ -115,7 +115,7 @@ CREATE TABLE `b_vpc`
     `region_id`  varchar(255) NOT NULL DEFAULT '',
     `name`       varchar(255) NOT NULL,
     `cidr_block` varchar(255) NOT NULL DEFAULT '',
-    `switch_ids` varchar(255) NOT NULL DEFAULT '[]',
+    `switch_ids` text NOT NULL DEFAULT '[]',
     `provider`   varchar(255) NOT NULL,
     `v_status`   varchar(20)  NOT NULL DEFAULT 'Pending',
     `is_del`     tinyint(3) NOT NULL DEFAULT '0',
@@ -137,6 +137,7 @@ CREATE TABLE `cluster`
 (
     `id`              bigint(20) unsigned NOT NULL AUTO_INCREMENT,
     `cluster_name`    varchar(64) COLLATE utf8mb4_bin  NOT NULL,
+    `cluster_type`    varchar(20) COLLATE utf8mb4_bin  DEFAULT 'standard',
     `cluster_desc`    varchar(128) COLLATE utf8mb4_bin NOT NULL,
     `expect_count`    int(7) NOT NULL DEFAULT '0',
     `status`          varchar(32) COLLATE utf8mb4_bin           DEFAULT NULL,
@@ -200,6 +201,7 @@ CREATE TABLE `instance`
     `status`         varchar(32) NOT NULL DEFAULT 'UNDEFINED',
     `ip_inner`       varchar(255)         DEFAULT NULL,
     `ip_outer`       varchar(255)         DEFAULT NULL,
+    `attrs`          varchar(1024)        DEFAULT NULL,
     `create_at`      timestamp   NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `update_at`      timestamp NULL DEFAULT CURRENT_TIMESTAMP,
     `delete_at`      timestamp NULL DEFAULT NULL,
@@ -343,6 +345,8 @@ create table kubernetes_infos (
   `message` varchar (255) ,
   `bridgx_cluster_name` varchar(255) NOT NULL,
   `type` varchar(255) NOT NULL,
+  `pod_cidr` VARCHAR(255) NOT NULL,
+  `service_cidr` VARCHAR(255) NOT NULL,
   `created_user` varchar(255),
   `created_time` int(11),
   PRIMARY KEY (`id`),
@@ -392,8 +396,18 @@ CREATE TABLE `kubernetes_install_steps` (
   `operation` varchar(255) ,
   `message` varchar(255) ,
    PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=71 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE `operation_log` (
+    `id` bigint(20) NOT NULL AUTO_INCREMENT,
+    `operation` varchar(256) NOT NULL DEFAULT '' COMMENT '操作',
+    `object_name` varchar(128) NOT NULL DEFAULT '' COMMENT '备操作的对象名,一般为表名',
+    `operator` bigint(20) NOT NULL DEFAULT '0' COMMENT '操作人的 id',
+    `diff` varchar(4096) DEFAULT NULL,
+    `create_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='操作日志';
 
 -- init super admin info
 INSERT INTO `user`

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/galaxy-future/BridgX/internal/clients"
@@ -77,7 +78,7 @@ func GetInstanceUsageTotal(ctx context.Context, clusterName string, specifyDay t
 		if len(accounts) == 0 {
 			return 0, nil
 		}
-		clusterNames, err = GetEnabledClusterNamesByAccounts(ctx, accounts)
+		clusterNames, err = GetStandardClusterNamesByAccounts(ctx, accounts)
 		if err != nil {
 			return 0, err
 		}
@@ -135,7 +136,7 @@ func GetInstanceUsageStatistics(ctx context.Context, clusterName string, specify
 		if len(accounts) == 0 {
 			return nil, 0, nil
 		}
-		clusterNames, err = GetEnabledClusterNamesByAccounts(ctx, accounts)
+		clusterNames, err = GetStandardClusterNamesByAccounts(ctx, accounts)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -155,11 +156,12 @@ func GetInstanceUsageStatistics(ctx context.Context, clusterName string, specify
 }
 
 type InstancesSearchCond struct {
-	TaskId     int64
-	TaskAction string
-	Status     string
-	PageNumber int
-	PageSize   int
+	TaskId      int64
+	TaskAction  string
+	Status      string
+	ClusterName string
+	PageNumber  int
+	PageSize    int
 }
 
 func GetInstancesByCond(ctx context.Context, cond InstancesSearchCond) (ret []model.Instance, total int64, err error) {
@@ -172,6 +174,9 @@ func GetInstancesByCond(ctx context.Context, cond InstancesSearchCond) (ret []mo
 	}
 	if cond.Status != "" {
 		queryMap["status"] = cond.Status
+	}
+	if cond.ClusterName != "" {
+		queryMap["cluster_name"] = cond.ClusterName
 	}
 	total, err = model.Query(queryMap, cond.PageNumber, cond.PageSize, &ret, "id", true)
 	if err != nil {
@@ -261,10 +266,11 @@ func getAvailableResource(regions []cloud.Region, provider, ak string) ([]model.
 }
 
 type ListInstanceTypeRequest struct {
-	Provider string
-	RegionId string
-	ZoneId   string
-	Account  *types.OrgKeys
+	Provider           string
+	RegionId           string
+	ZoneId             string
+	Account            *types.OrgKeys
+	ComputingPowerType string
 }
 
 type ListInstanceTypeResponse struct {
@@ -285,19 +291,63 @@ func (i *InstanceTypeByZone) GetDesc() string {
 	return fmt.Sprintf(instanceTypeTmpl, i.Core, i.Memory, i.InstanceType)
 }
 
-func ListInstanceType(ctx context.Context, req ListInstanceTypeRequest) (ListInstanceTypeResponse, error) {
+func ListInstanceType(req ListInstanceTypeRequest) ([]InstanceTypeByZone, error) {
 	if len(zoneInsTypeCache) == 0 {
 		RefreshCache()
 	}
 	zoneMap, ok := zoneInsTypeCache[req.Provider]
 	if !ok {
-		return ListInstanceTypeResponse{}, nil
+		return []InstanceTypeByZone{}, nil
 	}
 	res, ok := zoneMap[req.ZoneId]
 	if !ok {
-		return ListInstanceTypeResponse{}, nil
+		return []InstanceTypeByZone{}, nil
 	}
-	return ListInstanceTypeResponse{InstanceTypes: res}, nil
+	return filterByComputingPowerType(req.ComputingPowerType, req.Provider, res), nil
+}
+
+func filterByComputingPowerType(computingPowerType string, provider string, instanceTypes []InstanceTypeByZone) []InstanceTypeByZone {
+	if computingPowerType == "" {
+		return instanceTypes
+	}
+
+	ret := make([]InstanceTypeByZone, 0)
+	switch computingPowerType {
+	case constants.GPU:
+		for i, instanceType := range instanceTypes {
+			if CheckIsGpuComputingPowerType(instanceType.InstanceTypeFamily, provider) {
+				ret = append(ret, instanceTypes[i])
+			}
+		}
+		return ret
+	case constants.CPU:
+		for i, instanceType := range instanceTypes {
+			if !CheckIsGpuComputingPowerType(instanceType.InstanceTypeFamily, provider) {
+				ret = append(ret, instanceTypes[i])
+			}
+		}
+		return ret
+	default:
+		return instanceTypes
+	}
+}
+
+func CheckIsGpuComputingPowerType(instanceType string, provider string) bool {
+	switch provider {
+	case cloud.AlibabaCloud:
+		return strings.Contains(instanceType, constants.IsAlibabaCloudGpuType)
+	case cloud.HuaweiCloud:
+		return strings.HasPrefix(instanceType, constants.IsHuaweiCloudGpuType) || strings.HasPrefix(instanceType, constants.IsHuaweiCloudGpuTypeTwo)
+	default:
+		return false
+	}
+}
+
+func GetComputingPowerType(instanceType string, provider string) string {
+	if CheckIsGpuComputingPowerType(instanceType, provider) {
+		return constants.GPU
+	}
+	return constants.CPU
 }
 
 func BatchCreateInstanceType(ctx context.Context, inss []model.InstanceType) error {

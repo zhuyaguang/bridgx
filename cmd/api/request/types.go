@@ -1,6 +1,7 @@
 package request
 
 import (
+	"github.com/galaxy-future/BridgX/internal/model"
 	"github.com/galaxy-future/BridgX/internal/service"
 )
 
@@ -49,6 +50,13 @@ type CreateVpcRequest struct {
 
 func (c *CreateVpcRequest) Check() bool {
 	return c.Provider != "" && c.RegionId != "" && c.VpcName != "" && c.Ak != ""
+}
+
+type DescribeVpcRequest struct {
+	Provider   string `form:"provider" binding:"required"`
+	RegionId   string `form:"region_id" binding:"required"`
+	VpcName    string `form:"vpc_name"`
+	AccountKey string `form:"account_key" binding:"required"`
 }
 
 type CreateSwitchRequest struct {
@@ -169,4 +177,22 @@ type ListClusterByTagsRequest struct {
 
 type SyncInstanceExpireTimeRequest struct {
 	ClusterName string `json:"cluster_name" binding:"required"`
+}
+
+type CustomPublicCloudClusterRequest struct {
+	ClusterName  string                        `json:"name" binding:"required"`
+	ClusterDesc  string                        `json:"desc"`
+	Provider     string                        `json:"provider" binding:"required,mustIn=cloud"`
+	AccountKey   string                        `json:"account_key"`
+	InstanceList []model.CustomClusterInstance `json:"instance_list" binding:"required,min=1"`
+}
+
+type CustomPrivateCloudClusterRequest struct {
+	ClusterName  string                        `json:"name" binding:"required"`
+	ClusterDesc  string                        `json:"desc"`
+	InstanceList []model.CustomClusterInstance `json:"instance_list" binding:"required,min=1"`
+}
+
+type CheckInstanceConnectableRequest struct {
+	InstanceList []model.CustomClusterInstance `json:"instance_list"`
 }

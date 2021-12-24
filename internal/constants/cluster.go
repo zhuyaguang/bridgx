@@ -18,14 +18,23 @@ const (
 	DefaultUsername           = "root"
 	DefaultClusterUsageKey    = "usage"
 	DefaultClusterUsageUnused = "unused"
-)
 
-const (
 	ClusterStatusEnable  = "ENABLE"
 	ClusterStatusDisable = "DISABLE"
+
+	ClusterTypeStandard = "standard"
+	ClusterTypeCustom   = "custom"
 )
 
 const (
 	ErrClusterNotExist           = "集群: [%s] 不存在"
 	ErrPrePaidShrinkNotSupported = "不支持对包年包月的集群机器进行缩容操作"
+)
+
+const (
+	GPU                     = "GPU"
+	CPU                     = "CPU"
+	IsAlibabaCloudGpuType   = "gn"
+	IsHuaweiCloudGpuType    = "G"
+	IsHuaweiCloudGpuTypeTwo = "P"
 )

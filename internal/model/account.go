@@ -11,14 +11,14 @@ import (
 // Account cloud provider account info
 type Account struct {
 	Base
-	AccountName            string `json:"account_name"`
-	AccountKey             string `json:"account_key"`
-	EncryptedAccountSecret string `json:"encrypted_account_secret"`
-	Salt                   string `json:"salt"`
-	Provider               string `json:"provider"`
-	OrgId                  int64  `json:"org_id"`
-	CreateBy               string `json:"create_by"`
-	UpdateBy               string `json:"update_by"`
+	AccountName            string `json:"account_name" diff:"account_name"`
+	AccountKey             string `json:"account_key" diff:"account_key"`
+	EncryptedAccountSecret string `json:"encrypted_account_secret" diff:"encrypted_account_secret"`
+	Salt                   string `json:"salt" diff:"salt"`
+	Provider               string `json:"provider" diff:"provider"`
+	OrgId                  int64  `json:"org_id" diff:"org_id"`
+	CreateBy               string `json:"create_by" diff:"create_by"`
+	UpdateBy               string `json:"update_by" diff:"update_by"`
 	DeletedAt              gorm.DeletedAt
 
 	// the value of this field will not be empty only after decryption function called.
@@ -69,8 +69,8 @@ func GetDefaultAccountByProvider(provider string) (account *Account, err error) 
 	return account, nil
 }
 
-//GetAksByOrgAkProvider get aks by ak and provider
-func GetAksByOrgAkProvider(ctx context.Context, orgId int64, ak, provider string) ([]string, error) {
+//GetAksByOrgAk get aks by ak
+func GetAksByOrgAk(ctx context.Context, orgId int64, ak string) ([]string, error) {
 	aks := make([]string, 0)
 	query := clients.ReadDBCli.WithContext(ctx).
 		Table(Account{}.TableName()).
@@ -79,12 +79,9 @@ func GetAksByOrgAkProvider(ctx context.Context, orgId int64, ak, provider string
 	if ak != "" {
 		query = query.Where("account_key = ?", ak)
 	}
-	if provider != "" {
-		query = query.Where("provider = ?", provider)
-	}
 
 	if err := query.Find(&aks).Error; err != nil {
-		logErr("GetAksByOrgAkProvider from read db", err)
+		logErr("GetAksByOrgAk from read db", err)
 		return nil, err
 	}
 	return aks, nil

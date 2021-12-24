@@ -3,12 +3,15 @@ package service
 import (
 	"context"
 	"errors"
+	"runtime/debug"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Rican7/retry"
 	"github.com/Rican7/retry/backoff"
 	"github.com/Rican7/retry/strategy"
+	"github.com/galaxy-future/BridgX/cmd/api/response"
 	"github.com/galaxy-future/BridgX/config"
 	"github.com/galaxy-future/BridgX/internal/bcc"
 	"github.com/galaxy-future/BridgX/internal/clients"
@@ -17,17 +20,39 @@ import (
 	"github.com/galaxy-future/BridgX/internal/model"
 	"github.com/galaxy-future/BridgX/internal/types"
 	"github.com/galaxy-future/BridgX/pkg/cloud"
+	"github.com/galaxy-future/BridgX/pkg/utils"
 	jsoniter "github.com/json-iterator/go"
+	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
 
-func CreateCluster(cluster *model.Cluster, username string) error {
-	cluster.Status = constants.ClusterStatusEnable
+func CreateClusterWithTagsAndInstances(ctx context.Context, cluster *model.Cluster, tags []*model.ClusterTag, instances []model.Instance, username string, uid int64) error {
 	now := time.Now()
 	cluster.CreateAt = &now
 	cluster.UpdateAt = &now
 	cluster.CreateBy = username
 	cluster.UpdateBy = username
-	return model.Create(cluster)
+	cluster.Status = constants.ClusterStatusEnable
+	if len(tags) > 0 {
+		for _, tag := range tags {
+			tag.CreateAt = &now
+			tag.UpdateAt = &now
+		}
+	}
+	err := model.CreateClusterWithTagsAndInstances(ctx, cluster, tags, instances)
+	if err != nil {
+		return err
+	}
+	err = RecordOperationLog(ctx, OperationLog{
+		Operation: OperationCreate,
+		Operator:  uid,
+		Old:       nil,
+		New:       cluster,
+	})
+	if err != nil {
+		logs.Logger.Errorf("RecordOperationLog failed.Err:[%s]", err.Error())
+	}
+	return nil
 }
 
 func EditCluster(cluster *model.Cluster, username string) error {
@@ -60,15 +85,25 @@ func DeleteClusters(ctx context.Context, ids []int64, orgId int64) error {
 	if len(clusters) == 0 {
 		return nil
 	}
-	for _, cluster := range clusters {
-		c := cluster
-		c.DeleteUniqKey = c.Id
-		err = model.Save(&c)
+	return clients.WriteDBCli.Transaction(func(tx *gorm.DB) error {
+		for _, cluster := range clusters {
+			err = tx.Delete(model.ClusterTag{}, model.ClusterTag{ClusterName: cluster.ClusterName}).Error
+			if err != nil {
+				return err
+			}
+			c := cluster
+			c.DeleteUniqKey = c.Id
+			err = tx.Save(&c).Error
+			if err != nil {
+				return err
+			}
+		}
+		err = tx.Delete(clusters).Error
 		if err != nil {
 			return err
 		}
-	}
-	return model.Delete(clusters)
+		return nil
+	})
 }
 
 func CreateCluster4Test(clusterName string) error {
@@ -120,8 +155,8 @@ func GetClusterCount(ctx context.Context, accountKeys []string) (count int64, er
 	return count, nil
 }
 
-func ListClusters(ctx context.Context, accountKeys []string, clusterName, provider string, pageNum, pageSize int) ([]model.Cluster, int, error) {
-	return model.ListClustersByCond(ctx, accountKeys, clusterName, provider, pageNum, pageSize)
+func ListClusters(ctx context.Context, cond model.ClusterSearchCond) ([]model.Cluster, int, error) {
+	return model.ListClustersByCond(ctx, cond)
 }
 
 func GetEnabledClusterNamesByAccount(ctx context.Context, accountKey string) ([]string, error) {
@@ -134,17 +169,17 @@ func GetEnabledClusterNamesByAccount(ctx context.Context, accountKey string) ([]
 
 }
 
-func GetEnabledClusterNamesByCond(ctx context.Context, ak, clusterName string, aks []string, strict bool) ([]string, error) {
+func GetEnabledClusterNamesByCond(ctx context.Context, provider, clusterName string, aks []string, strict bool) ([]string, error) {
 	res := make([]string, 0)
 	query := clients.ReadDBCli.WithContext(ctx).
 		Model(&model.Cluster{}).
 		Select("cluster_name").
 		Where("status = ?", constants.ClusterStatusEnable)
-	if ak == "" && len(aks) > 0 {
+	if len(aks) > 0 && provider != cloud.PrivateCloud {
 		query = query.Where("account_key IN (?)", aks)
 	}
-	if ak != "" {
-		query = query.Where("account_key = ?", ak)
+	if provider != "" {
+		query = query.Where("provider = ?", provider)
 	}
 	if clusterName != "" {
 		if strict {
@@ -160,9 +195,9 @@ func GetEnabledClusterNamesByCond(ctx context.Context, ak, clusterName string, a
 	return res, nil
 }
 
-func GetEnabledClusterNamesByAccounts(ctx context.Context, accountKeys []string) ([]string, error) {
+func GetStandardClusterNamesByAccounts(ctx context.Context, accountKeys []string) ([]string, error) {
 	res := make([]string, 0)
-	err := clients.ReadDBCli.WithContext(ctx).Model(&model.Cluster{}).Select("cluster_name").Where("account_key in (?) AND status = ?", accountKeys, constants.ClusterStatusEnable).Find(&res).Error
+	err := clients.ReadDBCli.WithContext(ctx).Model(&model.Cluster{}).Select("cluster_name").Where("account_key in (?) AND status = ? AND cluster_type = ?", accountKeys, constants.ClusterStatusEnable, constants.ClusterTypeStandard).Find(&res).Error
 	if err != nil {
 		return res, err
 	}
@@ -182,18 +217,23 @@ func ConvertToClusterInfo(m *model.Cluster, tags []model.ClusterTag) (*types.Clu
 			return nil, err
 		}
 	}
-
-	err := jsoniter.UnmarshalFromString(m.NetworkConfig, networkConfig)
-	if err != nil {
-		return nil, err
+	if m.NetworkConfig != "" {
+		err := jsoniter.UnmarshalFromString(m.NetworkConfig, networkConfig)
+		if err != nil {
+			return nil, err
+		}
 	}
-	err = jsoniter.UnmarshalFromString(m.StorageConfig, storageConfig)
-	if err != nil {
-		return nil, err
+	if m.StorageConfig != "" {
+		err := jsoniter.UnmarshalFromString(m.StorageConfig, storageConfig)
+		if err != nil {
+			return nil, err
+		}
 	}
-	err = jsoniter.UnmarshalFromString(m.ChargeConfig, chargeConfig)
-	if err != nil {
-		return nil, err
+	if m.ChargeConfig != "" {
+		err := jsoniter.UnmarshalFromString(m.ChargeConfig, chargeConfig)
+		if err != nil {
+			return nil, err
+		}
 	}
 	var mt = make(map[string]string, 0)
 	for _, clusterTag := range tags {
@@ -201,24 +241,26 @@ func ConvertToClusterInfo(m *model.Cluster, tags []model.ClusterTag) (*types.Clu
 	}
 	instanceType := GetInstanceTypeByName(m.InstanceType)
 	clusterInfo := &types.ClusterInfo{
-		Id:             m.Id,
-		Name:           m.ClusterName,
-		Desc:           m.ClusterDesc,
-		RegionId:       m.RegionId,
-		ZoneId:         m.ZoneId,
-		InstanceType:   m.InstanceType,
-		Image:          m.Image,
-		Provider:       m.Provider,
-		Username:       constants.DefaultUsername,
-		Password:       m.Password,
-		AccountKey:     m.AccountKey,
-		ImageConfig:    imageConfig,
-		NetworkConfig:  networkConfig,
-		StorageConfig:  storageConfig,
-		ChargeConfig:   chargeConfig,
-		Tags:           mt,
-		InstanceCore:   instanceType.Core,
-		InstanceMemory: instanceType.Memory,
+		Id:                 m.Id,
+		Name:               m.ClusterName,
+		Desc:               m.ClusterDesc,
+		RegionId:           m.RegionId,
+		ZoneId:             m.ZoneId,
+		ClusterType:        m.ClusterType,
+		InstanceType:       m.InstanceType,
+		Image:              m.Image,
+		Provider:           m.Provider,
+		Username:           constants.DefaultUsername,
+		Password:           m.Password,
+		AccountKey:         m.AccountKey,
+		ImageConfig:        imageConfig,
+		NetworkConfig:      networkConfig,
+		StorageConfig:      storageConfig,
+		ChargeConfig:       chargeConfig,
+		Tags:               mt,
+		InstanceCore:       instanceType.Core,
+		InstanceMemory:     instanceType.Memory,
+		ComputingPowerType: GetComputingPowerType(m.InstanceType, m.Provider),
 	}
 	return clusterInfo, nil
 }
@@ -524,4 +566,47 @@ func judgeInstancesIsReady(instances []cloud.Instance, chargeConfig *types.Netwo
 		}
 	}
 	return true
+}
+
+// CheckInstanceConnectable 检测机器连通性
+func CheckInstanceConnectable(instances []model.CustomClusterInstance) response.CheckInstanceConnectableResponse {
+	resMachines := make([]*model.ConnectableResult, 0)
+	ch := make(chan *model.ConnectableResult, len(instances))
+	var wg sync.WaitGroup
+	for _, req := range instances {
+		wg.Add(1)
+		go func(req model.CustomClusterInstance) {
+			defer func() {
+				if r := recover(); r != nil {
+					logs.Logger.Errorf("CheckInstanceConnectable err:%v ", r)
+					logs.Logger.Errorw("CheckInstanceConnectable panic", zap.String("stack", string(debug.Stack())))
+				}
+				wg.Done()
+			}()
+			isPass := utils.SshCheck(req.InstanceIp, req.LoginName, req.LoginPassword)
+			res := &model.ConnectableResult{
+				InstanceIp: req.InstanceIp,
+				IsPass:     isPass,
+			}
+			ch <- res
+		}(req)
+	}
+	wg.Wait()
+	close(ch)
+	isAllPass := true
+	for i := 0; i < len(instances); i++ {
+		machine, ok := <-ch
+		if !ok {
+			continue
+		}
+		if !machine.IsPass {
+			isAllPass = false
+		}
+		resMachines = append(resMachines, machine)
+	}
+	res := response.CheckInstanceConnectableResponse{
+		IsAllPass:    isAllPass,
+		InstanceList: resMachines,
+	}
+	return res
 }

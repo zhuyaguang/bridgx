@@ -19,6 +19,7 @@ import (
 	"github.com/galaxy-future/BridgX/pkg/encrypt"
 	gf_cluster "github.com/galaxy-future/BridgX/pkg/gf-cluster"
 	"github.com/gin-gonic/gin"
+	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 )
 
@@ -53,23 +54,38 @@ func HandleCreateCluster(c *gin.Context) {
 		return
 	}
 
-	//4. 获取Bridgx集群实例信息
-	instances, err := service.GetAllInstanceInCluster(c, claims, buildRequest.BridgxClusterName)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(fmt.Sprintf("获取集群实例时失败,错误信息： %s", err.Error())))
-		return
-	}
+	//4. 获取AKSK信息
+	var accountKey, descryptRes string
+	var netMode gf_cluster.BuildNetMode = gf_cluster.VxLanNetMode
+	instances := make([]model.Instance, 0)
+	isNeedAkSk := service.IsNeedAkSk(clusterInfo)
+	if isNeedAkSk {
+		aksk, err := service.GetClusterAccount(clusterInfo)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(fmt.Sprintf("获取集群信息认证时失败,错误信息： %s", err.Error())))
+			return
+		}
+		accountKey = aksk.AccountKey
+		descryptRes, err = service.DecryptAccount(encrypt.AesKeyPepper, aksk.Salt, accountKey, aksk.EncryptedAccountSecret)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(fmt.Sprintf("解密集群信息认证时失败,错误信息： %s", err.Error())))
+			return
+		}
+		netMode = gf_cluster.AliCloudNetMode
 
-	//5. 获取AKSK信息
-	aksk, err := service.GetClusterAccount(c, buildRequest.BridgxClusterName)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(fmt.Sprintf("获取集群信息认证时失败,错误信息： %s", err.Error())))
-		return
-	}
-	descryptRes, err := service.DecryptAccount(encrypt.AesKeyPepper, aksk.Salt, aksk.AccountKey, aksk.EncryptedAccountSecret)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(fmt.Sprintf("解密集群信息认证时失败,错误信息： %s", err.Error())))
-		return
+		//5. 获取Bridgx集群实例信息
+		instances, err = service.GetAllInstanceInCluster(c, claims, buildRequest.BridgxClusterName)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(fmt.Sprintf("获取集群实例时失败,错误信息： %s", err.Error())))
+			return
+		}
+	} else {
+		//5. 获取自定义集群实例信息
+		instances, err = service.GetAllCustomInstanceInCluster(c, claims, buildRequest.BridgxClusterName)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(fmt.Sprintf("获取集群实例时失败,错误信息： %s", err.Error())))
+			return
+		}
 	}
 
 	//6. 集群搭建策略
@@ -102,6 +118,8 @@ func HandleCreateCluster(c *gin.Context) {
 		Type:              buildRequest.ClusterType,
 		CreatedUser:       claims.Name,
 		CreatedTime:       time.Now().Unix(),
+		PodCidr:           buildRequest.PodCidr,
+		ServiceCidr:       buildRequest.ServiceCidr,
 	}
 	err = model.RegisterKubernetesCluster(&clusterRecord)
 	if err != nil {
@@ -121,17 +139,34 @@ func HandleCreateCluster(c *gin.Context) {
 		SvcCidr:      buildRequest.ServiceCidr,
 		MachineList:  nil,
 		Mode:         gf_cluster.String2BuildMode(buildRequest.ClusterType),
+		NetMode:      netMode,
 		KubernetesId: clusterRecord.Id,
-		AccessKey:    aksk.AccountKey,
+		AccessKey:    accountKey,
 		AccessSecret: descryptRes,
 	}
 
 	for _, theInstance := range instances {
+		sshUsername := ""
+		sshPassword := ""
+		if isNeedAkSk {
+			sshUsername = "root"
+			sshPassword = clusterInfo.Password
+		} else {
+			attrs := model.InstanceAttr{}
+			err := jsoniter.UnmarshalFromString(*theInstance.Attrs, &attrs)
+			if err == nil {
+				sshUsername = attrs.LoginName
+				sshPassword = attrs.LoginPassword
+			} else {
+				c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse(fmt.Sprintf("解析私有录入机器ssh用户名密码信息失败，失败信息: %s", err.Error())))
+				return
+			}
+		}
 		buildParams.MachineList = append(buildParams.MachineList, gf_cluster.ClusterBuildMachine{
 			IP:       theInstance.IpInner,
 			Hostname: theInstance.InstanceId,
-			Username: "root",
-			Password: clusterInfo.Password,
+			Username: sshUsername,
+			Password: sshPassword,
 			Labels:   map[string]string{gf_cluster.ClusterInstanceTypeKey: clusterInfo.InstanceType, gf_cluster.ClusterInstanceProviderLabelKey: clusterInfo.Provider, gf_cluster.ClusterInstanceClusterLabelKey: clusterInfo.Name},
 		})
 	}
@@ -340,4 +375,15 @@ func HandleListClusterPodsSummary(c *gin.Context) {
 		PageSize:   pageSize,
 		Total:      len(result),
 	}))
+}
+
+// HandleGetClusterConfigInfoByName 查询单个集群配置信息
+func HandleGetClusterConfigInfoByName(c *gin.Context) {
+	clusterName := c.Query("cluster_name")
+	cluster, err := cluster.GetClusterConfigInfo(clusterName)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gf_cluster.NewFailedResponse(err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, gf_cluster.NewKubernetesInfoGetResponse(cluster))
 }
