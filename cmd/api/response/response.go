@@ -117,6 +117,7 @@ type InstanceThumb struct {
 	IpInner            string `json:"ip_inner"`
 	IpOuter            string `json:"ip_outer"`
 	Provider           string `json:"provider"`
+	ClusterType        string `json:"cluster_type"`
 	CreateAt           string `json:"create_at"`
 	Status             string `json:"status"`
 	StartupTime        int    `json:"startup_time"`
@@ -235,7 +236,25 @@ type ClusterThumbWithTag struct {
 	CreateBy    string            `json:"create_by"`
 }
 
-type CheckMachineResponse struct {
-	IsAllPass   bool                     `json:"is_all_pass"`
-	MachineList []*model.MachineResponse `json:"machine_list"`
+type CheckInstanceConnectableResponse struct {
+	IsAllPass    bool                       `json:"is_all_pass"`
+	InstanceList []*model.ConnectableResult `json:"instance_list"`
+}
+
+type CustomClusterResponse struct {
+	ClusterName string `json:"name"`
+	ClusterDesc string `json:"desc"`
+	Provider    string `json:"provider"`
+	AccountKey  string `json:"account_key"`
+}
+
+type CustomInstanceListResponse struct {
+	InstanceList []CustomClusterInstance `json:"instance_list"`
+	Pager        Pager                   `json:"pager"`
+}
+
+type CustomClusterInstance struct {
+	InstanceIp    string `json:"instance_ip"`
+	LoginName     string `json:"login_name"`
+	LoginPassword string `json:"login_password"`
 }
