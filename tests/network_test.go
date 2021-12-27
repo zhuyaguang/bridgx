@@ -238,7 +238,7 @@ func TestGetVPC(t *testing.T) {
 					VpcName:    "测试一键创建",
 					PageNumber: 0,
 					PageSize:   20,
-					Account: &types.OrgKeys {
+					Account: &types.OrgKeys{
 						OrgId: 0,
 						//Info: []types.Info{
 						//	{
