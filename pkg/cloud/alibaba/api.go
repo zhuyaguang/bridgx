@@ -13,6 +13,7 @@ import (
 	ecsClient "github.com/alibabacloud-go/ecs-20140526/v2/client"
 	"github.com/alibabacloud-go/tea/tea"
 	vpcClient "github.com/alibabacloud-go/vpc-20160428/v2/client"
+	sdkErr "github.com/aliyun/alibaba-cloud-sdk-go/sdk/errors"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/bssopenapi"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/ecs"
@@ -52,12 +53,18 @@ func (p *AlibabaCloud) GetInstancesByTags(region string, tags []cloud.Tag) (inst
 	request.PageSize = requests.NewInteger(50)
 	cloudInstance := make([]ecs.Instance, 0)
 	response, err := p.client.DescribeInstances(request)
+	if err != nil {
+		return nil, err
+	}
 	cloudInstance = append(cloudInstance, response.Instances.Instance...)
-	maxPage := math.Ceil(float64(response.TotalCount / 50))
+	maxPage := math.Ceil(float64(response.TotalCount) / 50)
 	for pageNumber < int(maxPage) {
 		pageNumber++
 		request.PageNumber = requests.NewInteger(pageNumber)
 		response, err = p.client.DescribeInstances(request)
+		if err != nil {
+			return nil, err
+		}
 		cloudInstance = append(cloudInstance, response.Instances.Instance...)
 	}
 	instances = generateInstances(cloudInstance)
@@ -163,8 +170,22 @@ func (p *AlibabaCloud) BatchCreate(m cloud.Params, num int) (instanceIds []strin
 		}
 		request.Tag = &tags
 	}
+	if m.DryRun {
+		request.DryRun = "true"
+	}
+
 	response, err := p.client.RunInstances(request)
-	return response.InstanceIdSets.InstanceIdSet, err
+	if m.DryRun && err != nil {
+		realErr := err.(*sdkErr.ServerError)
+		if realErr.ErrorCode() == "DryRunOperation" {
+			return []string{}, nil
+		}
+		return []string{}, err
+	}
+	if err != nil {
+		return []string{}, err
+	}
+	return response.InstanceIdSets.InstanceIdSet, nil
 }
 
 func (p *AlibabaCloud) GetInstances(ids []string) (instances []cloud.Instance, err error) {
@@ -680,7 +701,7 @@ func (p *AlibabaCloud) DescribeImages(req cloud.DescribeImagesRequest) (cloud.De
 		PageSize:        tea.Int32(50),
 		ImageOwnerAlias: tea.String(_imageType[req.ImageType]),
 	}
-	if req.InsType != "" {
+	if req.ImageType == cloud.ImageGlobal && req.InsType != "" {
 		request.InstanceType = tea.String(req.InsType)
 	}
 	for {

@@ -220,6 +220,11 @@ func CreateCluster(ctx *gin.Context) {
 		response.MkResponse(ctx, http.StatusBadRequest, validation.Translate2Chinese(err), nil)
 		return
 	}
+	err = service.CheckClusterParam(&clusterInput)
+	if err != nil {
+		response.MkResponse(ctx, http.StatusBadRequest, err.Error(), nil)
+		return
+	}
 	m, err := convertToClusterModel(&clusterInput)
 	if err != nil {
 		response.MkResponse(ctx, http.StatusBadRequest, err.Error(), err)
@@ -351,6 +356,11 @@ func EditCluster(ctx *gin.Context) {
 		response.MkResponse(ctx, http.StatusBadRequest, validation.Translate2Chinese(err), err)
 		return
 	}
+	err = service.CheckClusterParam(&clusterInput)
+	if err != nil {
+		response.MkResponse(ctx, http.StatusBadRequest, err.Error(), nil)
+		return
+	}
 	m, err := convertToClusterModel(&clusterInput)
 	if err != nil {
 		response.MkResponse(ctx, http.StatusBadRequest, err.Error(), err)
@@ -398,11 +408,13 @@ func convertCustomClusterInstances(instanceList []model.CustomClusterInstance, c
 			return nil, err
 		}
 		m := model.Instance{
+			Base: model.Base{
+				CreateAt: &now,
+			},
 			Status:      constants.Running,
 			IpInner:     instance.InstanceIp,
 			ClusterName: clusterName,
 			Attrs:       &attr,
-			CreateAt:    &now,
 			RunningAt:   &now,
 		}
 		ret = append(ret, m)

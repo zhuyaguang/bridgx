@@ -1,6 +1,8 @@
 package huawei
 
 import (
+	"time"
+
 	"github.com/galaxy-future/BridgX/pkg/cloud"
 	"github.com/huaweicloud/huaweicloud-sdk-go-v3/services/ecs/v2/model"
 	imsModel "github.com/huaweicloud/huaweicloud-sdk-go-v3/services/ims/v2/model"
@@ -10,6 +12,16 @@ const (
 	_maxNumEcsPerOperation = 1000
 	_pageSize              = 1000
 )
+
+type prePaidResources struct {
+	Id            string
+	Name          string
+	RegionId      string
+	EffectiveTime time.Time //资源生效时间
+	ExpireTime    time.Time //资源过期时间
+	ExpirePolicy  int       //资源到期后的扣费策略: 1:到期转按需2:到期后自动删除(从生效中直接删除)3:到期后自动续费4:到期后冻结5:到期后删除(从保留期删除)
+	Status        int       //2:使用中3:已关闭(页面不展示这个状态)4:已冻结5:已过期
+}
 
 //in
 var _inEcsChargeType = map[string]model.PrePaidServerExtendParamChargingMode{
