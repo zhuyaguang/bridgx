@@ -77,6 +77,20 @@ Through the [Developers' API Manual](https://github.com/galaxy-future/bridgx/blo
 If you need to perform front-end operations, please install 
 [ComandX](https://github.com/galaxy-future/comandx/blob/main/docs/EN-README.md).
 
+Video Tutorial
+------
+[ComandX Installation](https://www.bilibili.com/video/BV1n34y167o8/) <br>
+[Adding The Cloud Vendor Account](https://www.bilibili.com/video/BV1Jr4y1S7q4/)  <br>
+[Create Cluster](https://www.bilibili.com/video/BV1Wb4y1v7jw/)   <br>
+[Manual Scaling](https://www.bilibili.com/video/BV1bm4y197QD/)  <br>
+[K8s Cluster Creation and Pod cutting](https://www.bilibili.com/video/BV1FY411p7rE/) <br>
+
+
+Technical Articles
+------
+[《How does cloud-native technology migrate TB data per minute?》](https://zhuanlan.zhihu.com/p/442746588)<br>
+[《Best practices for enterprise migration to K8s》](https://zhuanlan.zhihu.com/p/445131885) <br>
+[《Top ten methods of cloud-native cost optimization 》](https://zhuanlan.zhihu.com/p/448405809)<br>
 
 Code of Conduct
 ------
