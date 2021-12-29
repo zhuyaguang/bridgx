@@ -80,6 +80,7 @@ BridgX是业界领先的基于全链路Serverless技术的云原生基础架构�
 [添加云账户](https://www.bilibili.com/video/BV1Jr4y1S7q4/)  <br>
 [创建集群](https://www.bilibili.com/video/BV1Wb4y1v7jw/)   <br>
 [手动扩缩容](https://www.bilibili.com/video/BV1bm4y197QD/)  <br>
+[K8s集群创建与Pod切割](https://www.bilibili.com/video/BV1FY411p7rE/)<br>
 
 
 技术文章
