@@ -70,12 +70,12 @@ For stable operation of the system, the recommended system model is 2 CPU cores 
              > docker-compose up -d scheduler //Start the scheduling service <br>
              > docker-compose down     //Stop BridgX service
 #### 4.Developer's API Manual
-Through the [Developers' API Manual](https://github.com/galaxy-future/bridgx/blob/master/docs/developer_api.md), users can quickly view the API ports and calling methods of various developer functions, enabling developers to integrate BridgX into third-party platforms.
+Through the [Developers' API Manual](https://github.com/galaxy-future/bridgx/blob/dev/docs/en-developer-api.md), users can quickly view the API ports and calling methods of various developer functions, enabling developers to integrate BridgX into third-party platforms.
 
 
 #### 5.Front-end Interface Operation
 If you need to perform front-end operations, please install 
-[ComandX](https://github.com/galaxy-future/comandx/blob/main/README.md)
+[ComandX](https://github.com/galaxy-future/comandx/blob/main/docs/EN-README.md).
 
 
 Code of Conduct
