@@ -5,6 +5,7 @@ const (
 
 	AlibabaCloud = "AlibabaCloud"
 	HuaweiCloud  = "HuaweiCloud"
+	AwsCloud     = "AwsCloud"
 )
 
 const (
