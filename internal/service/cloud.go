@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/galaxy-future/BridgX/pkg/cloud/aws"
+
 	"github.com/Rican7/retry"
 	"github.com/Rican7/retry/backoff"
 	"github.com/Rican7/retry/strategy"
@@ -248,6 +250,8 @@ func getProvider(provider, ak, regionId string) (cloud.Provider, error) {
 		client, err = alibaba.New(ak, sk, regionId)
 	case cloud.HuaweiCloud:
 		client, err = huawei.New(ak, sk, regionId)
+	case cloud.AwsCloud:
+		client, err = aws.New(ak, sk, regionId)
 	default:
 		return nil, errors.New("invalid provider")
 	}

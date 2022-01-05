@@ -8,8 +8,10 @@ require (
 	github.com/alibabacloud-go/tea v1.1.15
 	github.com/alibabacloud-go/vpc-20160428/v2 v2.0.0
 	github.com/allegro/bigcache v1.2.1
+	github.com/aws/aws-sdk-go v1.42.25
 	github.com/gin-contrib/pprof v1.3.0
 	github.com/gin-gonic/gin v1.7.6
+	github.com/google/go-cmp v0.5.5
 	github.com/huaweicloud/huaweicloud-sdk-go-v3 v0.0.71
 	github.com/json-iterator/go v1.1.12
 	github.com/natefinch/lumberjack v2.0.0+incompatible
@@ -36,12 +38,10 @@ require (
 	github.com/alibabacloud-go/openapi-util v0.0.8 // indirect
 	github.com/alibabacloud-go/tea-utils v1.3.9 // indirect
 	github.com/aliyun/credentials-go v1.1.2 // indirect
-	github.com/aws/aws-sdk-go v1.42.25 // indirect
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
 	github.com/go-logr/logr v1.2.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/google/go-cmp v0.5.5 // indirect
 	github.com/google/gofuzz v1.1.0 // indirect
 	github.com/googleapis/gnostic v0.5.5 // indirect
 	github.com/imdario/mergo v0.3.5 // indirect

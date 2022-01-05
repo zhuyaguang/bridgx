@@ -1,16 +1,25 @@
-package huawei
+package aws
 
 import (
+	"errors"
 	"time"
 
 	"github.com/galaxy-future/BridgX/pkg/cloud"
 	"github.com/huaweicloud/huaweicloud-sdk-go-v3/services/ecs/v2/model"
-	imsModel "github.com/huaweicloud/huaweicloud-sdk-go-v3/services/ims/v2/model"
 )
 
 const (
-	_maxNumEcsPerOperation = 1000
-	_pageSize              = 1000
+	_maxNumEcsPerOperation = 100
+	_pageSize              = 100
+
+	_filterNameLocation     = "location"
+	_locationTypeNameRegion = "region"
+	_locationTypeNameZone   = "availability-zone"
+	_locationTypeNameZoneId = "availability-zone-id"
+)
+
+var (
+	_errInstanceIdsEmpty = errors.New("at least one instance id")
 )
 
 type prePaidResources struct {
@@ -34,10 +43,10 @@ var _ecsPeriodType = map[string]model.PrePaidServerExtendParamPeriodType{
 	"Year":  model.GetPrePaidServerExtendParamPeriodTypeEnum().YEAR,
 }
 
-var _imageType = map[string]imsModel.ListImagesRequestImagetype{
-	cloud.ImageGlobal:  imsModel.GetListImagesRequestImagetypeEnum().GOLD,
-	cloud.ImageShared:  imsModel.GetListImagesRequestImagetypeEnum().SHARED,
-	cloud.ImagePrivate: imsModel.GetListImagesRequestImagetypeEnum().PRIVATE,
+var _imageType = map[string]string{
+	cloud.ImageGlobal:  "amazon",
+	cloud.ImageShared:  "aws-marketplace",
+	cloud.ImagePrivate: "self",
 }
 
 var _rootDiskCategory = map[string]model.PrePaidServerRootVolumeVolumetype{
@@ -78,18 +87,12 @@ var _ecsChargeType = map[string]string{
 }
 
 var _ecsStatus = map[string]string{
-	"BUILD":         cloud.EcsBuilding,
-	"REBUILD":       cloud.EcsBuilding,
-	"REBOOT":        cloud.EcsStarting,
-	"HARD_REBOOT":   cloud.EcsStarting,
-	"RESIZE":        cloud.EcsStarting,
-	"REVERT_RESIZE": cloud.EcsStarting,
-	"VERIFY_RESIZE": cloud.EcsStarting,
-	"MIGRATING":     cloud.EcsRunning,
-	"ACTIVE":        cloud.EcsRunning,
-	"SHUTOFF":       cloud.EcsStopped,
-	"ERROR":         cloud.EcsAbnormal,
-	"DELETED":       cloud.EcsDeleted,
+	"pending":       cloud.EcsBuilding,
+	"running":       cloud.EcsRunning,
+	"shutting-down": cloud.EcsStopped,
+	"terminated":    cloud.EcsAbnormal,
+	"stopping":      cloud.EcsStopping,
+	"stopped":       cloud.EcsStopped,
 }
 
 var _insTypeStat = map[string]string{
@@ -101,9 +104,9 @@ var _insTypeStat = map[string]string{
 	"sellout":   cloud.InsTypeSellOut,
 }
 
-var _secGrpRuleDirection = map[string]string{
-	"ingress": cloud.SecGroupRuleIn,
-	"egress":  cloud.SecGroupRuleOut,
+var _secGrpRuleDirection = map[bool]string{
+	false: cloud.SecGroupRuleIn,
+	true:  cloud.SecGroupRuleOut,
 }
 
 var _osType = map[string]string{
@@ -113,13 +116,16 @@ var _osType = map[string]string{
 }
 
 var _vpcStatus = map[string]string{
-	"\"CREATING\"\n": cloud.VPCStatusPending,
-	"\"OK\"\n":       cloud.VPCStatusAvailable,
-	"\"ERROR\"\n":    cloud.VPCStatusAbnormal,
+	"pending":   cloud.VPCStatusPending,
+	"available": cloud.VPCStatusAvailable,
 }
 
 var _subnetStatus = map[string]string{
-	"\"UNKNOWN\"\n": cloud.SubnetPending,
-	"\"ACTIVE\"\n":  cloud.SubnetAvailable,
-	"\"ERROR\"\n":   cloud.SubnetAbnormal,
+	"pending":   cloud.VPCStatusPending,
+	"available": cloud.VPCStatusAvailable,
+}
+
+var _subnetIsDefault = map[bool]int{
+	false: 0,
+	true:  1,
 }
