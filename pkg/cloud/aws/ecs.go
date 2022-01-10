@@ -3,6 +3,8 @@ package aws
 import (
 	"strings"
 
+	"github.com/aws/aws-sdk-go/aws/awserr"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/galaxy-future/BridgX/internal/logs"
@@ -20,7 +22,7 @@ func (p *AwsCloud) BatchCreate(m cloud.Params, num int) ([]string, error) {
 	}
 	var blockDeviceMappings = make([]*ec2.BlockDeviceMapping, 0, len(m.Disks.DataDisk))
 	blockDeviceMappings = append(blockDeviceMappings, &ec2.BlockDeviceMapping{
-		//DeviceName: "",
+		DeviceName: aws.String("/dev/sda1"),
 		Ebs: &ec2.EbsBlockDevice{
 			DeleteOnTermination: aws.Bool(true),
 			VolumeType:          aws.String(m.Disks.SystemDisk.Category),
@@ -29,7 +31,9 @@ func (p *AwsCloud) BatchCreate(m cloud.Params, num int) ([]string, error) {
 	})
 	for _, disk := range m.Disks.DataDisk {
 		blockDeviceMappings = append(blockDeviceMappings, &ec2.BlockDeviceMapping{
+			DeviceName: aws.String("/dev/sdb"),
 			Ebs: &ec2.EbsBlockDevice{
+				Iops:                aws.Int64(4000),
 				DeleteOnTermination: aws.Bool(true),
 				VolumeType:          aws.String(disk.Category),
 				VolumeSize:          aws.Int64(int64(disk.Size)),
@@ -59,7 +63,11 @@ func (p *AwsCloud) BatchCreate(m cloud.Params, num int) ([]string, error) {
 
 	result, err := p.ec2Client.RunInstances(input)
 	if err != nil {
-		logs.Logger.Errorf("BatchCreate AwsCloud failed.err: [%v] req[%v]", err, m)
+		// DryRun success
+		if aerr, ok := err.(awserr.Error); ok && strings.EqualFold(aerr.Code(), _errCodeDryRunOperation) {
+			return []string{}, nil
+		}
+		logs.Logger.Errorf("BatchCreate AwsCloud failed. err:[%v] req:[%v]", err, m)
 		return []string{}, err
 	}
 	var instanceIds = make([]string, 0, len(result.Instances))
@@ -69,6 +77,7 @@ func (p *AwsCloud) BatchCreate(m cloud.Params, num int) ([]string, error) {
 	return instanceIds, nil
 }
 
+// GetInstances output missing field: ExpireAt、Network.InternetChargeType、Network.InternetMaxBandwidthOut、Network.InternetIpType
 func (p *AwsCloud) GetInstances(ids []string) (instances []cloud.Instance, err error) {
 	idNum := len(ids)
 	if idNum < 1 {
@@ -82,7 +91,7 @@ func (p *AwsCloud) GetInstances(ids []string) (instances []cloud.Instance, err e
 		}
 		result, err := p.ec2Client.DescribeInstances(input)
 		if err != nil {
-			logs.Logger.Errorf("GetInstances AwsCloud failed.err: [%v] req[%v]", err, ids)
+			logs.Logger.Errorf("GetInstances AwsCloud failed.err:[%v] req:[%v]", err, ids)
 			return []cloud.Instance{}, nil
 		}
 		for _, reservation := range result.Reservations {
@@ -90,32 +99,12 @@ func (p *AwsCloud) GetInstances(ids []string) (instances []cloud.Instance, err e
 		}
 	}
 	for _, instance := range awsInstances {
-		var securityGroupIds = make([]string, 0, len(instance.SecurityGroups))
-		for _, securityGroup := range instance.SecurityGroups {
-			securityGroupIds = append(securityGroupIds, *securityGroup.GroupId)
-		}
-		instances = append(instances, cloud.Instance{
-			Id: *instance.InstanceId,
-			//CostWay: ,
-			Provider: cloud.AwsCloud,
-			IpInner:  *instance.PrivateIpAddress,
-			IpOuter:  *instance.PublicIpAddress,
-			Network: &cloud.Network{
-				VpcId:         *instance.VpcId,
-				SubnetId:      *instance.SubnetId,
-				SecurityGroup: strings.Join(securityGroupIds, ","),
-				//InternetChargeType: ,
-				//InternetMaxBandwidthOut: ,
-				//InternetIpType:
-			},
-			ImageId: *instance.ImageId,
-			Status:  _ecsStatus[*instance.State.Name],
-			//ExpireAt: in,
-		})
+		instances = append(instances, buildInstance(instance))
 	}
 	return instances, nil
 }
 
+// GetInstancesByTags output missing field: ExpireAt、Network.InternetChargeType、Network.InternetMaxBandwidthOut、Network.InternetIpType
 func (p *AwsCloud) GetInstancesByTags(regionId string, tags []cloud.Tag) (instances []cloud.Instance, err error) {
 	pageSize := _pageSize * 10
 	var awsInstances = make([]*ec2.Instance, 0, pageSize)
@@ -138,30 +127,34 @@ func (p *AwsCloud) GetInstancesByTags(regionId string, tags []cloud.Tag) (instan
 		return output.NextToken != nil
 	})
 	for _, instance := range awsInstances {
-		var securityGroupIds = make([]string, 0, len(instance.SecurityGroups))
-		for _, securityGroup := range instance.SecurityGroups {
-			securityGroupIds = append(securityGroupIds, *securityGroup.GroupId)
-		}
-		instances = append(instances, cloud.Instance{
-			Id: *instance.InstanceId,
-			//CostWay: ,
-			Provider: cloud.AwsCloud,
-			IpInner:  *instance.PrivateIpAddress,
-			IpOuter:  *instance.PublicIpAddress,
-			Network: &cloud.Network{
-				VpcId:         *instance.VpcId,
-				SubnetId:      *instance.SubnetId,
-				SecurityGroup: strings.Join(securityGroupIds, ","),
-				//InternetChargeType: ,
-				//InternetMaxBandwidthOut: ,
-				//InternetIpType:
-			},
-			ImageId: *instance.ImageId,
-			Status:  _ecsStatus[*instance.State.Name],
-			//ExpireAt: in,
-		})
+		instances = append(instances, buildInstance(instance))
 	}
 	return instances, nil
+}
+
+func buildInstance(instance *ec2.Instance) cloud.Instance {
+	var securityGroupIds = make([]string, 0, len(instance.SecurityGroups))
+	for _, securityGroup := range instance.SecurityGroups {
+		securityGroupIds = append(securityGroupIds, *securityGroup.GroupId)
+	}
+	return cloud.Instance{
+		Id:       aws.StringValue(instance.InstanceId),
+		CostWay:  cloud.InstanceChargeTypePrePaid,
+		Provider: cloud.AwsCloud,
+		IpInner:  aws.StringValue(instance.PrivateIpAddress),
+		IpOuter:  aws.StringValue(instance.PublicIpAddress),
+		Network: &cloud.Network{
+			VpcId:         aws.StringValue(instance.VpcId),
+			SubnetId:      aws.StringValue(instance.SubnetId),
+			SecurityGroup: strings.Join(securityGroupIds, ","),
+			//InternetChargeType: ,
+			//InternetMaxBandwidthOut: ,
+			//InternetIpType:
+		},
+		ImageId: aws.StringValue(instance.ImageId),
+		Status:  _ecsStatus[aws.StringValue(instance.State.Name)],
+		//ExpireAt: in,
+	}
 }
 
 func (p *AwsCloud) GetInstancesByCluster(regionId, clusterName string) (instances []cloud.Instance, err error) {
@@ -185,7 +178,7 @@ func (p *AwsCloud) BatchDelete(ids []string, regionId string) error {
 		//TODO
 		_, err := p.ec2Client.TerminateInstances(input)
 		if err != nil {
-			logs.Logger.Errorf("BatchDelete AwsCloud failed.err: [%v] req[%v]", err, ids)
+			logs.Logger.Errorf("BatchDelete AwsCloud failed.err:[%v] req:[%v]", err, ids)
 			return err
 		}
 	}
@@ -203,10 +196,9 @@ func (p *AwsCloud) StartInstances(ids []string) error {
 		input := &ec2.StartInstancesInput{
 			InstanceIds: aws.StringSlice(onceIds),
 		}
-		//TODO
 		_, err := p.ec2Client.StartInstances(input)
 		if err != nil {
-			logs.Logger.Errorf("StartInstances AwsCloud failed.err: [%v] req[%v]", err, ids)
+			logs.Logger.Errorf("StartInstances AwsCloud failed.err:[%v] req:[%v]", err, ids)
 			return err
 		}
 	}
@@ -224,10 +216,9 @@ func (p *AwsCloud) StopInstances(ids []string) error {
 		input := &ec2.StopInstancesInput{
 			InstanceIds: aws.StringSlice(onceIds),
 		}
-		//TODO
 		_, err := p.ec2Client.StopInstances(input)
 		if err != nil {
-			logs.Logger.Errorf("StopInstances AwsCloud failed.err: [%v] req[%v]", err, ids)
+			logs.Logger.Errorf("StopInstances AwsCloud failed.err:[%v] req:[%v]", err, ids)
 			return err
 		}
 	}
@@ -244,7 +235,7 @@ func (p *AwsCloud) GetZones(req cloud.GetZonesRequest) (cloud.GetZonesResponse, 
 	}
 	result, err := p.ec2Client.DescribeAvailabilityZones(input)
 	if err != nil {
-		logs.Logger.Errorf("GetZones AwsCloud failed.err: [%v] req[%v]", err, req)
+		logs.Logger.Errorf("GetZones AwsCloud failed.err:[%v] req:[%v]", err, req)
 		return cloud.GetZonesResponse{}, nil
 	}
 	var zones = make([]cloud.Zone, 0, len(result.AvailabilityZones))
@@ -257,7 +248,7 @@ func (p *AwsCloud) GetZones(req cloud.GetZonesRequest) (cloud.GetZonesResponse, 
 	return cloud.GetZonesResponse{Zones: zones}, nil
 }
 
-//DescribeAvailableResource miss status
+//DescribeAvailableResource output missing field: Family
 func (p *AwsCloud) DescribeAvailableResource(req cloud.DescribeAvailableResourceRequest) (cloud.DescribeAvailableResourceResponse, error) {
 	pageSize := _pageSize * 10
 	var awsInstanceTypes = make([]*ec2.InstanceTypeOffering, 0, pageSize)
@@ -268,29 +259,26 @@ func (p *AwsCloud) DescribeAvailableResource(req cloud.DescribeAvailableResource
 		LocationType: aws.String(_locationTypeNameZoneId),
 		MaxResults:   aws.Int64(int64(pageSize)),
 	}
+	var zoneIds = make([]*string, 0, pageSize)
 	if req.ZoneId != "" {
-		input.Filters = append(filters, &ec2.Filter{
-			Name:   aws.String(_filterNameLocation),
-			Values: []*string{&req.ZoneId},
-		})
+		zoneIds = append(zoneIds, &req.ZoneId)
 		zoneInsTypeMap[req.ZoneId] = []cloud.InstanceType{}
 	} else {
 		zones, err := p.GetZones(cloud.GetZonesRequest{
 			RegionId: req.RegionId,
 		})
 		if err != nil {
-			return cloud.DescribeAvailableResourceResponse{}, nil
+			return cloud.DescribeAvailableResourceResponse{}, err
 		}
-		var zoneIds = make([]*string, 0, len(zones.Zones))
 		for _, zone := range zones.Zones {
 			zoneIds = append(zoneIds, aws.String(zone.ZoneId))
 			zoneInsTypeMap[zone.ZoneId] = []cloud.InstanceType{}
 		}
-		input.Filters = append(filters, &ec2.Filter{
-			Name:   aws.String(_filterNameLocation),
-			Values: zoneIds,
-		})
 	}
+	input.Filters = append(filters, &ec2.Filter{
+		Name:   aws.String(_filterNameLocation),
+		Values: zoneIds,
+	})
 
 	//auto page
 	err := p.ec2Client.DescribeInstanceTypeOfferingsPages(input, func(output *ec2.DescribeInstanceTypeOfferingsOutput, b bool) bool {
@@ -299,7 +287,7 @@ func (p *AwsCloud) DescribeAvailableResource(req cloud.DescribeAvailableResource
 	})
 	if err != nil {
 		logs.Logger.Errorf("DescribeAvailableResource AwsCloud failed.err: [%v] req[%v]", err, req)
-		return cloud.DescribeAvailableResourceResponse{}, nil
+		return cloud.DescribeAvailableResourceResponse{}, err
 	}
 	for _, instanceType := range awsInstanceTypes {
 		instanceTypes = append(instanceTypes, aws.StringValue(instanceType.InstanceType))
@@ -315,7 +303,7 @@ func (p *AwsCloud) DescribeAvailableResource(req cloud.DescribeAvailableResource
 	}
 	instanceTypeInfos, err := p.DescribeInstanceTypes(cloud.DescribeInstanceTypesRequest{TypeName: instanceTypes})
 	if err != nil {
-		return cloud.DescribeAvailableResourceResponse{}, nil
+		return cloud.DescribeAvailableResourceResponse{}, err
 	}
 	var infoMap = make(map[string]cloud.InstanceInfo, len(instanceTypeInfos.Infos))
 	for _, info := range instanceTypeInfos.Infos {
@@ -333,7 +321,7 @@ func (p *AwsCloud) DescribeAvailableResource(req cloud.DescribeAvailableResource
 	return cloud.DescribeAvailableResourceResponse{InstanceTypes: zoneInsTypeMap}, nil
 }
 
-//DescribeInstanceTypes miss Family
+//DescribeInstanceTypes output missing field: Family
 func (p *AwsCloud) DescribeInstanceTypes(req cloud.DescribeInstanceTypesRequest) (cloud.DescribeInstanceTypesResponse, error) {
 	var instanceTypeInfos = make([]cloud.InstanceInfo, 0, _pageSize)
 	var awsInstanceTypeInfos = make([]*ec2.InstanceTypeInfo, 0, _pageSize)
@@ -344,14 +332,14 @@ func (p *AwsCloud) DescribeInstanceTypes(req cloud.DescribeInstanceTypesRequest)
 		}
 		result, err := p.ec2Client.DescribeInstanceTypes(input)
 		if err != nil {
-			logs.Logger.Errorf("DescribeInstanceTypes AwsCloud failed.err: [%v] req[%v]", err, req)
-			return cloud.DescribeInstanceTypesResponse{}, nil
+			logs.Logger.Errorf("DescribeInstanceTypes AwsCloud failed.err:[%v] req:[%v]", err, req)
+			return cloud.DescribeInstanceTypesResponse{}, err
 		}
 		awsInstanceTypeInfos = append(awsInstanceTypeInfos, result.InstanceTypes...)
 	}
 	for _, instanceTypeInfo := range awsInstanceTypeInfos {
 		instanceTypeInfos = append(instanceTypeInfos, cloud.InstanceInfo{
-			Core:   int(aws.Int64Value(instanceTypeInfo.VCpuInfo.DefaultCores)),
+			Core:   int(aws.Int64Value(instanceTypeInfo.VCpuInfo.DefaultVCpus)),
 			Memory: int(aws.Int64Value(instanceTypeInfo.MemoryInfo.SizeInMiB) / 1024),
 			//Family:      "",
 			InsTypeName: *instanceTypeInfo.InstanceType,

@@ -20,84 +20,73 @@ func (p *AwsCloud) CreateSecurityGroup(req cloud.CreateSecurityGroupRequest) (cl
 
 	output, err := p.ec2Client.CreateSecurityGroup(input)
 	if err != nil {
-		logs.Logger.Errorf("CreateSecurityGroup AwsCloud failed.err: [%v] req[%v]", err, req)
+		logs.Logger.Errorf("CreateSecurityGroup AwsCloud failed.err:[%v] req:[%v]", err, req)
 		return cloud.CreateSecurityGroupResponse{}, err
 	}
 	return cloud.CreateSecurityGroupResponse{SecurityGroupId: *output.GroupId}, nil
 }
 
-// AddIngressSecurityGroupRule 入参各云得统一
+// AddIngressSecurityGroupRule req:PrefixListId isn't use
 func (p *AwsCloud) AddIngressSecurityGroupRule(req cloud.AddSecurityGroupRuleRequest) error {
 	input := &ec2.AuthorizeSecurityGroupIngressInput{
-		GroupId:    aws.String(req.SecurityGroupId),
-		IpProtocol: aws.String(req.IpProtocol),
+		GroupId: aws.String(req.SecurityGroupId),
 		IpPermissions: []*ec2.IpPermission{
 			{
-				FromPort: aws.Int64(int64(req.PortFrom)),
-				//IpProtocol: aws.String("tcp"),
+				FromPort:   aws.Int64(int64(req.PortFrom)),
+				IpProtocol: aws.String(req.IpProtocol),
 				IpRanges: []*ec2.IpRange{
 					{
 						CidrIp: aws.String(req.CidrIp),
-						//Description: aws.String("SSH access from the LA office"),
 					},
 				},
 				ToPort: aws.Int64(int64(req.PortTo)),
-				UserIdGroupPairs: []*ec2.UserIdGroupPair{
-					{
-						GroupId: aws.String(req.GroupId),
-						VpcId:   aws.String(req.VpcId),
-						//Description: aws.String("HTTP access from other instances"),
-					},
-				},
+				//UserIdGroupPairs: []*ec2.UserIdGroupPair{
+				//	{
+				//		GroupId: aws.String(req.SecurityGroupId),
+				//		VpcId:   aws.String(req.VpcId),
+				//		//Description: aws.String("HTTP access from other instances"),
+				//	},
+				//},
 			},
 		},
 	}
 	_, err := p.ec2Client.AuthorizeSecurityGroupIngress(input)
 	if err != nil {
-		logs.Logger.Errorf("AddIngressSecurityGroupRule AwsCloud failed.err: [%v] req[%v]", err, req)
+		logs.Logger.Errorf("AddIngressSecurityGroupRule AwsCloud failed.err:[%v] req:[%v]", err, req)
 		return err
 	}
-	//if !*result.Return {
-	//	logs.Logger.Errorf("AddIngressSecurityGroupRule AwsCloud failed. req[%v]", req)
-	//	return err
-	//}
 	return nil
 }
 
+// AddEgressSecurityGroupRule req:PrefixListId isn't use
 func (p *AwsCloud) AddEgressSecurityGroupRule(req cloud.AddSecurityGroupRuleRequest) error {
 	input := &ec2.AuthorizeSecurityGroupEgressInput{
-		GroupId:    aws.String(req.SecurityGroupId),
-		IpProtocol: aws.String(req.IpProtocol),
+		GroupId: aws.String(req.SecurityGroupId),
 		IpPermissions: []*ec2.IpPermission{
 			{
-				FromPort: aws.Int64(int64(req.PortFrom)),
-				//IpProtocol: aws.String("tcp"),
+				FromPort:   aws.Int64(int64(req.PortFrom)),
+				IpProtocol: aws.String(req.IpProtocol),
 				IpRanges: []*ec2.IpRange{
 					{
 						CidrIp: aws.String(req.CidrIp),
-						//Description: aws.String("SSH access from the LA office"),
 					},
 				},
 				ToPort: aws.Int64(int64(req.PortTo)),
-				UserIdGroupPairs: []*ec2.UserIdGroupPair{
-					{
-						GroupId: aws.String(req.GroupId),
-						VpcId:   aws.String(req.VpcId),
-						//Description: aws.String("HTTP access from other instances"),
-					},
-				},
+				//UserIdGroupPairs: []*ec2.UserIdGroupPair{
+				//	{
+				//		GroupId: aws.String(req.SecurityGroupId),
+				//		VpcId:   aws.String(req.VpcId),
+				//		//Description: aws.String("HTTP access from other instances"),
+				//	},
+				//},
 			},
 		},
 	}
 	_, err := p.ec2Client.AuthorizeSecurityGroupEgress(input)
 	if err != nil {
-		logs.Logger.Errorf("AddEgressSecurityGroupRule AwsCloud failed.err: [%v] req[%v]", err, req)
+		logs.Logger.Errorf("AddEgressSecurityGroupRule AwsCloud failed. err:[%v] req:[%v]", err, req)
 		return err
 	}
-	//if !*result.Return {
-	//	logs.Logger.Errorf("AddEgressSecurityGroupRule AwsCloud failed. req[%v]", req)
-	//	return errors.New("")
-	//}
 	return nil
 }
 
@@ -119,25 +108,47 @@ func (p *AwsCloud) DescribeSecurityGroups(req cloud.DescribeSecurityGroupsReques
 		return output.NextToken != nil
 	})
 	if err != nil {
-		logs.Logger.Errorf("DescribeSecurityGroups AwsCloud failed.err: [%v] req[%v]", err, req)
+		logs.Logger.Errorf("DescribeSecurityGroups AwsCloud failed.err:[%v] req:[%v]", err, req)
 		return cloud.DescribeSecurityGroupsResponse{}, err
 	}
 	if len(awsSecurityGroups) == 0 {
-		logs.Logger.Warnf("DescribeSecurityGroups AwsCloud failed. req[%v] len(awsSubnets) is zero", req)
+		logs.Logger.Warnf("DescribeSecurityGroups AwsCloud failed. req:[%v] len(awsSubnets) is zero", req)
 		return cloud.DescribeSecurityGroupsResponse{}, nil
 	}
 	var securityGroups = make([]cloud.SecurityGroup, 0, len(awsSecurityGroups))
-	for _, group := range awsSecurityGroups {
-		securityGroups = append(securityGroups, cloud.SecurityGroup{
-			SecurityGroupId:   aws.StringValue(group.GroupId),
-			SecurityGroupName: aws.StringValue(group.GroupName),
-			SecurityGroupType: "normal",
-			VpcId:             req.VpcId,
-			RegionId:          req.RegionId,
-			//CreateAt: "",
-		})
+	for _, awsGroup := range awsSecurityGroups {
+		securityGroups = append(securityGroups, buildSecurityGroup(req.RegionId, awsGroup))
 	}
 	return cloud.DescribeSecurityGroupsResponse{Groups: securityGroups}, nil
+}
+
+func (p *AwsCloud) describeSecurityGroups(regionId, groupId string) (cloud.SecurityGroup, error) {
+	input := &ec2.DescribeSecurityGroupsInput{
+		GroupIds: []*string{aws.String(groupId)},
+	}
+	output, err := p.ec2Client.DescribeSecurityGroups(input)
+	if err != nil {
+		logs.Logger.Errorf("DescribeSecurityGroups AwsCloud failed. err:[%v] groupId:[%v]", err, groupId)
+		return cloud.SecurityGroup{}, err
+	}
+	if output == nil || len(output.SecurityGroups) == 0 {
+		logs.Logger.Warnf("DescribeSecurityGroups AwsCloud failed. groupId:[%v] output:[%v]", groupId, output)
+		return cloud.SecurityGroup{}, nil
+	}
+	awsGroup := output.SecurityGroups[0]
+	securityGroup := buildSecurityGroup(regionId, awsGroup)
+	return securityGroup, nil
+}
+
+func buildSecurityGroup(regionId string, awsGroup *ec2.SecurityGroup) cloud.SecurityGroup {
+	return cloud.SecurityGroup{
+		SecurityGroupId:   aws.StringValue(awsGroup.GroupId),
+		SecurityGroupName: aws.StringValue(awsGroup.GroupName),
+		SecurityGroupType: "normal",
+		VpcId:             aws.StringValue(awsGroup.VpcId),
+		RegionId:          regionId,
+		//CreateAt: "",
+	}
 }
 
 // DescribeGroupRules output missing field: CreateAt
@@ -158,18 +169,18 @@ func (p *AwsCloud) DescribeGroupRules(req cloud.DescribeGroupRulesRequest) (clou
 		return output.NextToken != nil
 	})
 	if err != nil {
-		logs.Logger.Errorf("DescribeGroupRules AwsCloud failed.err: [%v] req[%v]", err, req)
+		logs.Logger.Errorf("DescribeGroupRules AwsCloud failed.err:[%v] req:[%v]", err, req)
 		return cloud.DescribeGroupRulesResponse{}, err
 	}
 	if len(awsSecurityGroupRules) == 0 {
-		logs.Logger.Errorf("DescribeGroupRules AwsCloud failed. req[%v] len(awsSecurityGroupRules) is zero", req)
+		logs.Logger.Errorf("DescribeGroupRules AwsCloud failed. req:[%v] len(awsSecurityGroupRules) is zero", req)
 		return cloud.DescribeGroupRulesResponse{}, nil
 	}
 	var rules = make([]cloud.SecurityGroupRule, 0, len(awsSecurityGroupRules))
 	for _, rule := range awsSecurityGroupRules {
 		var vpcId string
-		if rule.ReferencedGroupInfo != nil {
-			vpcId = aws.StringValue(rule.ReferencedGroupInfo.VpcId)
+		if securityGroup, err := p.describeSecurityGroups(req.RegionId, req.SecurityGroupId); err == nil {
+			vpcId = securityGroup.VpcId
 		}
 		rules = append(rules, cloud.SecurityGroupRule{
 			VpcId:           vpcId,

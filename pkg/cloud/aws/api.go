@@ -1,6 +1,8 @@
 package aws
 
 import (
+	"strings"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -19,6 +21,7 @@ func New(ak, sk, regionId string) (*AwsCloud, error) {
 		Region:      aws.String(regionId),
 	})
 	if err != nil {
+		logs.Logger.Errorf("AwsCloud new session failed. err:[%v]", err)
 		return nil, err
 	}
 	svc := ec2.New(sess)
@@ -29,60 +32,57 @@ func (AwsCloud) ProviderType() string {
 	return cloud.AwsCloud
 }
 
-// GetRegions miss LocalName
+// GetRegions output missing field: LocalName
 func (p *AwsCloud) GetRegions() (cloud.GetRegionsResponse, error) {
 	input := &ec2.DescribeRegionsInput{}
-	result, err := p.ec2Client.DescribeRegions(input)
+	output, err := p.ec2Client.DescribeRegions(input)
 	if err != nil {
-		logs.Logger.Errorf("GetRegions AwsCloud failed.err: [%v]", err)
-		return cloud.GetRegionsResponse{}, nil
+		logs.Logger.Errorf("GetRegions AwsCloud failed. err:[%v]", err)
+		return cloud.GetRegionsResponse{}, err
 	}
-	var regions = make([]cloud.Region, 0, len(result.Regions))
-	for _, region := range result.Regions {
+	var regions = make([]cloud.Region, 0, len(output.Regions))
+	for _, region := range output.Regions {
 		regions = append(regions, cloud.Region{
-			RegionId: *region.RegionName,
+			RegionId: aws.StringValue(region.RegionName),
 			//LocalName: ,
 		})
 	}
 	return cloud.GetRegionsResponse{Regions: regions}, nil
 }
 
-//DescribeImages InsType isn't use
+//DescribeImages req:InsType isn't use
 func (p *AwsCloud) DescribeImages(req cloud.DescribeImagesRequest) (cloud.DescribeImagesResponse, error) {
-	var owners = make([]*string, 0, 1)
-	var filters = make([]*ec2.Filter, 0, 1)
 	var images = make([]cloud.Image, 0, _pageSize)
 	input := &ec2.DescribeImagesInput{
-		Owners: append(owners, aws.String(_imageType[req.ImageType])),
-		Filters: append(filters, &ec2.Filter{
+		Owners: append([]*string{}, aws.String(_imageType[req.ImageType])),
+		Filters: append([]*ec2.Filter{}, &ec2.Filter{
 			Name:   aws.String("state"),
 			Values: []*string{aws.String("available")},
 		}),
 	}
 	result, err := p.ec2Client.DescribeImages(input)
 	if err != nil {
-		logs.Logger.Errorf("DescribeImages AwsCloud failed.err: [%v] req[%v]", err, req)
-		return cloud.DescribeImagesResponse{}, nil
+		logs.Logger.Errorf("DescribeImages AwsCloud failed. err:[%v] req:[%v]", err, req)
+		return cloud.DescribeImagesResponse{}, err
 	}
 	for _, image := range result.Images {
 		images = append(images, cloud.Image{
-			OsType:  *image.Platform,
-			OsName:  *image.Name,
-			ImageId: *image.ImageId,
+			OsType:  formatOsType(aws.StringValue(image.Platform), aws.StringValue(image.PlatformDetails)),
+			OsName:  aws.StringValue(image.Name),
+			ImageId: aws.StringValue(image.ImageId),
 		})
 	}
 	return cloud.DescribeImagesResponse{Images: images}, nil
 }
 
-func (p *AwsCloud) payOrders(orderId string) error {
-
-	return nil
-}
-
-//up to 50 at once
-func (p *AwsCloud) listPrePaidResources(ids []string) (map[string]prePaidResources, error) {
-
-	return nil, nil
+func formatOsType(platfrom, platformDetails string) string {
+	if strings.EqualFold(platfrom, cloud.OsWindows) {
+		return cloud.OsWindows
+	}
+	if strings.ContainsAny(strings.ToLower(platformDetails), cloud.OsLinux) {
+		return cloud.OsLinux
+	}
+	return cloud.OsOther
 }
 
 func (p *AwsCloud) GetOrders(req cloud.GetOrdersRequest) (cloud.GetOrdersResponse, error) {
