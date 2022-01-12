@@ -56,7 +56,7 @@ func (p *AwsCloud) DescribeImages(req cloud.DescribeImagesRequest) (cloud.Descri
 	input := &ec2.DescribeImagesInput{
 		Owners: append([]*string{}, aws.String(_imageType[req.ImageType])),
 		Filters: append([]*ec2.Filter{}, &ec2.Filter{
-			Name:   aws.String("state"),
+			Name:   aws.String(_filterNameState),
 			Values: []*string{aws.String("available")},
 		}),
 	}

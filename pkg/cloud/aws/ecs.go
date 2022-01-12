@@ -33,7 +33,7 @@ func (p *AwsCloud) BatchCreate(m cloud.Params, num int) ([]string, error) {
 		blockDeviceMappings = append(blockDeviceMappings, &ec2.BlockDeviceMapping{
 			DeviceName: aws.String("/dev/sdb"),
 			Ebs: &ec2.EbsBlockDevice{
-				Iops:                aws.Int64(4000),
+				//Iops:                aws.Int64(4000),
 				DeleteOnTermination: aws.Bool(true),
 				VolumeType:          aws.String(disk.Category),
 				VolumeSize:          aws.Int64(int64(disk.Size)),
@@ -44,15 +44,16 @@ func (p *AwsCloud) BatchCreate(m cloud.Params, num int) ([]string, error) {
 		BlockDeviceMappings: blockDeviceMappings,
 		ImageId:             aws.String(m.ImageId),
 		InstanceType:        aws.String(m.InstanceType),
-		MaxCount:            aws.Int64(int64(num)),
-		MinCount:            aws.Int64(int64(num)),
+		//KeyName:             aws.String("chenxudong-key"),
+		MaxCount: aws.Int64(int64(num)),
+		MinCount: aws.Int64(int64(num)),
 		SecurityGroupIds: []*string{
 			aws.String(m.Network.SecurityGroup),
 		},
 		SubnetId: aws.String(m.Network.SubnetId),
 		TagSpecifications: []*ec2.TagSpecification{
 			{
-				ResourceType: aws.String("instance"),
+				ResourceType: aws.String(_resourceTypeInstance),
 				Tags:         tags,
 			},
 		},
@@ -144,10 +145,10 @@ func buildInstance(instance *ec2.Instance) cloud.Instance {
 		IpInner:  aws.StringValue(instance.PrivateIpAddress),
 		IpOuter:  aws.StringValue(instance.PublicIpAddress),
 		Network: &cloud.Network{
-			VpcId:         aws.StringValue(instance.VpcId),
-			SubnetId:      aws.StringValue(instance.SubnetId),
-			SecurityGroup: strings.Join(securityGroupIds, ","),
-			//InternetChargeType: ,
+			VpcId:              aws.StringValue(instance.VpcId),
+			SubnetId:           aws.StringValue(instance.SubnetId),
+			SecurityGroup:      strings.Join(securityGroupIds, ","),
+			InternetChargeType: cloud.BandwidthPayByTraffic,
 			//InternetMaxBandwidthOut: ,
 			//InternetIpType:
 		},
@@ -164,6 +165,7 @@ func (p *AwsCloud) GetInstancesByCluster(regionId, clusterName string) (instance
 	}})
 }
 
+// BatchDelete maybe fail partially
 func (p *AwsCloud) BatchDelete(ids []string, regionId string) error {
 	idNum := len(ids)
 	if idNum < 1 {
@@ -175,7 +177,6 @@ func (p *AwsCloud) BatchDelete(ids []string, regionId string) error {
 		input := &ec2.TerminateInstancesInput{
 			InstanceIds: aws.StringSlice(onceIds),
 		}
-		//TODO
 		_, err := p.ec2Client.TerminateInstances(input)
 		if err != nil {
 			logs.Logger.Errorf("BatchDelete AwsCloud failed.err:[%v] req:[%v]", err, ids)
@@ -226,12 +227,11 @@ func (p *AwsCloud) StopInstances(ids []string) error {
 }
 
 func (p *AwsCloud) GetZones(req cloud.GetZonesRequest) (cloud.GetZonesResponse, error) {
-	var filters = make([]*ec2.Filter, 0, 1)
 	input := &ec2.DescribeAvailabilityZonesInput{
-		Filters: append(filters, &ec2.Filter{
-			Name:   aws.String("region-name"),
+		Filters: []*ec2.Filter{{
+			Name:   aws.String(_filterNameRegionName),
 			Values: []*string{&req.RegionId},
-		}),
+		}},
 	}
 	result, err := p.ec2Client.DescribeAvailabilityZones(input)
 	if err != nil {
@@ -259,7 +259,7 @@ func (p *AwsCloud) DescribeAvailableResource(req cloud.DescribeAvailableResource
 		LocationType: aws.String(_locationTypeNameZoneId),
 		MaxResults:   aws.Int64(int64(pageSize)),
 	}
-	var zoneIds = make([]*string, 0, pageSize)
+	var zoneIds = make([]*string, 0, 64)
 	if req.ZoneId != "" {
 		zoneIds = append(zoneIds, &req.ZoneId)
 		zoneInsTypeMap[req.ZoneId] = []cloud.InstanceType{}

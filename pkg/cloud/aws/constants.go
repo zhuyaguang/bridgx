@@ -14,10 +14,23 @@ const (
 	_locationTypeNameRegion = "region"
 	_locationTypeNameZone   = "availability-zone"
 	_locationTypeNameZoneId = "availability-zone-id"
+
+	_filterNameVpcId      = "vpc-id"
+	_filterNameGroupId    = "group-id"
+	_filterNameRegionName = "region-name"
+	_filterNameState      = "state"
+
+	_resourceTypeVpc      = "vpc"
+	_resourceTypeSubnet   = "subnet"
+	_resourceTypeInstance = "instance"
+
+	_tagKeyVpcName    = "vpc-name"
+	_tagKeyswitchname = "switch-name"
 )
 
 var (
 	_errInstanceIdsEmpty    = errors.New("at least one instance id")
+	_errInvalidParameter    = errors.New("invalid parameter")
 	_errCodeDryRunOperation = "DryRunOperation"
 )
 

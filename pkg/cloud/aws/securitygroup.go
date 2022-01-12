@@ -23,7 +23,7 @@ func (p *AwsCloud) CreateSecurityGroup(req cloud.CreateSecurityGroupRequest) (cl
 		logs.Logger.Errorf("CreateSecurityGroup AwsCloud failed.err:[%v] req:[%v]", err, req)
 		return cloud.CreateSecurityGroupResponse{}, err
 	}
-	return cloud.CreateSecurityGroupResponse{SecurityGroupId: *output.GroupId}, nil
+	return cloud.CreateSecurityGroupResponse{SecurityGroupId: aws.StringValue(output.GroupId)}, nil
 }
 
 // AddIngressSecurityGroupRule req:PrefixListId isn't use
@@ -95,13 +95,10 @@ func (p *AwsCloud) DescribeSecurityGroups(req cloud.DescribeSecurityGroupsReques
 	pageSize := _pageSize * 10
 	var awsSecurityGroups = make([]*ec2.SecurityGroup, 0, pageSize)
 	input := &ec2.DescribeSecurityGroupsInput{
-		Filters: []*ec2.Filter{
-			{
-				Name:   aws.String("vpc-id"),
-				Values: []*string{&req.VpcId},
-			},
-		},
 		MaxResults: aws.Int64(int64(pageSize)),
+	}
+	if req.VpcId != "" {
+		input.Filters = []*ec2.Filter{{Name: aws.String(_filterNameVpcId), Values: []*string{&req.VpcId}}}
 	}
 	err := p.ec2Client.DescribeSecurityGroupsPages(input, func(output *ec2.DescribeSecurityGroupsOutput, b bool) bool {
 		awsSecurityGroups = append(awsSecurityGroups, output.SecurityGroups...)
@@ -158,7 +155,7 @@ func (p *AwsCloud) DescribeGroupRules(req cloud.DescribeGroupRulesRequest) (clou
 	input := &ec2.DescribeSecurityGroupRulesInput{
 		Filters: []*ec2.Filter{
 			{
-				Name:   aws.String("group-id"),
+				Name:   aws.String(_filterNameGroupId),
 				Values: []*string{&req.SecurityGroupId},
 			},
 		},

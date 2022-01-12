@@ -1,8 +1,6 @@
 package aws
 
 import (
-	"errors"
-
 	"github.com/galaxy-future/BridgX/internal/logs"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -16,9 +14,9 @@ func (p *AwsCloud) CreateVPC(req cloud.CreateVpcRequest) (cloud.CreateVpcRespons
 	input := &ec2.CreateVpcInput{
 		CidrBlock: aws.String(req.CidrBlock),
 		TagSpecifications: append([]*ec2.TagSpecification{}, &ec2.TagSpecification{
-			ResourceType: aws.String("vpc"),
+			ResourceType: aws.String(_resourceTypeVpc),
 			Tags: append([]*ec2.Tag{}, &ec2.Tag{
-				Key:   aws.String("vpc-name"),
+				Key:   aws.String(_tagKeyVpcName),
 				Value: aws.String(req.VpcName),
 			}),
 		}),
@@ -42,7 +40,7 @@ func (p *AwsCloud) GetVPC(req cloud.GetVpcRequest) (cloud.GetVpcResponse, error)
 	}
 	if req.VpcId != "" {
 		input.Filters = append([]*ec2.Filter{}, &ec2.Filter{
-			Name:   aws.String("vpc-id"),
+			Name:   aws.String(_filterNameVpcId),
 			Values: []*string{aws.String(req.VpcId)},
 		})
 	} else if req.VpcName != "" {
@@ -51,7 +49,7 @@ func (p *AwsCloud) GetVPC(req cloud.GetVpcRequest) (cloud.GetVpcResponse, error)
 			Values: []*string{aws.String(req.VpcName)},
 		})
 	} else {
-		return cloud.GetVpcResponse{}, errors.New("")
+		return cloud.GetVpcResponse{}, _errInvalidParameter
 	}
 	err := p.ec2Client.DescribeVpcsPages(input, func(output *ec2.DescribeVpcsOutput, b bool) bool {
 		awsVpcs = append(awsVpcs, output.Vpcs...)
@@ -95,7 +93,7 @@ func (p *AwsCloud) DescribeVpcs(req cloud.DescribeVpcsRequest) (cloud.DescribeVp
 func buildVpc(regionId string, awsVpc *ec2.Vpc) cloud.VPC {
 	var vpcName string
 	for _, tag := range awsVpc.Tags {
-		if aws.StringValue(tag.Key) == "vpc-name" {
+		if aws.StringValue(tag.Key) == _tagKeyVpcName {
 			vpcName = aws.StringValue(tag.Value)
 		}
 	}
@@ -117,9 +115,9 @@ func (p *AwsCloud) CreateSwitch(req cloud.CreateSwitchRequest) (cloud.CreateSwit
 		CidrBlock:          aws.String(req.CidrBlock),
 		VpcId:              aws.String(req.VpcId),
 		TagSpecifications: append([]*ec2.TagSpecification{}, &ec2.TagSpecification{
-			ResourceType: aws.String("subnet"),
+			ResourceType: aws.String(_resourceTypeSubnet),
 			Tags: append([]*ec2.Tag{}, &ec2.Tag{
-				Key:   aws.String("switch-name"),
+				Key:   aws.String(_tagKeyswitchname),
 				Value: aws.String(req.VSwitchName),
 			}),
 		}),
@@ -133,6 +131,17 @@ func (p *AwsCloud) CreateSwitch(req cloud.CreateSwitchRequest) (cloud.CreateSwit
 		logs.Logger.Warnf("CreateSwitch AwsCloud failed. req:[%v] output:[%v]", err, req)
 		return cloud.CreateSwitchResponse{}, err
 	}
+	//inputModify := &ec2.ModifySubnetAttributeInput{
+	//	MapPublicIpOnLaunch: &ec2.AttributeBooleanValue{
+	//		Value: aws.Bool(true),
+	//	},
+	//	SubnetId: output.Subnet.SubnetId,
+	//}
+	//_, err = p.ec2Client.ModifySubnetAttribute(inputModify)
+	//if err != nil {
+	//	logs.Logger.Errorf("ModifySubnetAttribute AwsCloud failed. err:[%v] req:[%v]", err, req)
+	//	return cloud.CreateSwitchResponse{}, err
+	//}
 	return cloud.CreateSwitchResponse{SwitchId: aws.StringValue(output.Subnet.SubnetId)}, nil
 }
 
@@ -162,7 +171,7 @@ func (p *AwsCloud) DescribeSwitches(req cloud.DescribeSwitchesRequest) (cloud.De
 	input := &ec2.DescribeSubnetsInput{
 		Filters: []*ec2.Filter{
 			{
-				Name:   aws.String("vpc-id"),
+				Name:   aws.String(_filterNameVpcId),
 				Values: []*string{&req.VpcId},
 			},
 		},
@@ -190,7 +199,7 @@ func (p *AwsCloud) DescribeSwitches(req cloud.DescribeSwitchesRequest) (cloud.De
 func buildSwitch(awsSubnet *ec2.Subnet) cloud.Switch {
 	var switchName string
 	for _, tag := range awsSubnet.Tags {
-		if aws.StringValue(tag.Key) == "switch-name" {
+		if aws.StringValue(tag.Key) == _tagKeyswitchname {
 			switchName = aws.StringValue(tag.Value)
 		}
 	}
