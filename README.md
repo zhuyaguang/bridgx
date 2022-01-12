@@ -49,7 +49,6 @@ BridgX是业界领先的基于全链路Serverless技术的云原生基础架构�
 * (2)macOS系统部署
   - 后端部署,在BridgX目录下运行
     > make docker-run-mac
-  - 系统运行，在浏览器中输入 http://127.0.0.1 可以看到管理控制台界面,初始用户名root和密码为123456。
 
 * (3)Linux安装部署
   - 以下步骤请使用 root用户 或有sudo权限的用户 sudo su - 切换到root用户后执行。
