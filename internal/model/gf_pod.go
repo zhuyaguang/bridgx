@@ -38,7 +38,7 @@ func UpdatePodFromDB(pod *gf_cluster.Pod) error {
 }
 
 func UpdatePodByPodNameFromDB(pod *gf_cluster.Pod) error {
-	if err := clients.WriteDBCli.Where("pod_name = ?", pod.PodName).Updates(map[string]interface{}{"node_name": pod.NodeName, "node_ip": pod.NodeIp, "pod_ip": pod.PodIP, "allocated_cpu_cores": pod.AllocatedCpuCores, "allocated_memory_gi": pod.AllocatedMemoryGi, "allocated_disk_gi": pod.AllocatedDiskGi, "instance_group_id": pod.InstanceGroupId, "instance_group_name": pod.InstanceGroupName, "running_time": pod.RunningTime, "status": pod.Status, "start_time": pod.StartTime, "created_user_id": pod.CreatedUserId}).Error; err != nil {
+	if err := clients.WriteDBCli.Where("pod_name = ? and instance_group_name = ?", pod.PodName, pod.InstanceGroupName).Updates(map[string]interface{}{"node_name": pod.NodeName, "node_ip": pod.NodeIp, "pod_ip": pod.PodIP, "allocated_cpu_cores": pod.AllocatedCpuCores, "allocated_memory_gi": pod.AllocatedMemoryGi, "allocated_disk_gi": pod.AllocatedDiskGi, "instance_group_id": pod.InstanceGroupId, "instance_group_name": pod.InstanceGroupName, "running_time": pod.RunningTime, "status": pod.Status, "start_time": pod.StartTime, "created_user_id": pod.CreatedUserId}).Error; err != nil {
 		logErr("UpdatePodByPodNameFromDB from write db", err)
 		return err
 	}

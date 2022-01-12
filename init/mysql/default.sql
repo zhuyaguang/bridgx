@@ -409,8 +409,8 @@ CREATE TABLE `operation_log` (
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='操作日志';
 
-drop table if exists pod;
-CREATE TABLE `pod` (
+drop table if exists pods;
+CREATE TABLE `pods` (
   `id` INT(11) NOT NULL AUTO_INCREMENT,
   `pod_name` VARCHAR(255) NOT NULL,
   `pod_ip` VARCHAR(255) NOT NULL,
@@ -419,10 +419,12 @@ CREATE TABLE `pod` (
   `allocated_cpu_cores` FLOAT NOT NULL DEFAULT '0',
   `allocated_memory_gi` FLOAT NOT NULL DEFAULT '0',
   `allocated_disk_gi` FLOAT NOT NULL DEFAULT '0',
+  `instance_group_name` VARCHAR(255) NOT NULL,
   `running_time` VARCHAR(255) NOT NULL,
   `status` VARCHAR(255) NOT NULL,
-  `group_id` INT(11) NOT NULL,
+  `instance_group_id` INT(11) NOT NULL,
   `start_time` INT(11) NOT NULL,
+  `created_user_id` INT(11) NOT NULL,
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 

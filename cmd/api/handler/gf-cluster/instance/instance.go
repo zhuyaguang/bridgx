@@ -19,7 +19,7 @@ import (
 	"go.uber.org/zap"
 )
 
-//HandleRestartInstance  c重启实例
+//HandleRestartInstance  重启实例
 func HandleRestartInstance(c *gin.Context) {
 	var request gf_cluster.InstanceRestartRequest
 	err := c.ShouldBindJSON(&request)

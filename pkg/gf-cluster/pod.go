@@ -19,5 +19,5 @@ type Pod struct {
 }
 
 func (Pod) TableName() string {
-	return "pod"
+	return "pods"
 }
