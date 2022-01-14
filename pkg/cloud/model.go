@@ -4,16 +4,6 @@ import (
 	"time"
 )
 
-const (
-	InstanceChargeTypePrePaid  = "PrePaid"
-	InstanceChargeTypePostPaid = "PostPaid"
-)
-
-const (
-	InternetChargeTypePayByTraffic   = "PayByTraffic"
-	InternetChargeTypePayByBandwidth = "PayByBandwidth"
-)
-
 type Params struct {
 	Provider     string
 	InstanceType string
@@ -83,7 +73,6 @@ type CreateVpcResponse struct {
 	VpcId     string
 	RequestId string
 	//ResourceGroupId *string `json:"ResourceGroupId,omitempty" xml:"ResourceGroupId,omitempty"`
-
 }
 
 type GetVpcRequest struct {
@@ -207,8 +196,13 @@ type Zone struct {
 }
 
 type InstanceType struct {
-	InstanceInfo
-	Status string
+	ChargeType  string `json:"charge_type"`
+	IsGpu       bool   `json:"is_gpu"`
+	Core        int    `json:"core"`
+	Memory      int    `json:"memory"`
+	Family      string `json:"instance_type_family"`
+	InsTypeName string `json:"instance_type"`
+	Status      string `json:"status"`
 }
 
 type InstanceInfo struct {
@@ -236,7 +230,7 @@ type DescribeInstanceTypesRequest struct {
 	TypeName []string
 }
 type DescribeInstanceTypesResponse struct {
-	Infos []InstanceInfo
+	Infos []InstanceType
 }
 type DescribeImagesRequest struct {
 	RegionId  string
@@ -249,10 +243,12 @@ type DescribeImagesResponse struct {
 }
 
 type Image struct {
-	OsType    string
-	OsName    string
-	ImageId   string
-	ImageName string
+	Platform  string `json:"platform"`
+	OsType    string `json:"os_type"`
+	OsName    string `json:"os_name"`
+	Size      int    `json:"size"` //GB
+	ImageId   string `json:"image_id"`
+	ImageName string `json:"image_name"`
 }
 
 type DescribeVpcsRequest struct {

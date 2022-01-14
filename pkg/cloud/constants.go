@@ -5,6 +5,7 @@ const (
 
 	AlibabaCloud = "AlibabaCloud"
 	HuaweiCloud  = "HuaweiCloud"
+	TencentCloud = "TencentCloud"
 )
 
 const (
@@ -13,14 +14,19 @@ const (
 )
 
 const (
-	PrePaid  = "PrePaid"
-	PostPaid = "PostPaid"
+	OrderPrePaid  = "PrePaid"
+	OrderPostPaid = "PostPaid"
 )
 
 const (
 	Paid = iota + 1
 	Unpaid
 	Cancelled
+)
+
+const (
+	InstanceChargeTypePrePaid  = "PrePaid"
+	InstanceChargeTypePostPaid = "PostPaid"
 )
 
 const (
@@ -36,6 +42,12 @@ const (
 const (
 	BandwidthPayByTraffic = "PayByTraffic"
 	BandwidthPayByFix     = "PayByBandwidth"
+)
+
+const (
+	InsTypeChargeTypePrePaid  = "PrePaid"
+	InsTypeChargeTypePostPaid = "PostPaid"
+	InsTypeChargeTypeAll      = "All"
 )
 
 const (
