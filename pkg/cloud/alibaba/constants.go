@@ -7,9 +7,15 @@ import (
 const (
 	_subOrderNumPerMain    = 3
 	_maxNumEcsPerOperation = 100
+	_pageSize              = 100
 )
 
 //in
+var _inEcsChargeType = map[string]string{
+	cloud.InstanceChargeTypePrePaid:  "PrePaid",
+	cloud.InstanceChargeTypePostPaid: "PostPaid",
+}
+
 var _imageType = map[string]string{
 	cloud.ImageGlobal:  "system",
 	cloud.ImageShared:  "others",
@@ -25,9 +31,9 @@ var _protocol = map[string]string{
 }
 
 //out
-var _chargeType = map[string]string{
-	"Subscription": cloud.PrePaid,
-	"PayAsYouGo":   cloud.PostPaid,
+var _orderChargeType = map[string]string{
+	"Subscription": cloud.OrderPrePaid,
+	"PayAsYouGo":   cloud.OrderPostPaid,
 }
 
 var _payStatus = map[string]int8{
@@ -44,11 +50,21 @@ var _ecsStatus = map[string]string{
 	"Stopped":  cloud.EcsStopped,
 }
 
+var _insTypeChargeType = map[string]string{
+	"PrePaid":  cloud.InsTypeChargeTypePrePaid,
+	"PostPaid": cloud.InsTypeChargeTypePostPaid,
+}
+
 var _insTypeStat = map[string]string{
 	"WithStock":          cloud.InsTypeAvailable,
 	"ClosedWithStock":    cloud.InsTypeLowStock,
 	"WithoutStock":       cloud.InsTypeAvaSoon,
 	"ClosedWithoutStock": cloud.InsTypeSellOut,
+}
+
+var _bandwidthChargeType = map[string]string{
+	"PayByBandwidth": cloud.BandwidthPayByFix,
+	"PayByTraffic":   cloud.BandwidthPayByTraffic,
 }
 
 var _secGrpRuleDirection = map[string]string{

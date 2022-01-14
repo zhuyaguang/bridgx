@@ -1,16 +1,35 @@
 package tests
 
 import (
+	"errors"
 	"testing"
 	"time"
 
 	"github.com/galaxy-future/BridgX/pkg/cloud"
+	"github.com/galaxy-future/BridgX/pkg/cloud/alibaba"
 	"github.com/galaxy-future/BridgX/pkg/cloud/huawei"
+	"github.com/galaxy-future/BridgX/pkg/cloud/tencent"
 	jsoniter "github.com/json-iterator/go"
 )
 
-func getHuaweiClient() (*huawei.HuaweiCloud, error) {
-	client, err := huawei.New("ak", "sk", "cn-north-4")
+const (
+	_provider = cloud.TencentCloud
+	_region   = ""
+	_zone     = ""
+	_insType  = ""
+)
+
+func getCloudClient() (client cloud.Provider, err error) {
+	switch _provider {
+	case cloud.AlibabaCloud:
+		client, err = alibaba.New("ak", "sk", _region)
+	case cloud.HuaweiCloud:
+		client, err = huawei.New("ak", "sk", _region)
+	case cloud.TencentCloud:
+		client, err = tencent.New("ak", "sk", _region)
+	default:
+		return nil, errors.New("invalid provider")
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -18,25 +37,26 @@ func getHuaweiClient() (*huawei.HuaweiCloud, error) {
 }
 
 func TestCreateIns(t *testing.T) {
-	client, err := getHuaweiClient()
+	client, err := getCloudClient()
 	if err != nil {
 		t.Log(err)
 		return
 	}
 
 	param := cloud.Params{
-		InstanceType: "c6s.large.2",
+		InstanceType: _insType,
 		ImageId:      "",
 		Network: &cloud.Network{
 			VpcId:                   "",
 			SubnetId:                "",
 			SecurityGroup:           "",
-			InternetChargeType:      "traffic",
+			InternetChargeType:      cloud.BandwidthPayByTraffic,
 			InternetMaxBandwidthOut: 0,
 			InternetIpType:          "5_bgp",
 		},
+		Zone: _zone,
 		Disks: &cloud.Disks{
-			SystemDisk: cloud.DiskConf{Size: 40, Category: "SSD"},
+			SystemDisk: cloud.DiskConf{Size: 50, Category: "CLOUD_SSD"},
 			DataDisk:   []cloud.DiskConf{},
 		},
 		Charge: &cloud.Charge{
@@ -52,9 +72,10 @@ func TestCreateIns(t *testing.T) {
 			},
 			{
 				Key:   cloud.ClusterName,
-				Value: "cluster2",
+				Value: "cluster",
 			},
 		},
+		DryRun: true,
 	}
 	res, err := client.BatchCreate(param, 1)
 	if err != nil {
@@ -65,35 +86,35 @@ func TestCreateIns(t *testing.T) {
 }
 
 func TestShowIns(t *testing.T) {
-	client, err := getHuaweiClient()
+	client, err := getCloudClient()
 	if err != nil {
 		t.Log(err)
 		return
 	}
 
 	var res interface{}
-	var resStr []byte
+	var resStr string
 	ids := []string{""}
 	res, err = client.GetInstances(ids)
 	if err != nil {
 		t.Log(err)
 		return
 	}
-	resStr, _ = jsoniter.Marshal(res)
-	t.Log(string(resStr))
+	resStr, _ = jsoniter.MarshalToString(res)
+	t.Log(resStr)
 
 	tags := []cloud.Tag{{Key: cloud.TaskId, Value: "12345"}}
-	res, err = client.GetInstancesByTags("", tags)
+	res, err = client.GetInstancesByTags(_region, tags)
 	if err != nil {
 		t.Log(err)
 		return
 	}
-	resStr, _ = jsoniter.Marshal(res)
-	t.Log(string(resStr))
+	resStr, _ = jsoniter.MarshalToString(res)
+	t.Log(len(res.([]cloud.Instance)), resStr)
 }
 
 func TestCtlIns(t *testing.T) {
-	client, err := getHuaweiClient()
+	client, err := getCloudClient()
 	if err != nil {
 		t.Log(err)
 		return
@@ -112,7 +133,7 @@ func TestCtlIns(t *testing.T) {
 		t.Log(err.Error())
 	}
 
-	time.Sleep(time.Duration(60) * time.Second)
+	time.Sleep(time.Duration(30) * time.Second)
 	err = client.BatchDelete(ids, "")
 	if err != nil {
 		t.Log(err.Error())
@@ -120,57 +141,72 @@ func TestCtlIns(t *testing.T) {
 }
 
 func TestGetResource(t *testing.T) {
-	client, err := getHuaweiClient()
+	client, err := getCloudClient()
 	if err != nil {
 		t.Log(err)
 		return
 	}
 
 	var res interface{}
-	var resStr []byte
+	var resStr string
 	res, err = client.GetRegions()
 	if err != nil {
 		t.Log(err.Error())
 		return
 	}
-	resStr, _ = jsoniter.Marshal(res)
-	t.Log(string(resStr))
+	resStr, _ = jsoniter.MarshalToString(res)
+	t.Log(resStr)
 
-	res, err = client.GetZones(cloud.GetZonesRequest{})
+	res, err = client.GetZones(cloud.GetZonesRequest{
+		RegionId: _region,
+	})
 	if err != nil {
 		t.Log(err.Error())
 		return
 	}
-	resStr, _ = jsoniter.Marshal(res)
-	t.Log(string(resStr))
+	resStr, _ = jsoniter.MarshalToString(res)
+	t.Log(resStr)
 
-	res, err = client.DescribeAvailableResource(cloud.DescribeAvailableResourceRequest{})
+	begin := time.Now()
+	res, err = client.DescribeAvailableResource(cloud.DescribeAvailableResourceRequest{
+		RegionId: _region,
+		ZoneId:   _zone,
+	})
 	if err != nil {
 		t.Log(err.Error())
 		return
 	}
-	resStr, _ = jsoniter.Marshal(res)
-	t.Log(string(resStr))
+	t.Log(time.Since(begin))
+	resStr, _ = jsoniter.MarshalToString(res)
+	t.Log(resStr)
 
-	res, err = client.DescribeInstanceTypes(cloud.DescribeInstanceTypesRequest{TypeName: []string{"1"}})
+	if _insType != "" {
+		res, err = client.DescribeInstanceTypes(cloud.DescribeInstanceTypesRequest{TypeName: []string{_insType}})
+		if err != nil {
+			t.Log(err.Error())
+			return
+		}
+		resStr, _ = jsoniter.MarshalToString(res)
+		t.Log(resStr)
+	}
+
+	begin = time.Now()
+	res, err = client.DescribeImages(cloud.DescribeImagesRequest{
+		RegionId:  _region,
+		InsType:   _insType,
+		ImageType: cloud.ImageGlobal,
+	})
 	if err != nil {
 		t.Log(err.Error())
 		return
 	}
-	resStr, _ = jsoniter.Marshal(res)
-	t.Log(string(resStr))
-
-	res, err = client.DescribeImages(cloud.DescribeImagesRequest{InsType: "c6s.large.2"})
-	if err != nil {
-		t.Log(err.Error())
-		return
-	}
-	resStr, _ = jsoniter.Marshal(res)
-	t.Log(string(resStr))
+	t.Log(time.Since(begin))
+	resStr, _ = jsoniter.MarshalToString(res)
+	t.Log(resStr)
 }
 
 func TestCreateSecGrp(t *testing.T) {
-	client, err := getHuaweiClient()
+	client, err := getCloudClient()
 	if err != nil {
 		t.Log(err)
 		return
@@ -185,12 +221,12 @@ func TestCreateSecGrp(t *testing.T) {
 		t.Log(err.Error())
 		return
 	}
-	resStr, _ := jsoniter.Marshal(res)
-	t.Log(string(resStr))
+	resStr, _ := jsoniter.MarshalToString(res)
+	t.Log(resStr)
 }
 
 func TestAddSecGrpRule(t *testing.T) {
-	client, err := getHuaweiClient()
+	client, err := getCloudClient()
 	if err != nil {
 		t.Log(err)
 		return
@@ -224,14 +260,14 @@ func TestAddSecGrpRule(t *testing.T) {
 }
 
 func TestShowSecGrp(t *testing.T) {
-	client, err := getHuaweiClient()
+	client, err := getCloudClient()
 	if err != nil {
 		t.Log(err)
 		return
 	}
 
 	var res interface{}
-	var resStr []byte
+	var resStr string
 	res, err = client.DescribeSecurityGroups(cloud.DescribeSecurityGroupsRequest{
 		VpcId: "",
 	})
@@ -239,8 +275,8 @@ func TestShowSecGrp(t *testing.T) {
 		t.Log(err.Error())
 		return
 	}
-	resStr, _ = jsoniter.Marshal(res)
-	t.Log(string(resStr))
+	resStr, _ = jsoniter.MarshalToString(res)
+	t.Log(resStr)
 
 	res, err = client.DescribeGroupRules(cloud.DescribeGroupRulesRequest{
 		SecurityGroupId: "",
@@ -249,18 +285,18 @@ func TestShowSecGrp(t *testing.T) {
 		t.Log(err.Error())
 		return
 	}
-	resStr, _ = jsoniter.Marshal(res)
-	t.Log(string(resStr))
+	resStr, _ = jsoniter.MarshalToString(res)
+	t.Log(resStr)
 }
 
 func TestCreateVpc(t *testing.T) {
-	client, err := getHuaweiClient()
+	client, err := getCloudClient()
 	if err != nil {
 		t.Log(err)
 		return
 	}
 
-	var resStr []byte
+	var resStr string
 	vpc, err := client.CreateVPC(cloud.CreateVpcRequest{
 		VpcName:   "vpc1",
 		CidrBlock: "10.8.0.0/16",
@@ -269,19 +305,19 @@ func TestCreateVpc(t *testing.T) {
 		t.Log(err.Error())
 		return
 	}
-	resStr, _ = jsoniter.Marshal(vpc)
-	t.Log(string(resStr))
+	resStr, _ = jsoniter.MarshalToString(vpc)
+	t.Log(resStr)
 }
 
 func TestCreateSubnet(t *testing.T) {
-	client, err := getHuaweiClient()
+	client, err := getCloudClient()
 	if err != nil {
 		t.Log(err)
 		return
 	}
 
 	var res interface{}
-	var resStr []byte
+	var resStr string
 
 	vpcId := ""
 	res, err = client.CreateSwitch(cloud.CreateSwitchRequest{
@@ -295,19 +331,19 @@ func TestCreateSubnet(t *testing.T) {
 		t.Log(err.Error())
 		return
 	}
-	resStr, _ = jsoniter.Marshal(res)
-	t.Log(string(resStr))
+	resStr, _ = jsoniter.MarshalToString(res)
+	t.Log(resStr)
 }
 
 func TestShowVpc(t *testing.T) {
-	client, err := getHuaweiClient()
+	client, err := getCloudClient()
 	if err != nil {
 		t.Log(err)
 		return
 	}
 
 	var res interface{}
-	var resStr []byte
+	var resStr string
 	vpcId := ""
 	swId := ""
 	res, err = client.GetVPC(cloud.GetVpcRequest{
@@ -317,16 +353,16 @@ func TestShowVpc(t *testing.T) {
 		t.Log(err.Error())
 		return
 	}
-	resStr, _ = jsoniter.Marshal(res)
-	t.Log(string(resStr))
+	resStr, _ = jsoniter.MarshalToString(res)
+	t.Log(resStr)
 
 	res, err = client.DescribeVpcs(cloud.DescribeVpcsRequest{})
 	if err != nil {
 		t.Log(err.Error())
 		return
 	}
-	resStr, _ = jsoniter.Marshal(res)
-	t.Log(string(resStr))
+	resStr, _ = jsoniter.MarshalToString(res)
+	t.Log(resStr)
 
 	res, err = client.GetSwitch(cloud.GetSwitchRequest{
 		SwitchId: swId,
@@ -335,8 +371,8 @@ func TestShowVpc(t *testing.T) {
 		t.Log(err.Error())
 		return
 	}
-	resStr, _ = jsoniter.Marshal(res)
-	t.Log(string(resStr))
+	resStr, _ = jsoniter.MarshalToString(res)
+	t.Log(resStr)
 
 	res, err = client.DescribeSwitches(cloud.DescribeSwitchesRequest{
 		VpcId: vpcId,
@@ -345,6 +381,38 @@ func TestShowVpc(t *testing.T) {
 		t.Log(err.Error())
 		return
 	}
-	resStr, _ = jsoniter.Marshal(res)
-	t.Log(string(resStr))
+	resStr, _ = jsoniter.MarshalToString(res)
+	t.Log(resStr)
+}
+
+func TestQueryOrders(t *testing.T) {
+	cli, err := getCloudClient()
+	if err != nil {
+		t.Log(err.Error())
+		return
+	}
+
+	startTime, err := time.Parse("2006-01-02 15:04:05", "2021-11-19 11:40:02")
+	if err != nil {
+		t.Log(startTime, err)
+		return
+	}
+	duration, _ := time.ParseDuration("5m")
+	endTime := startTime.Add(duration)
+	pageNum := 1
+	pageSize := 100
+	for {
+		res, err := cli.GetOrders(cloud.GetOrdersRequest{StartTime: startTime, EndTime: endTime,
+			PageNum: pageNum, PageSize: pageSize})
+		if err != nil {
+			t.Log(err.Error())
+			return
+		}
+		resStr, _ := jsoniter.MarshalToString(res.Orders)
+		t.Log(len(res.Orders), resStr)
+		if len(res.Orders) < pageSize {
+			break
+		}
+		pageNum += 1
+	}
 }

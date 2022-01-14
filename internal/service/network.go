@@ -28,8 +28,9 @@ const (
 	TargetTypeAccount
 	TargetTypeInstanceType
 
-	DefaultRegion       = "cn-qingdao"
-	DefaultRegionHuaWei = "cn-north-4"
+	DefaultRegion        = "cn-qingdao"
+	DefaultRegionHuaWei  = "cn-north-4"
+	DefaultRegionTencent = "ap-beijing"
 )
 
 var H *SimpleTaskHandler
@@ -266,7 +267,10 @@ func updateOrCreateSecurityGroupRules(ctx context.Context, groups []cloud.Securi
 func cloud2ModelVpc(vpcs []cloud.VPC, ak, provider string) []model.Vpc {
 	res := make([]model.Vpc, 0, len(vpcs))
 	for _, vpc := range vpcs {
-		createAt, _ := time.Parse("2006-01-02T15:04:05Z", vpc.CreateAt)
+		createAt, err := time.Parse("2006-01-02T15:04:05Z", vpc.CreateAt)
+		if err != nil {
+			createAt = time.Now()
+		}
 		var sw string
 		if len(vpc.SwitchIds) > 0 {
 			sw = strings.Join(vpc.SwitchIds, ",")
@@ -293,7 +297,10 @@ func cloud2ModelVpc(vpcs []cloud.VPC, ak, provider string) []model.Vpc {
 func cloud2ModelSwitches(switches []cloud.Switch) []model.Switch {
 	res := make([]model.Switch, 0, len(switches))
 	for _, sw := range switches {
-		createAt, _ := time.Parse("2006-01-02T15:04:05Z", sw.CreateAt)
+		createAt, err := time.Parse("2006-01-02T15:04:05Z", sw.CreateAt)
+		if err != nil {
+			createAt = time.Now()
+		}
 		now := time.Now()
 		res = append(res, model.Switch{
 			Base: model.Base{
@@ -316,7 +323,10 @@ func cloud2ModelSwitches(switches []cloud.Switch) []model.Switch {
 func cloud2ModelGroups(groups []cloud.SecurityGroup) []model.SecurityGroup {
 	res := make([]model.SecurityGroup, 0, len(groups))
 	for _, group := range groups {
-		createAt, _ := time.Parse("2006-01-02T15:04:05Z", group.CreateAt)
+		createAt, err := time.Parse("2006-01-02T15:04:05Z", group.CreateAt)
+		if err != nil {
+			createAt = time.Now()
+		}
 		now := time.Now()
 		res = append(res, model.SecurityGroup{
 			Base: model.Base{
@@ -335,7 +345,10 @@ func cloud2ModelGroups(groups []cloud.SecurityGroup) []model.SecurityGroup {
 func cloud2ModelRules(rules []cloud.SecurityGroupRule) []model.SecurityGroupRule {
 	res := make([]model.SecurityGroupRule, 0, len(rules))
 	for _, rule := range rules {
-		createAt, _ := time.Parse("2006-01-02T15:04:05Z", rule.CreateAt)
+		createAt, err := time.Parse("2006-01-02T15:04:05Z", rule.CreateAt)
+		if err != nil {
+			createAt = time.Now()
+		}
 		now := time.Now()
 		res = append(res, model.SecurityGroupRule{
 			Base: model.Base{
@@ -1078,6 +1091,8 @@ func getDefaultRegion(provider string) string {
 		regionId = DefaultRegion
 	case cloud.HuaweiCloud:
 		regionId = DefaultRegionHuaWei
+	case cloud.TencentCloud:
+		regionId = DefaultRegionTencent
 	}
 	return regionId
 }

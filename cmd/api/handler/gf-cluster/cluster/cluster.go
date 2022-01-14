@@ -20,6 +20,7 @@ import (
 	gf_cluster "github.com/galaxy-future/BridgX/pkg/gf-cluster"
 	"github.com/gin-gonic/gin"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/spf13/cast"
 	"go.uber.org/zap"
 )
 
@@ -375,6 +376,26 @@ func HandleListClusterPodsSummary(c *gin.Context) {
 		PageSize:   pageSize,
 		Total:      len(result),
 	}))
+}
+
+//HandleListClusterLogsSummary 获取集群log概述信息
+func HandleListClusterLogsSummary(c *gin.Context) {
+	clusterId := cast.ToInt64(c.Param("clusterId"))
+	if clusterId == 0 {
+		c.JSON(http.StatusBadRequest, gf_cluster.NewFailedResponse("should assign cluster id"))
+		return
+	}
+
+	installStepLogs, err := model.ListClusterInstallStep(clusterId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gf_cluster.NewFailedResponse(err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, gf_cluster.ListClusterLogsResponse{
+		ResponseBase: gf_cluster.NewSuccessResponse(),
+		Logs:         installStepLogs,
+	})
 }
 
 // HandleGetClusterConfigInfoByName 查询单个集群配置信息

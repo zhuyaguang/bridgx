@@ -9,8 +9,7 @@ const (
 	HasNoneIP       = "-"
 	HasNoneInstance = "-"
 
-	Interval = 60
-	Delay    = 5
+	Interval = 18
 	Retry    = 3
 
 	BatchMax = 100
@@ -32,9 +31,6 @@ const (
 )
 
 const (
-	GPU                     = "GPU"
-	CPU                     = "CPU"
-	IsAlibabaCloudGpuType   = "gn"
-	IsHuaweiCloudGpuType    = "G"
-	IsHuaweiCloudGpuTypeTwo = "P"
+	GPU = "GPU"
+	CPU = "CPU"
 )

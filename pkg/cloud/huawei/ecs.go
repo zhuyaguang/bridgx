@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/galaxy-future/BridgX/internal/logs"
@@ -54,17 +55,18 @@ func (p *HuaweiCloud) BatchCreate(m cloud.Params, num int) ([]string, error) {
 	}
 
 	serverbody := &model.PrePaidServer{
-		ImageRef:    m.ImageId,
-		FlavorRef:   m.InstanceType,
-		Name:        fmt.Sprintf("ins%v", time.Now().UnixNano()),
-		AdminPass:   &adminPassServerPrePaidServer,
-		Vpcid:       m.Network.VpcId,
-		Nics:        listNicsServer,
-		Count:       &countServerPrePaidServer,
-		RootVolume:  rootVolumeServer,
-		DataVolumes: &listDataVolumesServer,
-		ServerTags:  &listServerTagsServer,
-		Extendparam: extendParam,
+		ImageRef:         m.ImageId,
+		FlavorRef:        m.InstanceType,
+		Name:             fmt.Sprintf("ins%v", time.Now().UnixNano()),
+		AdminPass:        &adminPassServerPrePaidServer,
+		Vpcid:            m.Network.VpcId,
+		Nics:             listNicsServer,
+		Count:            &countServerPrePaidServer,
+		RootVolume:       rootVolumeServer,
+		DataVolumes:      &listDataVolumesServer,
+		AvailabilityZone: &m.Zone,
+		ServerTags:       &listServerTagsServer,
+		Extendparam:      extendParam,
 	}
 	if m.Network.InternetMaxBandwidthOut > 0 {
 		sizeBandwith := int32(m.Network.InternetMaxBandwidthOut)
@@ -96,12 +98,18 @@ func (p *HuaweiCloud) BatchCreate(m cloud.Params, num int) ([]string, error) {
 	request.Body = &model.CreateServersRequestBody{
 		Server: serverbody,
 	}
+	if m.DryRun {
+		request.Body.DryRun = &m.DryRun
+	}
 	response, err := p.ecsClient.CreateServers(request)
 	if err != nil {
 		return []string{}, err
 	}
+	if m.DryRun {
+		return []string{}, nil
+	}
 	if response.HttpStatusCode != http.StatusOK {
-		return []string{}, fmt.Errorf("httpcode %d, %v", response.HttpStatusCode, *response.JobId)
+		return []string{}, fmt.Errorf("httpcode %d", response.HttpStatusCode)
 	}
 
 	if m.Charge.ChargeType == cloud.InstanceChargeTypePrePaid {
@@ -117,29 +125,62 @@ func (p *HuaweiCloud) GetInstances(ids []string) (instances []cloud.Instance, er
 	if idNum < 1 {
 		return []cloud.Instance{}, nil
 	}
-	request := &model.ShowServerRequest{}
 	ecsInfos := make([]model.ServerDetail, 0, idNum)
+	resources := make(map[string]prePaidResources, idNum)
+	var wg sync.WaitGroup
+	var mutex sync.Mutex
+	wg.Add(idNum)
 	for _, id := range ids {
-		if id == "" {
-			continue
-		}
-		request.ServerId = id
-		response, err := p.ecsClient.ShowServer(request)
-		if err != nil {
-			logs.Logger.Errorf("ShowServer failed, %s, %s", id, err.Error())
-			continue
-		}
-		if response.HttpStatusCode != http.StatusOK {
-			logs.Logger.Errorf("id %s, httpcode %d", id, response.HttpStatusCode)
-			continue
-		}
-		ecsInfos = append(ecsInfos, *(response.Server))
+		go func(id string) {
+			defer func() {
+				wg.Done()
+				if e := recover(); e != nil {
+					logs.Logger.Errorf("ShowServer %s panic, %v", id, e)
+				}
+			}()
+
+			if id == "" {
+				return
+			}
+			request := &model.ShowServerRequest{}
+			request.ServerId = id
+			response, err := p.ecsClient.ShowServer(request)
+			if err != nil {
+				logs.Logger.Errorf("ShowServer failed, %s, %s", id, err.Error())
+				return
+			}
+			if response.HttpStatusCode != http.StatusOK {
+				logs.Logger.Errorf("id %s, httpcode %d", id, response.HttpStatusCode)
+				return
+			}
+			mutex.Lock()
+			ecsInfos = append(ecsInfos, *(response.Server))
+			mutex.Unlock()
+		}(id)
 	}
-	return ecsInfo2CloudIns(ecsInfos), nil
+
+	wg.Add(1)
+	go func() {
+		defer func() {
+			wg.Done()
+			if e := recover(); e != nil {
+				logs.Logger.Errorf("listPrePaidResources panic, %v", e)
+			}
+		}()
+
+		resources, err = p.listPrePaidResources(ids)
+		if err != nil {
+			logs.Logger.Errorf("listPrePaidResources failed, %v", err)
+			return
+		}
+	}()
+	wg.Wait()
+	return ecsInfo2CloudIns(ecsInfos, resources), nil
 }
 
 func (p *HuaweiCloud) GetInstancesByTags(regionId string, tags []cloud.Tag) (instances []cloud.Instance, err error) {
 	ecsInfos := make([]model.ServerDetail, 0, _pageSize)
+	resources := make(map[string]prePaidResources, _pageSize)
 	request := &model.ListServersDetailsRequest{}
 	listTag := make([]string, 0, len(tags))
 	for _, tag := range tags {
@@ -166,7 +207,17 @@ func (p *HuaweiCloud) GetInstancesByTags(regionId string, tags []cloud.Tag) (ins
 		}
 		pageNum++
 	}
-	return ecsInfo2CloudIns(ecsInfos), nil
+	if len(ecsInfos) > 0 && _ecsChargeType[ecsInfos[0].Metadata["charging_mode"]] == cloud.InstanceChargeTypePrePaid {
+		ids := make([]string, 0, len(ecsInfos))
+		for _, info := range ecsInfos {
+			ids = append(ids, info.Id)
+		}
+		resources, err = p.listPrePaidResources(ids)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return ecsInfo2CloudIns(ecsInfos, resources), nil
 }
 
 func (p *HuaweiCloud) GetInstancesByCluster(regionId, clusterName string) (instances []cloud.Instance, err error) {
@@ -199,7 +250,7 @@ func (p *HuaweiCloud) BatchDelete(ids []string, regionId string) error {
 			return err
 		}
 		if response.HttpStatusCode != http.StatusOK {
-			return fmt.Errorf("httpcode %d, %v", response.HttpStatusCode, *response.JobId)
+			return fmt.Errorf("httpcode %d", response.HttpStatusCode)
 		}
 	}
 	return nil
@@ -226,7 +277,7 @@ func (p *HuaweiCloud) StartInstances(ids []string) error {
 			return err
 		}
 		if response.HttpStatusCode != http.StatusOK {
-			return fmt.Errorf("httpcode %d, %v", response.HttpStatusCode, *response.JobId)
+			return fmt.Errorf("httpcode %d", response.HttpStatusCode)
 		}
 	}
 	return nil
@@ -253,7 +304,7 @@ func (p *HuaweiCloud) StopInstances(ids []string) error {
 			return err
 		}
 		if response.HttpStatusCode != http.StatusOK {
-			return fmt.Errorf("httpcode %d, %v", response.HttpStatusCode, *response.JobId)
+			return fmt.Errorf("httpcode %d", response.HttpStatusCode)
 		}
 	}
 	return nil
@@ -309,19 +360,14 @@ func (p *HuaweiCloud) DescribeAvailableResource(req cloud.DescribeAvailableResou
 			return cloud.DescribeAvailableResourceResponse{}, fmt.Errorf("httpcode %d", response.HttpStatusCode)
 		}
 
-		insType := make([]cloud.InstanceType, 0, len(*response.Flavors))
+		flavors := make([]model.Flavor, 0, len(*response.Flavors))
 		for _, flavor := range *response.Flavors {
-			insType = append(insType, cloud.InstanceType{
-				InstanceInfo: cloud.InstanceInfo{
-					Core:        cast.ToInt(flavor.Vcpus),
-					Memory:      cast.ToInt(flavor.Ram / 1024),
-					Family:      *flavor.OsExtraSpecs.Ecsperformancetype,
-					InsTypeName: flavor.Id,
-				},
-				Status: getFlavorStatus(flavor.OsExtraSpecs, zoneId),
-			})
+			if flavor.OSFLVDISABLEDdisabled {
+				continue
+			}
+			flavors = append(flavors, flavor)
 		}
-		zoneInsType[zoneId] = insType
+		zoneInsType[zoneId] = flavor2CloudInsType(flavors, zoneId)
 	}
 
 	return cloud.DescribeAvailableResourceResponse{InstanceTypes: zoneInsType}, nil
@@ -333,7 +379,7 @@ func (p *HuaweiCloud) DescribeInstanceTypes(req cloud.DescribeInstanceTypesReque
 }
 
 //缺少子网id,eip带宽相关信息. ListServerInterfaces 可以拿到子网id,ListPublicips 可以获取eip信息
-func ecsInfo2CloudIns(ecsInfos []model.ServerDetail) []cloud.Instance {
+func ecsInfo2CloudIns(ecsInfos []model.ServerDetail, resources map[string]prePaidResources) []cloud.Instance {
 	instances := make([]cloud.Instance, 0, len(ecsInfos))
 	for _, info := range ecsInfos {
 		var ipInner []string
@@ -351,6 +397,7 @@ func ecsInfo2CloudIns(ecsInfos []model.ServerDetail) []cloud.Instance {
 		for _, row := range info.SecurityGroups {
 			securityGroup = append(securityGroup, row.Id)
 		}
+		expTime := resources[info.Id].ExpireTime
 
 		instances = append(instances, cloud.Instance{
 			Id:       info.Id,
@@ -363,32 +410,62 @@ func ecsInfo2CloudIns(ecsInfos []model.ServerDetail) []cloud.Instance {
 				VpcId:         info.Metadata["vpc_id"],
 				SecurityGroup: strings.Join(securityGroup, ","),
 			},
-			Status: _ecsStatus[info.Status],
+			Status:   _ecsStatus[info.Status],
+			ExpireAt: &expTime,
 		})
 	}
 	return instances
 }
 
+func flavor2CloudInsType(flavors []model.Flavor, zoneId string) []cloud.InstanceType {
+	insTypes := make([]cloud.InstanceType, 0, len(flavors))
+	for _, flavor := range flavors {
+		extra := flavor.OsExtraSpecs
+		stat := getFlavorStatus(extra, zoneId)
+		chargeType := cloud.InsTypeChargeTypeAll
+		if extra.Condoperationcharge != nil {
+			chargeType = _insTypeChargeType[*extra.Condoperationcharge]
+		}
+		if stat != cloud.InsTypeAvailable || chargeType == "" {
+			continue
+		}
+		isGpu := false
+		if utils.StringValue(extra.Ecsperformancetype) == "gpu" {
+			isGpu = true
+		}
+
+		insTypes = append(insTypes, cloud.InstanceType{
+			ChargeType:  chargeType,
+			IsGpu:       isGpu,
+			Core:        cast.ToInt(flavor.Vcpus),
+			Memory:      cast.ToInt(flavor.Ram / 1024),
+			Family:      utils.StringValue(extra.Ecsperformancetype),
+			InsTypeName: flavor.Id,
+			Status:      stat,
+		})
+	}
+	return insTypes
+}
+
 func getFlavorStatus(flavor *model.FlavorExtraSpec, zoneId string) string {
-	status := *flavor.Condoperationaz
-	if status == "" {
+	if flavor.Condoperationaz == nil {
 		return _insTypeStat[*flavor.Condoperationstatus]
 	}
 
-	staStr := status
+	statStr := *flavor.Condoperationaz
 	for {
-		begin := strings.Index(staStr, zoneId)
+		begin := strings.Index(statStr, zoneId)
 		if begin == -1 {
 			return _insTypeStat[*flavor.Condoperationstatus]
 		}
-		staStr = staStr[begin:]
-		zoneIdx := strings.Index(staStr, "(")
-		if staStr[:zoneIdx] != zoneId {
-			staStr = staStr[zoneIdx:]
+		statStr = statStr[begin:]
+		zoneIdx := strings.Index(statStr, "(")
+		if statStr[:zoneIdx] != zoneId {
+			statStr = statStr[zoneIdx:]
 			continue
 		}
 
-		end := strings.Index(staStr, ")")
-		return _insTypeStat[staStr[zoneIdx+1:end]]
+		end := strings.Index(statStr, ")")
+		return _insTypeStat[statStr[zoneIdx+1:end]]
 	}
 }

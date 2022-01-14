@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"runtime/debug"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -235,59 +236,64 @@ func ConvertToClusterInfo(m *model.Cluster, tags []model.ClusterTag) (*types.Clu
 			return nil, err
 		}
 	}
+	extendConfig := &types.ExtendConfig{}
+	if m.ExtendConfig != "" {
+		err := jsoniter.UnmarshalFromString(m.ExtendConfig, extendConfig)
+		if err != nil {
+			return nil, err
+		}
+	}
 	var mt = make(map[string]string, 0)
 	for _, clusterTag := range tags {
 		mt[clusterTag.TagKey] = clusterTag.TagValue
 	}
-	instanceType := GetInstanceTypeByName(m.InstanceType)
+
 	clusterInfo := &types.ClusterInfo{
-		Id:                 m.Id,
-		Name:               m.ClusterName,
-		Desc:               m.ClusterDesc,
-		RegionId:           m.RegionId,
-		ZoneId:             m.ZoneId,
-		ClusterType:        m.ClusterType,
-		InstanceType:       m.InstanceType,
-		Image:              m.Image,
-		Provider:           m.Provider,
-		Username:           constants.DefaultUsername,
-		Password:           m.Password,
-		AccountKey:         m.AccountKey,
-		ImageConfig:        imageConfig,
-		NetworkConfig:      networkConfig,
-		StorageConfig:      storageConfig,
-		ChargeConfig:       chargeConfig,
-		Tags:               mt,
-		InstanceCore:       instanceType.Core,
-		InstanceMemory:     instanceType.Memory,
-		ComputingPowerType: GetComputingPowerType(m.InstanceType, m.Provider),
+		Id:            m.Id,
+		Name:          m.ClusterName,
+		Desc:          m.ClusterDesc,
+		RegionId:      m.RegionId,
+		ZoneId:        m.ZoneId,
+		ClusterType:   m.ClusterType,
+		InstanceType:  m.InstanceType,
+		Image:         m.Image,
+		Provider:      m.Provider,
+		Username:      constants.DefaultUsername,
+		Password:      m.Password,
+		AccountKey:    m.AccountKey,
+		ImageConfig:   imageConfig,
+		NetworkConfig: networkConfig,
+		StorageConfig: storageConfig,
+		ChargeConfig:  chargeConfig,
+		ExtendConfig:  extendConfig,
+		Tags:          mt,
 	}
 	return clusterInfo, nil
 }
 
-func ExpandCluster(c *types.ClusterInfo, num int, taskId int64) (instanceIds []cloud.Instance, err error) {
+func ExpandCluster(c *types.ClusterInfo, num int, taskId int64) ([]string, []string, error) {
 	//调用云厂商接口进行扩容
-	expandInstanceIds, err := ExpandAndRepair(c, num, taskId)
-	if len(expandInstanceIds) == 0 && err != nil {
-		return nil, err
+	expandInstanceIds, expandErr := ExpandInDeed(c, num, taskId)
+	if len(expandInstanceIds) == 0 && expandErr != nil {
+		return nil, nil, expandErr
 	}
 
 	//将扩容的Instance信息保存到DB
-	err = saveExpandInstancesToDB(c, expandInstanceIds, taskId)
+	err := saveExpandInstancesToDB(c, expandInstanceIds, taskId)
 	if err != nil {
-		logs.Logger.Errorf("[ExpandCluster] Expand error. cluster name: %s, error: %v", c.Name, err)
-		return nil, err
+		logs.Logger.Errorf("[ExpandCluster] saveExpandInstancesToDB error. cluster name: %s, error: %v", c.Name, err)
+		return nil, nil, err
 	}
 
 	//查询扩容的Instance的IP并保存
-	expandIPs, expandInstances, err := queryAndSaveExpandIPs(c, err, expandInstanceIds)
+	expandIPs, availableIds, err := queryAndSaveExpandIPs(c, taskId, len(expandInstanceIds))
 	if err != nil {
 		logs.Logger.Errorf("[ExpandCluster] queryAndSaveExpandIPs error. cluster name: %s, error: %v", c.Name, err)
-		return expandInstances, err
+		return availableIds, expandInstanceIds, err
 	}
 	//发布扩容信息到配置中心
 	_ = publishExpandConfig(c.Name, expandInstanceIds, expandIPs)
-	return expandInstances, nil
+	return availableIds, expandInstanceIds, expandErr
 }
 
 func ShrinkClusterBySpecificIps(c *types.ClusterInfo, deletingIPs string, count int, taskId int64) (err error) {
@@ -413,49 +419,74 @@ func getMappingInstanceIdList(clusterName, deletingIPs string) (toBeDeletedIds, 
 	return
 }
 
-func queryAndSaveExpandIPs(c *types.ClusterInfo, err error, expandInstanceIds []string) ([]string, []cloud.Instance, error) {
-	expandIps := make([]string, 0)
-	expandInstances := make([]cloud.Instance, 0)
+func getDelayFactor(n int) int {
+	if n < 2 {
+		return 5
+	} else if n < 5 {
+		return 8
+	} else if n < 8 {
+		return 13
+	} else {
+		return 20
+	}
+}
+
+func queryAndSaveExpandIPs(c *types.ClusterInfo, taskId int64, idNum int) ([]string, []string, error) {
+	var err error
+	var instances []cloud.Instance
+	var insNum int
+	tags := []cloud.Tag{{
+		Key:   cloud.TaskId,
+		Value: strconv.FormatInt(taskId, 10),
+	}}
 	// TODO scheduler
 	for k := 0; k < constants.Interval; k++ {
-		expandInstances, err = GetInstances(c, expandInstanceIds)
-		logs.Logger.Infof("[queryAndSaveExpandIPs] expandInstances: %v, err: %v", expandInstances, err)
-		if err == nil && len(expandInstances) == len(expandInstanceIds) && judgeInstancesIsReady(expandInstances, c.NetworkConfig) {
+		instances, err = GetInstanceByTag(c, tags)
+		insNum = len(instances)
+		logs.Logger.Infof("[queryAndSaveExpandIPs] insNum: %d, idNum: %d, err: %v", insNum, idNum, err)
+		if err == nil && insNum == idNum && judgeInstancesIsReady(instances, c.NetworkConfig) {
+			logs.Logger.Infof("[queryAndSaveExpandIPs] is ready, %d", insNum)
 			break
 		}
-		time.Sleep(constants.Delay * time.Second)
+		time.Sleep(time.Duration(getDelayFactor(k)) * time.Second)
 	}
 	if err != nil {
-		logs.Logger.Errorf("[ExpandCluster] GetInstances error. cluster name: %s, error: %s", c.Name, err.Error())
+		return nil, nil, err
 	}
-	for _, instance := range expandInstances {
-		if instance.IpInner != "" {
-			expandIps = append(expandIps, instance.IpInner)
-			update := func(attempt uint) error {
-				now := time.Now()
-				var expireAt *time.Time
-				if instance.CostWay == cloud.InstanceChargeTypePrePaid {
-					expireAt = instance.ExpireAt
-				}
-				return model.UpdateByInstanceId(model.Instance{
-					InstanceId:  instance.Id,
-					IpInner:     instance.IpInner,
-					IpOuter:     instance.IpOuter,
-					ClusterName: c.Name,
-					Status:      constants.Running,
-					RunningAt:   &now,
-					ExpireAt:    expireAt,
-				})
-			}
-			err = retry.Retry(update, strategy.Limit(3), strategy.Backoff(backoff.Fibonacci(10*time.Millisecond)))
-		} else {
+
+	expandIps := make([]string, 0, insNum)
+	expandIds := make([]string, 0, insNum)
+	for _, instance := range instances {
+		if instance.IpInner == "" {
 			logs.Logger.Errorf("[syncDbAndConfig] InstanceId:%v, GOT NO IP", instance.Id)
+			continue
 		}
+		update := func(attempt uint) error {
+			now := time.Now()
+			var expireAt *time.Time
+			if instance.CostWay == cloud.InstanceChargeTypePrePaid {
+				expireAt = instance.ExpireAt
+			}
+			return model.UpdateByInstanceId(model.Instance{
+				InstanceId:  instance.Id,
+				IpInner:     instance.IpInner,
+				IpOuter:     instance.IpOuter,
+				ClusterName: c.Name,
+				Status:      constants.Running,
+				RunningAt:   &now,
+				ExpireAt:    expireAt,
+			})
+		}
+		err = retry.Retry(update, strategy.Limit(3), strategy.Backoff(backoff.Fibonacci(10*time.Millisecond)))
 		if err != nil {
 			logs.Logger.Errorf("[syncDbAndConfig] UpdateByInstanceId Error IP:%v, instanceId:%v", instance.IpInner, instance.Id)
+			continue
 		}
+
+		expandIps = append(expandIps, instance.IpInner)
+		expandIds = append(expandIds, instance.Id)
 	}
-	return expandIps, expandInstances, err
+	return expandIps, expandIds, nil
 }
 
 func saveExpandInstancesToDB(c *types.ClusterInfo, expandInstanceIds []string, taskId int64) error {
@@ -463,11 +494,13 @@ func saveExpandInstancesToDB(c *types.ClusterInfo, expandInstanceIds []string, t
 	now := time.Now()
 	for _, instanceId := range expandInstanceIds {
 		instances = append(instances, model.Instance{
+			Base: model.Base{
+				CreateAt: &now,
+			},
 			TaskId:      taskId,
 			InstanceId:  instanceId,
 			Status:      constants.Pending,
 			ClusterName: c.Name,
-			CreateAt:    &now,
 			ChargeType:  c.ChargeConfig.ChargeType,
 		})
 	}
@@ -552,16 +585,15 @@ func publishShrinkConfig(clusterName string) error {
 }
 
 func judgeInstancesIsReady(instances []cloud.Instance, chargeConfig *types.NetworkConfig) bool {
-	var internetChargeType string
+	bandwithOut := 0
 	if chargeConfig != nil {
-		internetChargeType = chargeConfig.InternetChargeType
+		bandwithOut = chargeConfig.InternetMaxBandwidthOut
 	}
-	needCheckIpOuter := internetChargeType == cloud.InternetChargeTypePayByTraffic || internetChargeType == cloud.InternetChargeTypePayByBandwidth
 	for _, instance := range instances {
-		if instance.Status == cloud.EcsBuilding || instance.IpInner == "" {
+		if instance.Status != cloud.EcsRunning || instance.IpInner == "" {
 			return false
 		}
-		if needCheckIpOuter && instance.IpOuter == "" {
+		if bandwithOut > 0 && instance.IpOuter == "" {
 			return false
 		}
 	}

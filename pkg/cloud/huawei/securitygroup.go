@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/alibabacloud-go/tea/tea"
+	"github.com/galaxy-future/BridgX/pkg/utils"
+
 	"github.com/galaxy-future/BridgX/pkg/cloud"
 	"github.com/huaweicloud/huaweicloud-sdk-go-v3/services/vpc/v3/model"
 	"github.com/spf13/cast"
@@ -25,7 +26,7 @@ func (p *HuaweiCloud) CreateSecurityGroup(req cloud.CreateSecurityGroupRequest) 
 		return cloud.CreateSecurityGroupResponse{}, err
 	}
 	if response.HttpStatusCode != http.StatusCreated {
-		return cloud.CreateSecurityGroupResponse{}, fmt.Errorf("httpcode %d, %v", response.HttpStatusCode, *response.RequestId)
+		return cloud.CreateSecurityGroupResponse{}, fmt.Errorf("httpcode %d", response.HttpStatusCode)
 	}
 
 	return cloud.CreateSecurityGroupResponse{SecurityGroupId: response.SecurityGroup.Id,
@@ -58,7 +59,7 @@ func (p *HuaweiCloud) DescribeSecurityGroups(req cloud.DescribeSecurityGroupsReq
 			return cloud.DescribeSecurityGroupsResponse{}, err
 		}
 		if response.HttpStatusCode != http.StatusOK {
-			return cloud.DescribeSecurityGroupsResponse{}, fmt.Errorf("httpcode %d, %v", response.HttpStatusCode, *response.RequestId)
+			return cloud.DescribeSecurityGroupsResponse{}, fmt.Errorf("httpcode %d", response.HttpStatusCode)
 		}
 		for _, group := range *response.SecurityGroups {
 			groups = append(groups, cloud.SecurityGroup{
@@ -89,7 +90,7 @@ func (p *HuaweiCloud) DescribeGroupRules(req cloud.DescribeGroupRulesRequest) (c
 		return cloud.DescribeGroupRulesResponse{}, err
 	}
 	if response.HttpStatusCode != http.StatusOK {
-		return cloud.DescribeGroupRulesResponse{}, fmt.Errorf("httpcode %d, %v", response.HttpStatusCode, *response.RequestId)
+		return cloud.DescribeGroupRulesResponse{}, fmt.Errorf("httpcode %d", response.HttpStatusCode)
 	}
 
 	for _, rule := range response.SecurityGroup.SecurityGroupRules {
@@ -116,7 +117,7 @@ func (p *HuaweiCloud) addSecGrpRule(req cloud.AddSecurityGroupRuleRequest, direc
 		Direction:       direction,
 	}
 	if req.IpProtocol != "" {
-		secGrpRuleOpt.Protocol = tea.String(_protocol[req.IpProtocol])
+		secGrpRuleOpt.Protocol = utils.String(_protocol[req.IpProtocol])
 	}
 	if req.PortFrom > 0 {
 		portRange := cast.ToString(req.PortFrom)
@@ -143,7 +144,7 @@ func (p *HuaweiCloud) addSecGrpRule(req cloud.AddSecurityGroupRuleRequest, direc
 		return err
 	}
 	if response.HttpStatusCode != http.StatusCreated {
-		return fmt.Errorf("httpcode %d, %v", response.HttpStatusCode, *response.RequestId)
+		return fmt.Errorf("httpcode %d", response.HttpStatusCode)
 	}
 	return nil
 }

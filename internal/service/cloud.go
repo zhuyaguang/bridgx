@@ -19,11 +19,12 @@ import (
 	"github.com/galaxy-future/BridgX/pkg/cloud"
 	"github.com/galaxy-future/BridgX/pkg/cloud/alibaba"
 	"github.com/galaxy-future/BridgX/pkg/cloud/huawei"
+	"github.com/galaxy-future/BridgX/pkg/cloud/tencent"
 )
 
 var clientMap sync.Map
 
-func ExpandAndRepair(c *types.ClusterInfo, num int, taskId int64) ([]string, error) {
+func ExpandInDeed(c *types.ClusterInfo, num int, taskId int64) ([]string, error) {
 	tags := []cloud.Tag{{
 		Key:   cloud.TaskId,
 		Value: strconv.FormatInt(taskId, 10),
@@ -32,7 +33,7 @@ func ExpandAndRepair(c *types.ClusterInfo, num int, taskId int64) ([]string, err
 			Key:   cloud.ClusterName,
 			Value: c.Name,
 		}}
-	expandInstanceIds := make([]string, 0)
+	expandInstanceIds := make([]string, 0, num)
 	needExpandNum := num
 	var err error
 	var ids []string
@@ -47,29 +48,26 @@ func ExpandAndRepair(c *types.ClusterInfo, num int, taskId int64) ([]string, err
 		}
 		needExpandNum -= len(ids)
 	}
-	if len(expandInstanceIds) != num {
-		logs.Logger.Infof("len(expandInstanceIds) %d, num %d", len(expandInstanceIds), num)
-		_ = RepairCluster(c, taskId, expandInstanceIds)
-	}
 	return expandInstanceIds, err
 }
 
-func RepairCluster(c *types.ClusterInfo, taskId int64, instanceIds []string) (err error) {
+func RepairCluster(c *types.ClusterInfo, taskId int64, availableIds []string, allIds []string) (err error) {
 	tags := []cloud.Tag{{
 		Key:   cloud.TaskId,
 		Value: strconv.FormatInt(taskId, 10),
 	}}
 	cloudInstances, err := GetInstanceByTag(c, tags)
-	logs.Logger.Infof("[RepairCluster] GetInstanceByTag length %d", len(cloudInstances))
 	if err != nil {
 		return
 	}
-	cloudIds := make([]string, 0)
+	cloudInsNum := len(cloudInstances)
+	logs.Logger.Infof("[RepairCluster] GetInstanceByTag length %d, available num %d, all num %d", cloudInsNum, len(availableIds), len(allIds))
+	cloudIds := make([]string, 0, cloudInsNum)
 	for _, instance := range cloudInstances {
 		cloudIds = append(cloudIds, instance.Id)
 	}
-	onlyCouldIds, onlyMemoryIds := cloudDiff(cloudIds, instanceIds)
-	logs.Logger.Infof("[RepairCluster] taskId: %d, ClusterName: %s, Shrink InstanceIds: %v", taskId, c.Name, onlyCouldIds)
+	onlyCouldIds, onlyMemoryIds := cloudDiff(cloudIds, availableIds)
+	logs.Logger.Infof("[RepairCluster] taskId: %d, ClusterName: %s, Shrink InstanceIds num: %v", taskId, c.Name, len(onlyCouldIds))
 	shrink := func(attempt uint) error {
 		return Shrink(c, onlyCouldIds)
 	}
@@ -78,20 +76,22 @@ func RepairCluster(c *types.ClusterInfo, taskId int64, instanceIds []string) (er
 		logs.Logger.Errorf("[RepairCluster] taskId: %d, ClusterName: %s, Shrink InstanceIds error: %s", taskId, c.Name, err.Error())
 	}
 
-	logs.Logger.Infof("[RepairCluster] taskId: %d, ClusterName: %s, UpdateDB InstanceIds: %v", taskId, c.Name, onlyMemoryIds)
+	deleteIds, _ := cloudDiff(allIds, availableIds)
+	deleteIds = append(deleteIds, onlyMemoryIds...)
+	logs.Logger.Infof("[RepairCluster] taskId: %d, ClusterName: %s, delete InstanceIds num: %v", taskId, c.Name, len(deleteIds))
 	update := func(attempt uint) error {
-		if len(onlyMemoryIds) == 0 {
+		if len(deleteIds) == 0 {
 			return nil
 		}
 		now := time.Now()
-		return model.BatchUpdateByInstanceIds(onlyMemoryIds, model.Instance{
+		return model.BatchUpdateByInstanceIds(deleteIds, model.Instance{
 			DeleteAt: &now,
 			Status:   constants.Deleted,
 		})
 	}
 	err = retry.Retry(update, strategy.Limit(3), strategy.Backoff(backoff.BinaryExponential(10*time.Millisecond)))
 	if err != nil {
-		logs.Logger.Errorf("[RepairCluster] taskId: %d, ClusterName: %s, UpdateDB InstanceIds error: %s", taskId, c.Name, err.Error())
+		logs.Logger.Errorf("[RepairCluster] taskId: %d, ClusterName: %s, delete InstanceIds error: %s", taskId, c.Name, err.Error())
 	}
 
 	return nil
@@ -122,6 +122,20 @@ func cloudDiff(cloudIds, memoryIds []string) (onlyCouldIds, onlyMemoryIds []stri
 	return
 }
 
+func CheckClusterParam(clusterInfo *types.ClusterInfo) error {
+	provider, err := getProvider(clusterInfo.Provider, clusterInfo.AccountKey, clusterInfo.RegionId)
+	if err != nil {
+		return err
+	}
+	params, err := generateParams(clusterInfo, nil)
+	params.DryRun = true
+	_, err = provider.BatchCreate(params, 1)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func Expand(clusterInfo *types.ClusterInfo, tags []cloud.Tag, num int) (instanceIds []string, err error) {
 	batch := getBatch(num, constants.BatchMax)
 	createdBatch := make(chan []string, batch)
@@ -136,10 +150,10 @@ func Expand(clusterInfo *types.ClusterInfo, tags []cloud.Tag, num int) (instance
 		go func(cur int) {
 			var bErr error
 			defer func() {
-				if bErr := recover(); bErr != nil {
-					logs.Logger.Errorf("[cloud.Expand] recover error. error: %v", bErr)
+				if e := recover(); e != nil {
+					logs.Logger.Errorf("[cloud.Expand] recover error. error: %v", e)
 					logs.Logger.Errorf("stacktrace from panic: \n" + string(debug.Stack()))
-					createdError <- fmt.Errorf("panic %v", bErr)
+					createdError <- fmt.Errorf("panic %v", e)
 				}
 			}()
 			batchInstanceIds := make([]string, 0)
@@ -235,6 +249,8 @@ func getProvider(provider, ak, regionId string) (cloud.Provider, error) {
 		client, err = alibaba.New(ak, sk, regionId)
 	case cloud.HuaweiCloud:
 		client, err = huawei.New(ak, sk, regionId)
+	case cloud.TencentCloud:
+		client, err = tencent.New(ak, sk, regionId)
 	default:
 		return nil, errors.New("invalid provider")
 	}
