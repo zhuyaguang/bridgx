@@ -121,6 +121,15 @@ func listElasticInstance(client *cluster.KubernetesClient, clusterName string, i
 	return instances, nil
 }
 
+//getElasticInstanceByPodNameAndInstanceGroupId
+func getPodByPodName(client *cluster.KubernetesClient, podName string) (*v1.Pod, error) {
+	pod, err := client.ClientSet.CoreV1().Pods("default").Get(context.Background(), podName, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return pod, nil
+}
+
 func clearElasticInstance(client *cluster.KubernetesClient, instanceGroupName string, id int64) error {
 	instances, err := listElasticInstance(client, instanceGroupName, id)
 	if err != nil && !errors.IsNotFound(err) {

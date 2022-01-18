@@ -40,7 +40,6 @@ func getClusterPodInfo(info *gf_cluster.KubernetesInfo) ([]*gf_cluster.PodSummar
 	if err != nil {
 		return nil, err
 	}
-	//TODO remove hadrd code
 	ctxPodQuery, cancelPodQuery := context.WithTimeout(context.Background(), time.Second*2)
 	defer cancelPodQuery()
 	selector := metav1.LabelSelector{MatchLabels: createInstanceLabels()}

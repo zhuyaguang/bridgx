@@ -423,6 +423,7 @@ CREATE TABLE `pods` (
   `running_time` VARCHAR(255) NOT NULL,
   `status` VARCHAR(255) NOT NULL,
   `instance_group_id` INT(11) NOT NULL,
+  `kubernetes_id` INT(11) NOT NULL,
   `start_time` INT(11) NOT NULL,
   `created_user_id` INT(11) NOT NULL,
   PRIMARY KEY (`id`) USING BTREE

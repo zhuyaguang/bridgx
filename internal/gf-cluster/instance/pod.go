@@ -12,27 +12,37 @@ import (
 	"time"
 )
 
+var podChan = make(chan *gf_cluster.Pod, 100)
+
 func createPod(instanceGroup *gf_cluster.InstanceGroup, pod *v1.Pod) error {
-	cpuUsed, memoryUsed, storageUsed := getPodResourceInfo(pod)
-	runningTime := getPodRunningTime(pod)
+	status := pod.Status.Phase
 	podInfo := &gf_cluster.Pod{
 		NodeName:          pod.Spec.NodeName,
 		NodeIp:            pod.Status.HostIP,
 		PodName:           pod.GetName(),
 		PodIP:             pod.Status.PodIP,
-		AllocatedCpuCores: cpuUsed,
-		AllocatedMemoryGi: memoryUsed,
-		AllocatedDiskGi:   storageUsed,
 		InstanceGroupName: instanceGroup.Name,
-		RunningTime:       runningTime,
-		Status:            string(pod.Status.Phase),
+		Status:            string(status),
 		InstanceGroupId:   instanceGroup.Id,
-		StartTime:         pod.Status.StartTime.Time.Unix(),
+		KubernetesId:      instanceGroup.KubernetesId,
+		CreatedUserId:     instanceGroup.CreatedUserId,
 	}
-	err := model.CreatePodFromDB(podInfo)
-	if err != nil {
-		return err
+	if status != v1.PodRunning {
+		err := model.CreatePodFromDB(podInfo)
+		go func() { podChan <- podInfo }()
+		if err != nil {
+			return err
+		}
+		return nil
 	}
+	cpuUsed, memoryUsed, storageUsed := getPodResourceInfo(pod)
+	runningTime := getPodRunningTime(pod)
+	podInfo.AllocatedCpuCores = cpuUsed
+	podInfo.AllocatedMemoryGi = memoryUsed
+	podInfo.AllocatedDiskGi = storageUsed
+	podInfo.RunningTime = runningTime
+	podInfo.StartTime = pod.Status.StartTime.Time.Unix()
+
 	return nil
 }
 
@@ -136,4 +146,40 @@ func getPodRunningTime(pod *v1.Pod) string {
 		runningTime = cluster.FormatHumanReadableDuration(time.Now().Sub(pod.Status.StartTime.Time))
 	}
 	return runningTime
+}
+
+// Init 处理POD资源状态
+func Init() {
+	go func() {
+		for {
+			select {
+			case podInfo, ok := <-podChan:
+				if ok {
+					updatePod(podInfo)
+				}
+			}
+		}
+	}()
+}
+
+func updatePod(podInfo *gf_cluster.Pod) {
+	// 1 获取k8s实例列表
+	client, err := cluster.GetKubeClient(podInfo.KubernetesId)
+	if err != nil {
+		logs.Logger.Errorw("Failed to Update pods: GetKubeClient", zap.String("pod_name", podInfo.PodName), zap.Error(err))
+		return
+	}
+	for {
+		pod, err := getPodByPodName(client, podInfo.PodName)
+		if err != nil {
+			logs.Logger.Errorw("Failed to Update pods: getPodByPodName", zap.String("pod_name", podInfo.PodName), zap.Error(err))
+		}
+		if pod.Status.Phase == v1.PodRunning {
+			if err := updatePodByPodName(pod); err != nil {
+				logs.Logger.Errorw("Failed to Update pods: updatePodByPodName", zap.String("pod_name", podInfo.PodName), zap.Error(err))
+			}
+			break
+		}
+		time.Sleep(time.Duration(2) * time.Second)
+	}
 }

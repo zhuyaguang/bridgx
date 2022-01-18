@@ -14,6 +14,7 @@ type Pod struct {
 	RunningTime       string  `json:"running_time"`
 	Status            string  `json:"status"`
 	InstanceGroupId   int64   `json:"instance_group_id"`
+	KubernetesId      int64   `json:"kubernetes_id"`
 	StartTime         int64   `json:"start_time"`
 	CreatedUserId     int64   `json:"created_user_id"`
 }

@@ -6,12 +6,14 @@ import (
 	"github.com/galaxy-future/BridgX/cmd/api/handler/gf-cluster/kubernetes"
 	"github.com/galaxy-future/BridgX/cmd/api/middleware/authorization"
 	"github.com/galaxy-future/BridgX/internal/gf-cluster/calibrator"
+	gf_instance "github.com/galaxy-future/BridgX/internal/gf-cluster/instance"
 	"github.com/gin-gonic/gin"
 )
 
 func RegisterHandler(route *gin.RouterGroup) {
 	route.Use(authorization.CheckTokenAuth())
 	calibrator.Init()
+	gf_instance.Init()
 
 	kubeRoute := route.Group("/kubernetes")
 	{
