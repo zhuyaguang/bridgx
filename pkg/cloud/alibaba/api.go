@@ -3,7 +3,6 @@ package alibaba
 import (
 	"errors"
 	"fmt"
-	"math"
 	"strconv"
 	"strings"
 	"sync"
@@ -35,72 +34,6 @@ type AlibabaCloud struct {
 	ecsClient *ecsClient.Client
 	bssClient *bssopenapi.Client
 	lock      sync.Mutex
-}
-
-func (p *AlibabaCloud) GetInstancesByTags(region string, tags []cloud.Tag) (instances []cloud.Instance, err error) {
-	request := ecs.CreateDescribeInstancesRequest()
-	request.Scheme = "https"
-
-	eTag := make([]ecs.DescribeInstancesTag, 0)
-	for _, tag := range tags {
-		eTag = append(eTag, ecs.DescribeInstancesTag{
-			Key:   tag.Key,
-			Value: tag.Value,
-		})
-	}
-	request.Tag = &eTag
-	pageNumber := 1
-	request.PageSize = requests.NewInteger(50)
-	cloudInstance := make([]ecs.Instance, 0)
-	response, err := p.client.DescribeInstances(request)
-	if err != nil {
-		return nil, err
-	}
-	cloudInstance = append(cloudInstance, response.Instances.Instance...)
-	maxPage := math.Ceil(float64(response.TotalCount) / 50)
-	for pageNumber < int(maxPage) {
-		pageNumber++
-		request.PageNumber = requests.NewInteger(pageNumber)
-		response, err = p.client.DescribeInstances(request)
-		if err != nil {
-			return nil, err
-		}
-		cloudInstance = append(cloudInstance, response.Instances.Instance...)
-	}
-	instances = generateInstances(cloudInstance)
-	return
-}
-
-func generateInstances(cloudInstance []ecs.Instance) (instances []cloud.Instance) {
-	for _, instance := range cloudInstance {
-		ipOuter := ""
-		if len(instance.PublicIpAddress.IpAddress) > 0 {
-			ipOuter = instance.PublicIpAddress.IpAddress[0]
-		}
-		expireAt, err := time.Parse("2006-01-02T15:04Z", instance.ExpiredTime)
-		var expireAtPtr *time.Time
-		if err == nil {
-			expireAtPtr = &expireAt
-		}
-		instances = append(instances, cloud.Instance{
-			Id:       instance.InstanceId,
-			CostWay:  instance.InstanceChargeType,
-			Provider: cloud.AlibabaCloud,
-			IpInner:  strings.Join(instance.VpcAttributes.PrivateIpAddress.IpAddress, ","),
-			IpOuter:  ipOuter,
-			ImageId:  instance.ImageId,
-			ExpireAt: expireAtPtr,
-			Network: &cloud.Network{
-				VpcId:                   instance.VpcAttributes.VpcId,
-				SubnetId:                instance.VpcAttributes.VSwitchId,
-				SecurityGroup:           strings.Join(instance.SecurityGroupIds.SecurityGroupId, ","),
-				InternetChargeType:      instance.InternetChargeType,
-				InternetMaxBandwidthOut: instance.InternetMaxBandwidthOut,
-			},
-			Status: _ecsStatus[instance.Status],
-		})
-	}
-	return
 }
 
 func New(AK, SK, region string) (*AlibabaCloud, error) {
@@ -155,7 +88,7 @@ func (p *AlibabaCloud) BatchCreate(m cloud.Params, num int) (instanceIds []strin
 	request.Amount = requests.NewInteger(num)
 	request.MinAmount = requests.NewInteger(num)
 	if m.Charge.ChargeType == cloud.InstanceChargeTypePrePaid {
-		request.InstanceChargeType = m.Charge.ChargeType
+		request.InstanceChargeType = _inEcsChargeType[m.Charge.ChargeType]
 		request.PeriodUnit = m.Charge.PeriodUnit
 		request.Period = requests.NewInteger(m.Charge.Period)
 	}
@@ -190,7 +123,7 @@ func (p *AlibabaCloud) BatchCreate(m cloud.Params, num int) (instanceIds []strin
 
 func (p *AlibabaCloud) GetInstances(ids []string) (instances []cloud.Instance, err error) {
 	batchIds := utils.StringSliceSplit(ids, 50)
-	cloudInstance := make([]ecs.Instance, 0)
+	cloudInstance := make([]ecs.Instance, 0, len(ids))
 	for _, onceIds := range batchIds {
 		request := ecs.CreateDescribeInstancesRequest()
 		request.Scheme = "https"
@@ -252,6 +185,72 @@ func (p *AlibabaCloud) StopInstances(ids []string) error {
 		logs.Logger.Debug(res)
 	}
 	return nil
+}
+
+func (p *AlibabaCloud) GetInstancesByTags(region string, tags []cloud.Tag) (instances []cloud.Instance, err error) {
+	eTag := make([]*ecsClient.ListTagResourcesRequestTag, 0, len(tags))
+	for _, tag := range tags {
+		eTag = append(eTag, &ecsClient.ListTagResourcesRequestTag{
+			Key:   tea.String(tag.Key),
+			Value: tea.String(tag.Value),
+		})
+	}
+	request := &ecsClient.ListTagResourcesRequest{
+		RegionId:     tea.String(region),
+		ResourceType: tea.String("instance"),
+		Tag:          eTag,
+	}
+
+	instanceIds := make([]string, 0, _pageSize)
+	for {
+		response, err := p.ecsClient.ListTagResources(request)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, resource := range response.Body.TagResources.TagResource {
+			instanceIds = append(instanceIds, tea.StringValue(resource.ResourceId))
+		}
+		nextToken := tea.StringValue(response.Body.NextToken)
+		if nextToken == "" {
+			break
+		}
+		request.NextToken = tea.String(nextToken)
+	}
+
+	return p.GetInstances(instanceIds)
+}
+
+func generateInstances(cloudInstance []ecs.Instance) (instances []cloud.Instance) {
+	for _, instance := range cloudInstance {
+		ipOuter := ""
+		if len(instance.PublicIpAddress.IpAddress) > 0 {
+			ipOuter = instance.PublicIpAddress.IpAddress[0]
+		}
+		expireAt, err := time.Parse("2006-01-02T15:04Z", instance.ExpiredTime)
+		var expireAtPtr *time.Time
+		if err == nil {
+			expireAtPtr = &expireAt
+		}
+		instances = append(instances, cloud.Instance{
+			Id:       instance.InstanceId,
+			CostWay:  instance.InstanceChargeType,
+			Provider: cloud.AlibabaCloud,
+			IpInner:  strings.Join(instance.VpcAttributes.PrivateIpAddress.IpAddress, ","),
+			IpOuter:  ipOuter,
+			ImageId:  instance.ImageId,
+			ExpireAt: expireAtPtr,
+			Network: &cloud.Network{
+				VpcId:                   instance.VpcAttributes.VpcId,
+				SubnetId:                instance.VpcAttributes.VSwitchId,
+				SecurityGroup:           strings.Join(instance.SecurityGroupIds.SecurityGroupId, ","),
+				InternetChargeType:      _bandwidthChargeType[instance.InternetChargeType],
+				InternetMaxBandwidthOut: instance.InternetMaxBandwidthOut,
+			},
+			Status: _ecsStatus[instance.Status],
+		})
+	}
+	return
 }
 
 func (p *AlibabaCloud) GetInstancesByCluster(regionId, clusterName string) (instances []cloud.Instance, err error) {
@@ -600,6 +599,7 @@ func (p *AlibabaCloud) GetZones(req cloud.GetZonesRequest) (cloud.GetZonesRespon
 	return cloud.GetZonesResponse{}, err
 }
 
+// DescribeAvailableResource response miss InstanceChargeType
 func (p *AlibabaCloud) DescribeAvailableResource(req cloud.DescribeAvailableResourceRequest) (cloud.DescribeAvailableResourceResponse, error) {
 	request := &ecsClient.DescribeAvailableResourceRequest{
 		RegionId:            tea.String(req.RegionId),
@@ -609,63 +609,42 @@ func (p *AlibabaCloud) DescribeAvailableResource(req cloud.DescribeAvailableReso
 	if req.ZoneId != "" {
 		request.ZoneId = tea.String(req.ZoneId)
 	}
-	response, err := p.ecsClient.DescribeAvailableResource(request)
-	if err != nil {
-		logs.Logger.Errorf("DescribeAvailableResource AlibabaCloud failed.err: [%v] req[%v]", err, req)
-		return cloud.DescribeAvailableResourceResponse{}, err
-	}
 
-	if response != nil && response.Body != nil && response.Body.AvailableZones != nil {
-		zoneInsType := make(map[string][]cloud.InstanceType, 64)
+	zoneInsType := make(map[string][]cloud.InstanceType, 8)
+	insTypeChargeType := []string{"PrePaid", "PostPaid"}
+	for _, chargeType := range insTypeChargeType {
+		request.InstanceChargeType = tea.String(chargeType)
+		response, err := p.ecsClient.DescribeAvailableResource(request)
+		if err != nil {
+			logs.Logger.Errorf("DescribeAvailableResource AlibabaCloud failed.err: [%v] req[%v]", err, req)
+			return cloud.DescribeAvailableResourceResponse{}, err
+		}
+		if response == nil || response.Body == nil || response.Body.AvailableZones == nil {
+			return cloud.DescribeAvailableResourceResponse{}, errors.New("response is null")
+		}
+
 		for _, zone := range response.Body.AvailableZones.AvailableZone {
-			if zone.AvailableResources == nil {
+			if zone.AvailableResources == nil || len(zone.AvailableResources.AvailableResource) < 1 ||
+				tea.StringValue(zone.StatusCategory) != "WithStock" {
 				continue
 			}
-			insTypeMap := make(map[string]cloud.InstanceType, 100)
-			insTypeIds := make([]string, 0, 100)
-			for _, resource := range zone.AvailableResources.AvailableResource {
-				if resource.SupportedResources == nil {
-					continue
-				}
-				for _, ins := range resource.SupportedResources.SupportedResource {
-					if ins == nil {
-						continue
-					}
-					insTypeMap[*ins.Value] = cloud.InstanceType{
-						Status: _insTypeStat[*ins.StatusCategory],
-					}
-					insTypeIds = append(insTypeIds, *ins.Value)
-				}
+
+			zoneId := *zone.ZoneId
+			insTypes, err := p.getResourceDetail(zone.AvailableResources.AvailableResource, chargeType)
+			if err != nil {
+				logs.Logger.Errorf("zoneId[%v] getResourceDetail failed: [%v]", zoneId, err)
+				continue
 			}
 
-			res, err := p.DescribeInstanceTypes(cloud.DescribeInstanceTypesRequest{TypeName: insTypeIds})
-			if err != nil {
-				return cloud.DescribeAvailableResourceResponse{}, err
-			}
-			insTypeInfos := make([]cloud.InstanceType, 0, len(res.Infos))
-			for _, info := range res.Infos {
-				insTypeInfos = append(insTypeInfos, cloud.InstanceType{
-					InstanceInfo: cloud.InstanceInfo{
-						Core:        info.Core,
-						Memory:      info.Memory,
-						Family:      info.Family,
-						InsTypeName: info.InsTypeName,
-					},
-					Status: insTypeMap[info.InsTypeName].Status,
-				})
-			}
-			zoneInsType[*zone.ZoneId] = insTypeInfos
+			zoneInsType[zoneId] = append(zoneInsType[zoneId], insTypes...)
 		}
-		return cloud.DescribeAvailableResourceResponse{
-			InstanceTypes: zoneInsType,
-		}, nil
 	}
-	return cloud.DescribeAvailableResourceResponse{}, errors.New("response is null")
+	return cloud.DescribeAvailableResourceResponse{InstanceTypes: zoneInsType}, nil
 }
 
 // DescribeInstanceTypes Up to 10 at once
 func (p *AlibabaCloud) DescribeInstanceTypes(req cloud.DescribeInstanceTypesRequest) (cloud.DescribeInstanceTypesResponse, error) {
-	insTypeInfo := make([]cloud.InstanceInfo, 0, len(req.TypeName))
+	ecsInsTypes := make([]*ecsClient.DescribeInstanceTypesResponseBodyInstanceTypesInstanceType, 0, len(req.TypeName))
 	var onceNum int64 = 10
 	batchIds := utils.StringSliceSplit(req.TypeName, onceNum)
 	for _, onceIds := range batchIds {
@@ -681,24 +660,20 @@ func (p *AlibabaCloud) DescribeInstanceTypes(req cloud.DescribeInstanceTypesRequ
 			return cloud.DescribeInstanceTypesResponse{}, errors.New("response is null")
 		}
 		for _, info := range response.Body.InstanceTypes.InstanceType {
-			insTypeInfo = append(insTypeInfo, cloud.InstanceInfo{
-				Core:        int(*info.CpuCoreCount),
-				Memory:      int(*info.MemorySize),
-				Family:      *info.InstanceTypeFamily,
-				InsTypeName: *info.InstanceTypeId,
-			})
+			ecsInsTypes = append(ecsInsTypes, info)
 		}
 	}
-
-	return cloud.DescribeInstanceTypesResponse{Infos: insTypeInfo}, nil
+	insTypes := ecsInsType2CloudInsType(ecsInsTypes)
+	return cloud.DescribeInstanceTypesResponse{Infos: insTypes}, nil
 }
 
 func (p *AlibabaCloud) DescribeImages(req cloud.DescribeImagesRequest) (cloud.DescribeImagesResponse, error) {
 	var page int32 = 1
+	var pageSize int32 = 50
 	images := make([]cloud.Image, 0)
 	request := &ecsClient.DescribeImagesRequest{
 		RegionId:        tea.String(req.RegionId),
-		PageSize:        tea.Int32(50),
+		PageSize:        tea.Int32(pageSize),
 		ImageOwnerAlias: tea.String(_imageType[req.ImageType]),
 	}
 	if req.ImageType == cloud.ImageGlobal && req.InsType != "" {
@@ -713,18 +688,19 @@ func (p *AlibabaCloud) DescribeImages(req cloud.DescribeImagesRequest) (cloud.De
 		if response != nil && response.Body != nil && response.Body.Images != nil {
 			for _, img := range response.Body.Images.Image {
 				images = append(images, cloud.Image{
+					Platform:  *img.Platform,
 					OsType:    _osType[*img.OSType],
 					OsName:    *img.OSName,
+					Size:      int(tea.Int32Value(img.Size)),
 					ImageId:   *img.ImageId,
 					ImageName: *img.ImageName,
 				})
 			}
 
-			if *response.Body.TotalCount > page*50 {
-				page++
-			} else {
+			if page*pageSize >= tea.Int32Value(response.Body.TotalCount) {
 				break
 			}
+			page++
 		}
 	}
 	return cloud.DescribeImagesResponse{Images: images}, nil
@@ -826,7 +802,7 @@ func (p *AlibabaCloud) GetOrders(req cloud.GetOrdersRequest) (cloud.GetOrdersRes
 			} else {
 				usageEndTime, _ = time.Parse("2006-01-02T15:04:05Z", subOrder.UsageEndTime)
 			}
-			if _chargeType[subOrder.SubscriptionType] == cloud.PostPaid && usageEndTime.Sub(usageStartTime).Hours() > 24*365*20 {
+			if _orderChargeType[subOrder.SubscriptionType] == cloud.OrderPostPaid && usageEndTime.Sub(usageStartTime).Hours() > 24*365*20 {
 				usageEndTime, _ = time.Parse("2006-01-02 15:04:05", "2038-01-01 00:00:00")
 			}
 
@@ -838,7 +814,7 @@ func (p *AlibabaCloud) GetOrders(req cloud.GetOrdersRequest) (cloud.GetOrdersRes
 				UsageStartTime: usageStartTime,
 				UsageEndTime:   usageEndTime,
 				RegionId:       subOrder.Region,
-				ChargeType:     _chargeType[subOrder.SubscriptionType],
+				ChargeType:     _orderChargeType[subOrder.SubscriptionType],
 				PayStatus:      _payStatus[subOrder.PaymentStatus],
 				Currency:       subOrder.Currency,
 				Cost:           cast.ToFloat32(subOrder.PretaxAmount),
@@ -850,4 +826,51 @@ func (p *AlibabaCloud) GetOrders(req cloud.GetOrdersRequest) (cloud.GetOrdersRes
 		}
 	}
 	return cloud.GetOrdersResponse{Orders: orders}, nil
+}
+
+//miss ChargeType,Status
+func ecsInsType2CloudInsType(ecsInsType []*ecsClient.DescribeInstanceTypesResponseBodyInstanceTypesInstanceType) []cloud.InstanceType {
+	insType := make([]cloud.InstanceType, 0, len(ecsInsType))
+	for _, info := range ecsInsType {
+		isGpu := false
+		if tea.Int32Value(info.GPUAmount) > 0 {
+			isGpu = true
+		}
+		insType = append(insType, cloud.InstanceType{
+			IsGpu:       isGpu,
+			Core:        int(tea.Int32Value(info.CpuCoreCount)),
+			Memory:      int(tea.Float32Value(info.MemorySize)),
+			Family:      tea.StringValue(info.InstanceTypeFamily),
+			InsTypeName: tea.StringValue(info.InstanceTypeId),
+		})
+	}
+	return insType
+}
+
+func (p *AlibabaCloud) getResourceDetail(availableResource []*ecsClient.DescribeAvailableResourceResponseBodyAvailableZonesAvailableZoneAvailableResourcesAvailableResource,
+	chargeType string) ([]cloud.InstanceType, error) {
+	insTypeStat := make(map[string]string, 100)
+	insTypeIds := make([]string, 0, 100)
+	for _, resource := range availableResource {
+		if resource.SupportedResources == nil {
+			continue
+		}
+		for _, ins := range resource.SupportedResources.SupportedResource {
+			if ins == nil || _insTypeStat[tea.StringValue(ins.StatusCategory)] != cloud.InsTypeAvailable {
+				continue
+			}
+			insTypeStat[*ins.Value] = _insTypeStat[tea.StringValue(ins.StatusCategory)]
+			insTypeIds = append(insTypeIds, *ins.Value)
+		}
+	}
+
+	res, err := p.DescribeInstanceTypes(cloud.DescribeInstanceTypesRequest{TypeName: insTypeIds})
+	if err != nil {
+		return nil, err
+	}
+	for i, info := range res.Infos {
+		res.Infos[i].ChargeType = _insTypeChargeType[chargeType]
+		res.Infos[i].Status = insTypeStat[info.InsTypeName]
+	}
+	return res.Infos, nil
 }

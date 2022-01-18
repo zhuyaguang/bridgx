@@ -236,32 +236,37 @@ func ConvertToClusterInfo(m *model.Cluster, tags []model.ClusterTag) (*types.Clu
 			return nil, err
 		}
 	}
+	extendConfig := &types.ExtendConfig{}
+	if m.ExtendConfig != "" {
+		err := jsoniter.UnmarshalFromString(m.ExtendConfig, extendConfig)
+		if err != nil {
+			return nil, err
+		}
+	}
 	var mt = make(map[string]string, 0)
 	for _, clusterTag := range tags {
 		mt[clusterTag.TagKey] = clusterTag.TagValue
 	}
-	instanceType := GetInstanceTypeByName(m.InstanceType)
+
 	clusterInfo := &types.ClusterInfo{
-		Id:                 m.Id,
-		Name:               m.ClusterName,
-		Desc:               m.ClusterDesc,
-		RegionId:           m.RegionId,
-		ZoneId:             m.ZoneId,
-		ClusterType:        m.ClusterType,
-		InstanceType:       m.InstanceType,
-		Image:              m.Image,
-		Provider:           m.Provider,
-		Username:           constants.DefaultUsername,
-		Password:           m.Password,
-		AccountKey:         m.AccountKey,
-		ImageConfig:        imageConfig,
-		NetworkConfig:      networkConfig,
-		StorageConfig:      storageConfig,
-		ChargeConfig:       chargeConfig,
-		Tags:               mt,
-		InstanceCore:       instanceType.Core,
-		InstanceMemory:     instanceType.Memory,
-		ComputingPowerType: GetComputingPowerType(m.InstanceType, m.Provider),
+		Id:            m.Id,
+		Name:          m.ClusterName,
+		Desc:          m.ClusterDesc,
+		RegionId:      m.RegionId,
+		ZoneId:        m.ZoneId,
+		ClusterType:   m.ClusterType,
+		InstanceType:  m.InstanceType,
+		Image:         m.Image,
+		Provider:      m.Provider,
+		Username:      constants.DefaultUsername,
+		Password:      m.Password,
+		AccountKey:    m.AccountKey,
+		ImageConfig:   imageConfig,
+		NetworkConfig: networkConfig,
+		StorageConfig: storageConfig,
+		ChargeConfig:  chargeConfig,
+		ExtendConfig:  extendConfig,
+		Tags:          mt,
 	}
 	return clusterInfo, nil
 }
@@ -580,16 +585,15 @@ func publishShrinkConfig(clusterName string) error {
 }
 
 func judgeInstancesIsReady(instances []cloud.Instance, chargeConfig *types.NetworkConfig) bool {
-	var internetChargeType string
+	bandwithOut := 0
 	if chargeConfig != nil {
-		internetChargeType = chargeConfig.InternetChargeType
+		bandwithOut = chargeConfig.InternetMaxBandwidthOut
 	}
-	needCheckIpOuter := internetChargeType == cloud.InternetChargeTypePayByTraffic || internetChargeType == cloud.InternetChargeTypePayByBandwidth
 	for _, instance := range instances {
-		if instance.Status == cloud.EcsBuilding || instance.IpInner == "" {
+		if instance.Status != cloud.EcsRunning || instance.IpInner == "" {
 			return false
 		}
-		if needCheckIpOuter && instance.IpOuter == "" {
+		if bandwithOut > 0 && instance.IpOuter == "" {
 			return false
 		}
 	}
