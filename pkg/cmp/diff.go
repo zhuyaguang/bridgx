@@ -62,6 +62,12 @@ func Diff(o, n interface{}) (res DiffResult, err error) {
 		return DiffResult{}, errDifferentTypeCompare
 	}
 	v1, v2 := reflect.ValueOf(o), reflect.ValueOf(n)
+	if t1.Kind() == reflect.Ptr{
+		t1 = t1.Elem()
+		t2 = t2.Elem()
+		v1 = v1.Elem()
+		v2 = v2.Elem()
+	}
 	for i := 0; i < v1.NumField(); i++ {
 		field := t1.Field(i)
 		tagV := field.Tag.Get(columnTag)
