@@ -36,13 +36,14 @@ func createPod(instanceGroup *gf_cluster.InstanceGroup, pod *v1.Pod) error {
 		return nil
 	}
 	cpuUsed, memoryUsed, storageUsed := getPodResourceInfo(pod)
-	runningTime := getPodRunningTime(pod)
 	podInfo.AllocatedCpuCores = cpuUsed
 	podInfo.AllocatedMemoryGi = memoryUsed
 	podInfo.AllocatedDiskGi = storageUsed
-	podInfo.RunningTime = runningTime
 	podInfo.StartTime = pod.Status.StartTime.Time.Unix()
-
+	err := model.CreatePodFromDB(podInfo)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -71,9 +72,11 @@ func updatePodById(pod *gf_cluster.Pod) error {
 }
 
 func updatePodByPodName(pod *v1.Pod) error {
+	if pod == nil || pod.Status.StartTime == nil {
+		return nil
+	}
 	cpuUsed, memoryUsed, storageUSed := getPodResourceInfo(pod)
 	instanceGroupName, instanceGroupId, _ := getPodGroupInfoFromLabels(pod)
-	runningTime := getPodRunningTime(pod)
 	podInfo := &gf_cluster.Pod{
 		NodeName:          pod.Spec.NodeName,
 		NodeIp:            pod.Status.HostIP,
@@ -83,7 +86,6 @@ func updatePodByPodName(pod *v1.Pod) error {
 		AllocatedMemoryGi: memoryUsed,
 		AllocatedDiskGi:   storageUSed,
 		InstanceGroupName: instanceGroupName,
-		RunningTime:       runningTime,
 		Status:            string(pod.Status.Phase),
 		InstanceGroupId:   instanceGroupId,
 		StartTime:         pod.Status.StartTime.Time.Unix(),

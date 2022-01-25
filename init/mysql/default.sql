@@ -421,7 +421,6 @@ CREATE TABLE `pods` (
   `allocated_memory_gi` FLOAT NOT NULL DEFAULT '0',
   `allocated_disk_gi` FLOAT NOT NULL DEFAULT '0',
   `instance_group_name` VARCHAR(255) NOT NULL,
-  `running_time` VARCHAR(255) NOT NULL,
   `status` VARCHAR(255) NOT NULL,
   `instance_group_id` INT(11) NOT NULL,
   `kubernetes_id` INT(11) NOT NULL,

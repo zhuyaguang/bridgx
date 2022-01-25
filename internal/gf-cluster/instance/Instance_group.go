@@ -13,8 +13,7 @@ func CreateInstanceGroup(instanceGroup *gf_cluster.InstanceGroup) error {
 
 //DeleteInstanceGroup 删除实例组
 func DeleteInstanceGroup(instanceGroup *gf_cluster.InstanceGroup) error {
-
-	client, err := cluster.GetKubeClient(instanceGroup.KubernetesId)
+	err := model.DeletePodByInstanceGroupIdFromDB(instanceGroup.Id)
 	if err != nil {
 		return err
 	}
@@ -22,11 +21,15 @@ func DeleteInstanceGroup(instanceGroup *gf_cluster.InstanceGroup) error {
 	if err != nil {
 		return err
 	}
-	err = clearElasticInstance(client, instanceGroup.Name, instanceGroup.Id)
+	client, err := cluster.GetKubeClient(instanceGroup.KubernetesId)
 	if err != nil {
 		return err
 	}
 
+	err = clearElasticInstance(client, instanceGroup.Name, instanceGroup.Id)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

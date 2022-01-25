@@ -11,7 +11,6 @@ type Pod struct {
 	AllocatedMemoryGi float64 `json:"allocated_memory_gi"`
 	AllocatedDiskGi   float64 `json:"allocated_disk_gi"`
 	InstanceGroupName string  `json:"instance_group_name"`
-	RunningTime       string  `json:"running_time"`
 	Status            string  `json:"status"`
 	InstanceGroupId   int64   `json:"instance_group_id"`
 	KubernetesId      int64   `json:"kubernetes_id"`

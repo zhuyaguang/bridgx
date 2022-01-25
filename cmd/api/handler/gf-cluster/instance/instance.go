@@ -88,7 +88,7 @@ func HandleDeleteInstance(c *gin.Context) {
 
 }
 
-//HandleListInstance 列出所欲实例
+//HandleListInstance 列出所有实例
 func HandleListInstance(c *gin.Context) {
 	instanceGroupId, err := strconv.ParseInt(c.Param("instanceGroup"), 10, 64)
 	if err != nil {
