@@ -75,11 +75,17 @@ func GetUserInfo(ctx *gin.Context) {
 		response.MkResponse(ctx, http.StatusBadRequest, response.UserNotFound, nil)
 		return
 	}
+	roleIds, err := service.GetRoleIdsByUserId(user.UserId)
+	if err != nil {
+		response.MkResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
 	res := &response.UserInfo{
 		UserId:   user.UserId,
 		Username: userInDB.Username,
 		OrgId:    userInDB.OrgId,
 		UserType: helper.ConvertToReadableStr(userInDB.UserType),
+		RoleIds:  roleIds,
 	}
 	response.MkResponse(ctx, http.StatusOK, response.Success, res)
 	return
@@ -128,7 +134,7 @@ func CreateUser(ctx *gin.Context) {
 		return
 	}
 
-	err := service.CreateUser(ctx, user.OrgId, req.UserName, req.Password, user.Name)
+	err := service.CreateUser(ctx, user.OrgId, req.UserName, req.Password, user.Name, req.RoleIds)
 	if err != nil {
 		response.MkResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
 		return
@@ -203,6 +209,22 @@ func ModifyUsername(ctx *gin.Context) {
 	}
 
 	err := service.ModifyUsername(ctx, user.UserId, req.NewUsername)
+	if err != nil {
+		response.MkResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+	response.MkResponse(ctx, http.StatusOK, response.Success, nil)
+	return
+}
+
+func ModifyUser(ctx *gin.Context) {
+	req := request.ModifyUserRequest{}
+	if err := ctx.ShouldBind(&req); err != nil {
+		response.MkResponse(ctx, http.StatusBadRequest, response.ParamInvalid, nil)
+		return
+	}
+
+	err := service.ModifyUser(ctx, req.UserId, req.Username, req.UserStatus, req.RoleIds)
 	if err != nil {
 		response.MkResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
 		return

@@ -8,6 +8,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/galaxy-future/BridgX/internal/permission"
+
 	"github.com/galaxy-future/BridgX/cmd/api/middleware"
 	"github.com/galaxy-future/BridgX/cmd/api/routers"
 	"github.com/galaxy-future/BridgX/config"
@@ -29,6 +31,7 @@ func main() {
 	cache.MustInit()
 	service.Init(100)
 	middleware.Init()
+	permission.Init()
 	router := routers.Init()
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", config.GlobalConfig.ServerPort),

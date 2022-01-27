@@ -1,6 +1,8 @@
 package response
 
-import "github.com/galaxy-future/BridgX/internal/model"
+import (
+	"github.com/galaxy-future/BridgX/internal/model"
+)
 
 type ClusterCountResponse struct {
 	ClusterNum int64 `json:"cluster_num"`
@@ -193,10 +195,11 @@ type TaskInstancesResponse struct {
 }
 
 type UserInfo struct {
-	UserId   int64  `json:"user_id"`
-	Username string `json:"username"`
-	UserType string `json:"user_type"`
-	OrgId    int64  `json:"org_id"`
+	UserId   int64   `json:"user_id"`
+	Username string  `json:"username"`
+	UserType string  `json:"user_type"`
+	OrgId    int64   `json:"org_id"`
+	RoleIds  []int64 `json:"role_ids"`
 }
 
 type UserThumb struct {
@@ -258,3 +261,83 @@ type CustomClusterInstance struct {
 	LoginName     string `json:"login_name"`
 	LoginPassword string `json:"login_password"`
 }
+
+/*role start*/
+
+type RoleBase struct {
+	Id       int64  `json:"id"`        //角色ID
+	Name     string `json:"name"`      //角色名称
+	Code     string `json:"code"`      //角色编码
+	Status   *int8  `json:"status"`    //状态  0:禁用 1:启用
+	Sort     int    `json:"sort"`      //排序 值越小越靠前
+	CreateAt string `json:"create_at"` //创建时间
+	CreateBy string `json:"create_by"` //创建人
+	UpdateAt string `json:"update_at"` //更新时间
+	UpdateBy string `json:"update_by"` //更新人
+}
+
+type RoleDetailResponse struct {
+	RoleBase
+	MenuIds []int64 `json:"menu_ids"` //菜单ID列表
+}
+
+type RoleListResponse struct {
+	RoleList []RoleBase `json:"role_list"`
+	Pager    Pager      `json:"pager"`
+}
+
+/*role end*/
+
+/*menu start*/
+
+type MenuBase struct {
+	Id            int64       `json:"id"`              //角色ID
+	ParentId      *int64      `json:"parent_id"`       //父节点ID
+	Name          string      `json:"name"`            //菜单名称
+	Icon          string      `json:"icon"`            //图标
+	Type          *int8       `json:"type"`            //菜单类型 0:目录 1:菜单 2:按钮
+	Path          string      `json:"path"`            //路径
+	Component     string      `json:"component"`       //组件
+	Permission    string      `json:"permission"`      //权限编码
+	Visible       *int8       `json:"visible"`         //是否展示  0:否 1:是
+	OuterLinkFlag *int8       `json:"outer_link_flag"` //外链标识  0:否 1:是
+	Sort          *int        `json:"sort"`            //排序 值越小越靠前
+	Children      []*MenuBase `json:"children"`        //子菜单
+	CreateAt      string      `json:"create_at"`       //创建时间
+	CreateBy      string      `json:"create_by"`       //创建人
+	UpdateAt      string      `json:"update_at"`       //更新时间
+	UpdateBy      string      `json:"update_by"`       //更新人
+}
+
+type MenuDetailResponse struct {
+	MenuBase
+	ApiIds []int64 `json:"api_ids"` //菜单ID列表
+}
+
+type MenuListResponse struct {
+	MenuList []*MenuBase `json:"menu_list"`
+	Pager    Pager       `json:"pager"`
+}
+
+/*menu end*/
+
+/*api start*/
+
+type ApiDetailResponse struct {
+	Id       int64  `json:"id"`        //apiID
+	Name     string `json:"name"`      //接口名称
+	Path     string `json:"path"`      //地址
+	Method   string `json:"method"`    //请求方法
+	Status   *int8  `json:"status"`    //状态  0:禁用 1:启用
+	CreateAt string `json:"create_at"` //创建时间
+	CreateBy string `json:"create_by"` //创建人
+	UpdateAt string `json:"update_at"` //更新时间
+	UpdateBy string `json:"update_by"` //更新人
+}
+
+type ApiListResponse struct {
+	ApiList []ApiDetailResponse `json:"api_list"`
+	Pager   Pager               `json:"pager"`
+}
+
+/*api end*/

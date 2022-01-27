@@ -36,18 +36,31 @@ require (
 )
 
 require (
+	github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible // indirect
 	github.com/alibabacloud-go/debug v0.0.0-20190504072949-9472017b5c68 // indirect
 	github.com/alibabacloud-go/endpoint-util v1.1.0 // indirect
 	github.com/alibabacloud-go/openapi-util v0.0.8 // indirect
 	github.com/alibabacloud-go/tea-utils v1.3.9 // indirect
 	github.com/aliyun/credentials-go v1.1.2 // indirect
+	github.com/casbin/casbin/v2 v2.40.6 // indirect
+	github.com/casbin/gorm-adapter/v3 v3.4.6 // indirect
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
+	github.com/denisenkom/go-mssqldb v0.11.0 // indirect
 	github.com/go-logr/logr v1.2.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/golang-sql/civil v0.0.0-20190719163853-cb61b32ac6fe // indirect
 	github.com/google/gofuzz v1.1.0 // indirect
 	github.com/googleapis/gnostic v0.5.5 // indirect
 	github.com/imdario/mergo v0.3.5 // indirect
+	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
+	github.com/jackc/pgconn v1.10.0 // indirect
+	github.com/jackc/pgio v1.0.0 // indirect
+	github.com/jackc/pgpassfile v1.0.0 // indirect
+	github.com/jackc/pgproto3/v2 v2.1.1 // indirect
+	github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b // indirect
+	github.com/jackc/pgtype v1.8.1 // indirect
+	github.com/jackc/pgx/v4 v4.13.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/tjfoc/gmsm v1.3.2 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
@@ -61,6 +74,9 @@ require (
 	google.golang.org/genproto v0.0.0-20210602131652-f16073e35f0c // indirect
 	google.golang.org/grpc v1.38.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
+	gorm.io/driver/postgres v1.2.2 // indirect
+	gorm.io/driver/sqlserver v1.2.1 // indirect
+	gorm.io/plugin/dbresolver v1.1.0 // indirect
 	k8s.io/klog/v2 v2.30.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20211115234752-e816edb12b65 // indirect
 	k8s.io/utils v0.0.0-20210930125809-cb0fa318a74b // indirect

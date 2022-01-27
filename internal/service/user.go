@@ -6,6 +6,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/spf13/cast"
+
+	"github.com/galaxy-future/BridgX/internal/permission"
+
+	"github.com/galaxy-future/BridgX/internal/clients"
+
 	"github.com/galaxy-future/BridgX/internal/constants"
 
 	"github.com/galaxy-future/BridgX/internal/model"
@@ -33,7 +39,8 @@ func GetUserList(ctx context.Context, orgId int64, pageNum, pageSize int) (ret [
 	return ret, total, nil
 }
 
-func CreateUser(ctx context.Context, orgId int64, username, password, createBy string) error {
+func CreateUser(ctx context.Context, orgId int64, username, password, createBy string, roleIds []int64) error {
+	var err error
 	user := &model.User{
 		Username:   username,
 		Password:   utils.Base64Md5(password),
@@ -42,10 +49,30 @@ func CreateUser(ctx context.Context, orgId int64, username, password, createBy s
 		UserType:   constants.UserTypeCommonUser,
 		CreateBy:   createBy,
 	}
+	tx := clients.WriteDBCli.WithContext(ctx).Begin()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		} else {
+			tx.Commit()
+			permission.E.AddRolesForUser(cast.ToString(user.Id), cast.ToStringSlice(roleIds))
+		}
+	}()
 	now := time.Now()
 	user.CreateAt = &now
 	user.UpdateAt = &now
-	return model.Create(user)
+	err = tx.Create(user).Error
+	if err != nil {
+		return err
+	}
+	if roleIds == nil || len(roleIds) == 0 {
+		return nil
+	}
+	userRoles := make([]model.UserRole, 0, len(roleIds))
+	for _, roleId := range roleIds {
+		userRoles = append(userRoles, model.UserRole{UserId: user.Id, RoleId: roleId})
+	}
+	return tx.CreateInBatches(userRoles, len(roleIds)).Error
 }
 
 func UpdateUserStatus(ctx context.Context, usernames []string, status string) error {
@@ -94,6 +121,47 @@ func ModifyUsername(ctx context.Context, uid int64, newUsername string) error {
 	user.Username = newUsername
 	user.UpdateAt = &now
 	return model.Save(user)
+}
+
+func ModifyUser(ctx context.Context, uid int64, username, userStatus string, roleIds []int64) error {
+	var err error
+	user, err := GetUserById(ctx, uid)
+	if err != nil {
+		return err
+	}
+	tx := clients.WriteDBCli.WithContext(ctx).Begin()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		} else {
+			tx.Commit()
+			// 4.update casbin policy
+			// 4.1 delete old policy
+			permission.E.DeleteRolesForUser(cast.ToString(uid))
+			// 4.2 add new policy
+			permission.E.AddRolesForUser(cast.ToString(uid), cast.ToStringSlice(roleIds))
+		}
+	}()
+	// 1.delete user_role
+	err = tx.Delete(model.UserRole{}, "user_id = ?", uid).Error
+	if err != nil {
+		return err
+	}
+	// 2.insert user_role
+	userRoles := make([]model.UserRole, 0, len(roleIds))
+	for _, roleId := range roleIds {
+		userRoles = append(userRoles, model.UserRole{UserId: uid, RoleId: roleId})
+	}
+	err = tx.CreateInBatches(userRoles, len(roleIds)).Error
+	if err != nil {
+		return err
+	}
+	// 3.update user
+	now := time.Now()
+	user.Username = username
+	user.UserStatus = userStatus
+	user.UpdateAt = &now
+	return tx.Save(user).Error
 }
 
 func UserMapByIDs(ctx context.Context, ids []int64) map[int64]string {

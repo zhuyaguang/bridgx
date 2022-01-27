@@ -3,6 +3,8 @@ package routers
 import (
 	"net/http"
 
+	"github.com/galaxy-future/BridgX/cmd/api/middleware/permission"
+
 	"github.com/galaxy-future/BridgX/cmd/api/handler"
 	gf_cluster "github.com/galaxy-future/BridgX/cmd/api/handler/gf-cluster"
 	"github.com/galaxy-future/BridgX/cmd/api/handler/gf-cluster/cluster"
@@ -38,6 +40,7 @@ func Init() *gin.Engine {
 
 	v1Api := router.Group("/api/v1/")
 	v1Api.Use(authorization.CheckTokenAuth())
+	v1Api.Use(permission.CheckPermission())
 
 	{
 		cloudAccountPath := v1Api.Group("cloud_account/")
@@ -131,10 +134,37 @@ func Init() *gin.Engine {
 		{
 			userPath.GET("info", handler.GetUserInfo)
 			userPath.POST("create_ram_user", handler.CreateUser)
+			userPath.POST("modify", handler.ModifyUser)
 			userPath.POST("modify_password", handler.ModifyAdminPassword)
 			userPath.POST("modify_username", handler.ModifyUsername)
 			userPath.POST("enable_ram_user", handler.EnableUser)
 			userPath.GET("list", handler.ListUsers)
+		}
+		rolePath := v1Api.Group("role/")
+		{
+			rolePath.GET("detail/:id", handler.GetRoleDetail)
+			rolePath.GET("list", handler.GetRoleList)
+			rolePath.POST("create", handler.CreateRole)
+			rolePath.POST("update", handler.UpdateRole)
+			rolePath.POST("update_status", handler.UpdateRoleStatus)
+			rolePath.DELETE("delete/:ids", handler.DeleteRole)
+		}
+		menuPath := v1Api.Group("menu/")
+		{
+			menuPath.GET("detail/:id", handler.GetMenuDetail)
+			menuPath.GET("list", handler.GetMenuList)
+			menuPath.POST("create", handler.CreateMenu)
+			menuPath.POST("update", handler.UpdateMenu)
+			menuPath.DELETE("delete/:ids", handler.DeleteMenu)
+		}
+		apiPath := v1Api.Group("api/")
+		{
+			apiPath.GET("detail/:id", handler.GetApiDetail)
+			apiPath.GET("list", handler.GetApiList)
+			apiPath.POST("create", handler.CreateApi)
+			apiPath.POST("update", handler.UpdateApi)
+			apiPath.POST("update_status", handler.UpdateApiStatus)
+			apiPath.DELETE("delete/:ids", handler.DeleteApi)
 		}
 		orgPath := v1Api.Group("org/")
 		{

@@ -144,8 +144,9 @@ type EditOrgRequest struct {
 }
 
 type CreateUserRequest struct {
-	UserName string `json:"username"`
-	Password string `json:"password"`
+	UserName string  `json:"username"`
+	Password string  `json:"password"`
+	RoleIds  []int64 `json:"role_ids"`
 }
 
 type ModifyAdminPasswordRequest struct {
@@ -161,6 +162,13 @@ type ModifyUsernameRequest struct {
 type UserStatusRequest struct {
 	UserNames []string `json:"usernames"`
 	Action    string   `json:"action"`
+}
+
+type ModifyUserRequest struct {
+	UserId     int64   `json:"user_id" binding:"required"`
+	Username   string  `json:"username" binding:"required"`
+	UserStatus string  `json:"user_status" binding:"required"`
+	RoleIds    []int64 `json:"role_ids"`
 }
 
 type CreateOrgRequest struct {
@@ -196,3 +204,107 @@ type CustomPrivateCloudClusterRequest struct {
 type CheckInstanceConnectableRequest struct {
 	InstanceList []model.CustomClusterInstance `json:"instance_list"`
 }
+
+/*role start*/
+
+type CreateRoleRequest struct {
+	Name    string  `json:"name" binding:"required"`   //角色名称
+	Code    string  `json:"code" binding:"required"`   //角色编码
+	Status  *int8   `json:"status" binding:"required"` //状态  0:禁用 1:启用
+	Sort    int     `json:"sort" binding:"required"`   //排序 值越小越靠前
+	MenuIds []int64 `json:"menu_ids"`                  //菜单ID列表
+}
+
+type UpdateRoleRequest struct {
+	Id      int64   `json:"id" binding:"required"`   //角色ID
+	Name    string  `json:"name" binding:"required"` //角色名称
+	Code    string  `json:"code" binding:"required"` //角色编码
+	Sort    int     `json:"sort" binding:"required"` //排序 值越小越靠前
+	MenuIds []int64 `json:"menu_ids"`                //菜单ID列表
+}
+
+type UpdateRoleStatusRequest struct {
+	Id     []int64 `json:"ids" binding:"required"`    //角色ID集合
+	Status *int8   `json:"status" binding:"required"` //状态  0:禁用 1:启用
+}
+
+type RoleListRequest struct {
+	Name       string `form:"name"`   //角色名称
+	Status     *int8  `form:"status"` //状态  0:禁用 1:启用
+	PageNumber int    `form:"page_number" binding:"required"`
+	PageSize   int    `form:"page_size" binding:"required"`
+}
+
+/*role end*/
+
+/*menu start*/
+
+type CreateMenuRequest struct {
+	ParentId      *int64  `json:"parent_id" binding:"required"`       //父节点ID
+	Name          string  `json:"name" binding:"required"`            //菜单名称
+	Icon          string  `json:"icon"`                               //图标
+	Type          *int8   `json:"type" binding:"required"`            //菜单类型 0:目录 1:菜单 2:按钮
+	Path          string  `json:"path"`                               //路径
+	Component     string  `json:"component"`                          //组件
+	Permission    string  `json:"permission"`                         //权限编码
+	Visible       *int8   `json:"visible" binding:"required"`         //是否展示  0:否 1:是
+	OuterLinkFlag *int8   `json:"outer_link_flag" binding:"required"` //外链标识  0:否 1:是
+	Sort          *int    `json:"sort" binding:"required"`            //排序 值越小越靠前
+	ApiIds        []int64 `json:"api_ids"`                            //接口ID列表
+}
+
+type UpdateMenuRequest struct {
+	Id            int64   `json:"id" binding:"required"`              //角色ID
+	ParentId      *int64  `json:"parent_id" binding:"required"`       //父节点ID
+	Name          string  `json:"name" binding:"required"`            //菜单名称
+	Icon          string  `json:"icon"`                               //图标
+	Type          *int8   `json:"type" binding:"required"`            //菜单类型 0:目录 1:菜单 2:按钮
+	Path          string  `json:"path"`                               //路径
+	Component     string  `json:"component"`                          //组件
+	Permission    string  `json:"permission"`                         //权限编码
+	Visible       *int8   `json:"visible" binding:"required"`         //是否展示  0:否 1:是
+	OuterLinkFlag *int8   `json:"outer_link_flag" binding:"required"` //外链标识  0:否 1:是
+	Sort          *int    `json:"sort" binding:"required"`            //排序 值越小越靠前
+	ApiIds        []int64 `json:"api_ids"`                            //接口ID列表
+}
+
+type MenuListRequest struct {
+	Name       string `form:"name"`    //菜单名称
+	Visible    *int8  `form:"visible"` //是否展示  0:否 1:是
+	PageNumber int    `form:"page_number" binding:"required"`
+	PageSize   int    `form:"page_size" binding:"required"`
+}
+
+/*menu end*/
+
+/*api start*/
+
+type CreateApiRequest struct {
+	Name   string `json:"name" binding:"required"`   //接口名称
+	Path   string `json:"path" binding:"required"`   //地址
+	Method string `json:"method" binding:"required"` //请求方法
+	Status *int8  `json:"status" binding:"required"` //状态  0:禁用 1:启用
+}
+
+type UpdateApiRequest struct {
+	Id     int64  `json:"id" binding:"required"`     //apiID
+	Name   string `json:"name" binding:"required"`   //接口名称
+	Path   string `json:"path" binding:"required"`   //地址
+	Method string `json:"method" binding:"required"` //请求方法
+}
+
+type UpdateApiStatusRequest struct {
+	Id     []int64 `json:"ids" binding:"required"`    //API ID集合
+	Status *int8   `json:"status" binding:"required"` //状态  0:禁用 1:启用
+}
+
+type ApiListRequest struct {
+	Name       string `json:"name"`   //接口名称
+	Path       string `json:"path"`   //地址
+	Method     string `json:"method"` //请求方法
+	Status     *int8  `json:"status"` //状态  0:禁用 1:启用
+	PageNumber int    `form:"page_number" binding:"required"`
+	PageSize   int    `form:"page_size" binding:"required"`
+}
+
+/*api end*/
