@@ -418,3 +418,99 @@ VALUES (1, 'root', '87d9bb400c0634691f0e3baaf1e2fd0d', 1, 'enable', 1, '2021-11-
 -- init org info
 INSERT INTO `org`
 VALUES (1, '星汉未来', '2021-11-16 03:44:33', '2021-11-16 03:44:33');
+
+DROP TABLE IF EXISTS `api`;
+CREATE TABLE `api` (
+   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
+   `name` varchar(32) NOT NULL COMMENT '接口名称',
+   `path` varchar(128) NOT NULL COMMENT '地址',
+   `method` varchar(32) NOT NULL COMMENT '请求方法',
+   `status` tinyint(1) NOT NULL DEFAULT '1' COMMENT '状态 0:禁用 1:启用',
+   `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '创建时间',
+   `create_by` varchar(128) NOT NULL COMMENT '创建人',
+   `update_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+   `update_by` varchar(128) NOT NULL COMMENT '更新人',
+   PRIMARY KEY (`id`),
+   UNIQUE KEY `uniq_name` (`name`),
+   UNIQUE KEY `uniq_path_method` (`path`,`method`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='接口api表';
+
+DROP TABLE IF EXISTS `menu`;
+CREATE TABLE `menu` (
+    `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
+    `parent_id` bigint(20) NOT NULL DEFAULT '0' COMMENT '父节点ID',
+    `name` varchar(32) NOT NULL COMMENT '菜单名称',
+    `icon` varchar(64) DEFAULT NULL COMMENT '图标',
+    `type` tinyint(1) NOT NULL COMMENT '菜单类型 0:目录 1:菜单 2:按钮',
+    `path` varchar(128) DEFAULT NULL COMMENT '路径',
+    `component` varchar(128) DEFAULT NULL COMMENT '组件',
+    `permission` varchar(128) DEFAULT NULL COMMENT '权限编码',
+    `visible` tinyint(1) NOT NULL DEFAULT '1' COMMENT '是否展示  0:否 1:是',
+    `outer_link_flag` tinyint(1) NOT NULL DEFAULT '0' COMMENT '外链标识  0:否 1:是',
+    `sort` int(11) NOT NULL DEFAULT '0' COMMENT '排序 值越小越靠前',
+    `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '创建时间',
+    `create_by` varchar(128) NOT NULL COMMENT '创建人',
+    `update_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `update_by` varchar(128) NOT NULL COMMENT '更新人',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uniq_name` (`name`),
+    KEY `idx_parent_id` (`parent_id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='菜单表';
+
+DROP TABLE IF EXISTS `menu_api`;
+CREATE TABLE `menu_api` (
+    `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
+    `menu_id` bigint(20) NOT NULL COMMENT '菜单ID',
+    `api_id` bigint(20) NOT NULL COMMENT 'apiID',
+    `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '创建时间',
+    `create_by` varchar(128) NOT NULL COMMENT '创建人',
+    `update_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `update_by` varchar(128) NOT NULL COMMENT '更新人',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uniq_menu_id_api_id` (`menu_id`,`api_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='菜单接口关系表';
+
+
+DROP TABLE IF EXISTS `role`;
+CREATE TABLE `role` (
+    `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
+    `name` varchar(32) NOT NULL COMMENT '角色名称',
+    `code` varchar(64) NOT NULL COMMENT '角色编码',
+    `status` tinyint(1) NOT NULL DEFAULT '1' COMMENT '状态  0:禁用 1:启用',
+    `sort` int(11) NOT NULL DEFAULT '0' COMMENT '排序 值越小越靠前',
+    `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '创建时间',
+    `create_by` varchar(128) NOT NULL COMMENT '创建人',
+    `update_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `update_by` varchar(128) NOT NULL COMMENT '更新人',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uniq_name` (`name`),
+    UNIQUE KEY `uniq_code` (`code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='角色表';
+
+
+DROP TABLE IF EXISTS `role_menu`;
+CREATE TABLE `role_menu` (
+     `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
+     `role_id` bigint(20) NOT NULL COMMENT '角色ID',
+     `menu_id` bigint(20) NOT NULL COMMENT '菜单ID',
+     `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '创建时间',
+     `create_by` varchar(128) NOT NULL COMMENT '创建人',
+     `update_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+     `update_by` varchar(128) NOT NULL COMMENT '更新人',
+     PRIMARY KEY (`id`),
+     UNIQUE KEY `uniq_role_id_menu_id` (`role_id`,`menu_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='角色菜单关系表';
+
+
+DROP TABLE IF EXISTS `user_role`;
+CREATE TABLE `user_role` (
+     `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
+     `user_id` bigint(20) NOT NULL COMMENT '用户ID',
+     `role_id` bigint(20) NOT NULL COMMENT '角色ID',
+     `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '创建时间',
+     `create_by` varchar(128) NOT NULL COMMENT '创建人',
+     `update_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+     `update_by` varchar(128) NOT NULL COMMENT '更新人',
+     PRIMARY KEY (`id`),
+     UNIQUE KEY `uniq_user_id_role_id` (`user_id`,`role_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户角色关系表';
