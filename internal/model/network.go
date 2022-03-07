@@ -138,7 +138,7 @@ func FindVpcsWithPage(ctx context.Context, cond FindVpcConditions) (result []Vpc
 		cond.PageSize = constants.DefaultPageSize
 	}
 	offset := (cond.PageNumber - 1) * cond.PageSize
-	err = query.Find(&result).Limit(int(cond.PageSize)).Offset(int(offset)).Error
+	err = query.Order("create_at DESC,id").Limit(int(cond.PageSize)).Offset(int(offset)).Find(&result).Error
 	if err != nil {
 		logs.Logger.Errorf("FindVpcsWithPage failed.err: [%v]", err)
 		return nil, 0, err
