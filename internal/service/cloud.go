@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/galaxy-future/BridgX/pkg/cloud/baidu"
+
 	"github.com/Rican7/retry"
 	"github.com/Rican7/retry/backoff"
 	"github.com/Rican7/retry/strategy"
@@ -256,6 +258,8 @@ func getProvider(provider, ak, regionId string) (cloud.Provider, error) {
 		client, err = huawei.New(ak, sk, regionId)
 	case cloud.TencentCloud:
 		client, err = tencent.New(ak, sk, regionId)
+	case cloud.BaiduCloud:
+		client, err = baidu.New(ak, sk, regionId)
 	default:
 		return nil, errors.New("invalid provider")
 	}
