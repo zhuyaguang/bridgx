@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
 	"testing"
 
 	"github.com/galaxy-future/BridgX/cmd/api/request"
@@ -46,11 +45,17 @@ func TestCreateCloudAccount(t *testing.T) {
 			AccountName:   "test_user",
 			Provider:      cloud.BaiduCloud,
 			AccountKey:    AKGenerator(cloud.BaiduCloud),
-			AccountSecret: "xxx",
+			AccountSecret: "",
+		},
+		{
+			AccountName:   "test_user",
+			Provider:      cloud.AwsCloud,
+			AccountKey:    AKGenerator(cloud.AwsCloud),
+			AccountSecret: "",
 		},
 	}
-	for i, tt := range tests {
-		t.Run(strconv.Itoa(i), func(t *testing.T) {
+	for _, tt := range tests {
+		t.Run(tt.Provider, func(t *testing.T) {
 			w := httptest.NewRecorder()
 			json, _ := json.Marshal(tt)
 			fmt.Println(string(json))
@@ -73,9 +78,13 @@ func TestList(t *testing.T) {
 			provider:    cloud.BaiduCloud,
 			accountName: "test_account",
 		},
+		{
+			provider:    cloud.AwsCloud,
+			accountName: "test_user",
+		},
 	}
-	for i, tt := range tests {
-		t.Run(strconv.Itoa(i), func(t *testing.T) {
+	for _, tt := range tests {
+		t.Run(tt.provider, func(t *testing.T) {
 			w := httptest.NewRecorder()
 			req, _ := http.NewRequest("GET", _cloudAccount+`list?provider=`+tt.provider+`&accountName=`+tt.accountName, nil)
 			req.Header.Set("content-type", "application/json")
@@ -89,7 +98,7 @@ func TestList(t *testing.T) {
 }
 func TestDelete(t *testing.T) {
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("DELETE", _cloudAccount+`delete/2`, nil)
+	req, _ := http.NewRequest("DELETE", _cloudAccount+`delete/8`, nil)
 	req.Header.Set("Authorization", "Bear "+_Token)
 	req.Header.Set("content-type", "application/json")
 	r.ServeHTTP(w, req)

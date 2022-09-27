@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/galaxy-future/BridgX/pkg/cloud/aws"
 	"github.com/galaxy-future/BridgX/pkg/cloud/baidu"
 
 	"github.com/galaxy-future/BridgX/pkg/cloud/tencent"
@@ -122,6 +123,8 @@ func CheckAccountValid(ak, sk, provider string) error {
 		cli, err = tencent.New(ak, sk, DefaultRegionTencent)
 	case cloud.BaiduCloud:
 		cli, err = baidu.New(ak, sk, DefaultRegionBaidu)
+	case cloud.AwsCloud:
+		cli, err = aws.New(ak, sk, DefaultRegionAws)
 	default:
 		return errors.New("invalid provider")
 	}

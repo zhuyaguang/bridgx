@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/spf13/cast"
+
 	"github.com/Rican7/retry"
 	"github.com/Rican7/retry/backoff"
 	"github.com/Rican7/retry/strategy"
@@ -267,6 +269,8 @@ func ConvertToClusterInfo(m *model.Cluster, tags []model.ClusterTag) (*types.Clu
 		ChargeConfig:  chargeConfig,
 		ExtendConfig:  extendConfig,
 		Tags:          mt,
+		AuthType:      m.AuthType,
+		KeyId:         cast.ToString(m.KeyId),
 	}
 	return clusterInfo, nil
 }

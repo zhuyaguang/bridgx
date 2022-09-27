@@ -32,6 +32,7 @@ const (
 	DefaultRegionHuaWei  = "cn-north-4"
 	DefaultRegionTencent = "ap-beijing"
 	DefaultRegionBaidu   = "bj"
+	DefaultRegionAws     = "cn-north-1"
 )
 
 var H *SimpleTaskHandler
@@ -1298,6 +1299,8 @@ func getDefaultRegion(provider string) string {
 		regionId = DefaultRegionTencent
 	case cloud.BaiduCloud:
 		regionId = DefaultRegionBaidu
+	case cloud.AwsCloud:
+		regionId = DefaultRegionAws
 	}
 	return regionId
 }
