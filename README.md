@@ -39,7 +39,7 @@ For stable operation of the system, the recommended system model is 2 CPU cores 
 #### 2. Environmental Dependence
 
 - If you have already installed Docker-1.10.0 and Docker-Compose-1.6.0 or above, please skip this step; otherwise, please check 
-[Docker Install](https://www.docker.com/products/container-runtime) 和 [Docker Compose Install](https://docs.docker.com/compose/install/);
+[Docker Install](https://www.docker.com/products/container-runtime) and [Docker Compose Install](https://docs.docker.com/compose/install/);
 - If you have already installed Git, please skip this step; otherwise, please refer to 
 [Git - Downloads](https://git-scm.com/downloads) to install it.
 
