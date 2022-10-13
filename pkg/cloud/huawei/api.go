@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/alibabacloud-go/tea/tea"
+	"github.com/galaxy-future/BridgX/internal/logs"
 	"github.com/galaxy-future/BridgX/pkg/cloud"
 	"github.com/galaxy-future/BridgX/pkg/utils"
 	"github.com/huaweicloud/huaweicloud-sdk-go-v3/core/auth/basic"
@@ -13,6 +15,7 @@ import (
 	bssModel "github.com/huaweicloud/huaweicloud-sdk-go-v3/services/bss/v2/model"
 	bssRegion "github.com/huaweicloud/huaweicloud-sdk-go-v3/services/bss/v2/region"
 	ecs "github.com/huaweicloud/huaweicloud-sdk-go-v3/services/ecs/v2"
+	"github.com/huaweicloud/huaweicloud-sdk-go-v3/services/ecs/v2/model"
 	ecsRegion "github.com/huaweicloud/huaweicloud-sdk-go-v3/services/ecs/v2/region"
 	iam "github.com/huaweicloud/huaweicloud-sdk-go-v3/services/iam/v3"
 	iamModel "github.com/huaweicloud/huaweicloud-sdk-go-v3/services/iam/v3/model"
@@ -77,7 +80,7 @@ func New(ak, sk, regionId string) (h *HuaweiCloud, err error) {
 			WithRegion(iamRegion.ValueOf(regionId)).
 			WithCredential(gAuth).
 			Build())
-	//bss region must be cn-north-1
+	// bss region must be cn-north-1
 	bssClt := bss.NewBssClient(
 		bss.BssClientBuilder().
 			WithRegion(bssRegion.ValueOf("cn-north-1")).
@@ -180,7 +183,7 @@ func (p *HuaweiCloud) payOrders(orderId string) error {
 	return nil
 }
 
-//up to 50 at once
+// up to 50 at once
 func (p *HuaweiCloud) listPrePaidResources(ids []string) (map[string]prePaidResources, error) {
 	pageSize := 50
 	batchIds := utils.StringSliceSplit(ids, int64(pageSize))
@@ -223,12 +226,83 @@ func (p *HuaweiCloud) GetOrders(req cloud.GetOrdersRequest) (cloud.GetOrdersResp
 	orders := make([]cloud.Order, 0, 0)
 	return cloud.GetOrdersResponse{Orders: orders}, nil
 }
+
 func (p *HuaweiCloud) CreateKeyPair(req cloud.CreateKeyPairRequest) (cloud.CreateKeyPairResponse, error) {
-	return cloud.CreateKeyPairResponse{}, nil
+	request := &model.NovaCreateKeypairRequest{}
+	typeKeypair := model.GetNovaCreateKeypairOptionTypeEnum().SSH
+	keypairBody := &model.NovaCreateKeypairOption{
+		Type: &typeKeypair,
+		Name: req.KeyPairName,
+	}
+	request.Body = &model.NovaCreateKeypairRequestBody{
+		Keypair: keypairBody,
+	}
+	response, err := p.ecsClient.NovaCreateKeypair(request)
+	if err != nil {
+		logs.Logger.Errorf("CreateKeyPair HuaweiCloud failed.err:[%v] req:[%v]", err, req)
+		return cloud.CreateKeyPairResponse{}, err
+	}
+	if response.HttpStatusCode != http.StatusOK {
+		errMsg := "HttpStatusCode not ok"
+		logs.Logger.Errorf("CreateKeyPair HuaweiCloud failed.err:[%v] req:[%v]", errMsg, req)
+		return cloud.CreateKeyPairResponse{}, fmt.Errorf("httpcode %d", response.HttpStatusCode)
+	}
+	return cloud.CreateKeyPairResponse{
+		KeyPairName: response.Keypair.Name,
+		PrivateKey:  response.Keypair.PrivateKey,
+		PublicKey:   response.Keypair.PublicKey,
+	}, nil
 }
+
 func (p *HuaweiCloud) ImportKeyPair(req cloud.ImportKeyPairRequest) (cloud.ImportKeyPairResponse, error) {
-	return cloud.ImportKeyPairResponse{}, nil
+	request := &model.NovaCreateKeypairRequest{}
+	typeKeypair := model.GetNovaCreateKeypairOptionTypeEnum().SSH
+	keypairBody := &model.NovaCreateKeypairOption{
+		PublicKey: tea.String(req.PublicKey),
+		Type:      &typeKeypair,
+		Name:      req.KeyPairName,
+	}
+	request.Body = &model.NovaCreateKeypairRequestBody{
+		Keypair: keypairBody,
+	}
+	response, err := p.ecsClient.NovaCreateKeypair(request)
+	if err != nil {
+		logs.Logger.Errorf("ImportKeyPair HuaweiCloud failed.err:[%v] req:[%v]", err, req)
+		return cloud.ImportKeyPairResponse{}, err
+	}
+	if response.HttpStatusCode != http.StatusOK {
+		errMsg := "HttpStatusCode not ok"
+		logs.Logger.Errorf("ImportKeyPair HuaweiCloud failed.err:[%v] req:[%v]", errMsg, req)
+		return cloud.ImportKeyPairResponse{}, fmt.Errorf("httpcode %d", response.HttpStatusCode)
+	}
+	return cloud.ImportKeyPairResponse{
+		KeyPairName: response.Keypair.Name,
+	}, nil
 }
+
 func (p *HuaweiCloud) DescribeKeyPairs(req cloud.DescribeKeyPairsRequest) (cloud.DescribeKeyPairsResponse, error) {
-	return cloud.DescribeKeyPairsResponse{}, nil
+	response, err := p.ecsClient.NovaListKeypairs(&model.NovaListKeypairsRequest{
+		Limit:  tea.Int32(int32(req.PageSize)),
+		Marker: tea.String(req.OlderMarker),
+	})
+	if err != nil {
+		logs.Logger.Errorf("DescribeKeyPairs HuaweiCloud failed.err:[%v] req:[%v]", err, req)
+		return cloud.DescribeKeyPairsResponse{}, err
+	}
+	if response.HttpStatusCode != http.StatusOK {
+		errMsg := "HttpStatusCode not ok"
+		logs.Logger.Errorf("DescribeKeyPairs HuaweiCloud failed.err:[%v] req:[%v]", errMsg, req)
+		return cloud.DescribeKeyPairsResponse{}, fmt.Errorf("httpcode %d", response.HttpStatusCode)
+	}
+	rsp := cloud.DescribeKeyPairsResponse{
+		TotalCount: len(*response.Keypairs),
+	}
+	if response.Keypairs != nil {
+		for _, result := range *response.Keypairs {
+			rsp.KeyPairs = append(rsp.KeyPairs, cloud.KeyPair{
+				KeyPairName: result.Keypair.Name,
+			})
+		}
+	}
+	return rsp, nil
 }
