@@ -229,9 +229,9 @@ func (p *HuaweiCloud) GetOrders(req cloud.GetOrdersRequest) (cloud.GetOrdersResp
 
 func (p *HuaweiCloud) CreateKeyPair(req cloud.CreateKeyPairRequest) (cloud.CreateKeyPairResponse, error) {
 	request := &model.NovaCreateKeypairRequest{}
-	typeKeypair := model.GetNovaCreateKeypairOptionTypeEnum().SSH
+	//typeKeypair := model.GetNovaCreateKeypairOptionTypeEnum().SSH
 	keypairBody := &model.NovaCreateKeypairOption{
-		Type: &typeKeypair,
+		//Type: &typeKeypair,
 		Name: req.KeyPairName,
 	}
 	request.Body = &model.NovaCreateKeypairRequestBody{
@@ -256,11 +256,11 @@ func (p *HuaweiCloud) CreateKeyPair(req cloud.CreateKeyPairRequest) (cloud.Creat
 
 func (p *HuaweiCloud) ImportKeyPair(req cloud.ImportKeyPairRequest) (cloud.ImportKeyPairResponse, error) {
 	request := &model.NovaCreateKeypairRequest{}
-	typeKeypair := model.GetNovaCreateKeypairOptionTypeEnum().SSH
+	//typeKeypair := model.GetNovaCreateKeypairOptionTypeEnum().SSH
 	keypairBody := &model.NovaCreateKeypairOption{
 		PublicKey: tea.String(req.PublicKey),
-		Type:      &typeKeypair,
-		Name:      req.KeyPairName,
+		//Type:      &typeKeypair,
+		Name: req.KeyPairName,
 	}
 	request.Body = &model.NovaCreateKeypairRequestBody{
 		Keypair: keypairBody,
@@ -281,10 +281,13 @@ func (p *HuaweiCloud) ImportKeyPair(req cloud.ImportKeyPairRequest) (cloud.Impor
 }
 
 func (p *HuaweiCloud) DescribeKeyPairs(req cloud.DescribeKeyPairsRequest) (cloud.DescribeKeyPairsResponse, error) {
-	response, err := p.ecsClient.NovaListKeypairs(&model.NovaListKeypairsRequest{
-		Limit:  tea.Int32(int32(req.PageSize)),
-		Marker: tea.String(req.OlderMarker),
-	})
+	request := model.NovaListKeypairsRequest{
+		Limit: tea.Int32(int32(req.PageSize)),
+	}
+	if req.OlderMarker != "" {
+		request.Marker = tea.String(req.OlderMarker)
+	}
+	response, err := p.ecsClient.NovaListKeypairs(&request)
 	if err != nil {
 		logs.Logger.Errorf("DescribeKeyPairs HuaweiCloud failed.err:[%v] req:[%v]", err, req)
 		return cloud.DescribeKeyPairsResponse{}, err
