@@ -98,3 +98,18 @@ func AKGenerator(provider string) (ak string) {
 	}
 	return
 }
+func RegionGenerator(provider string) (region string) {
+	switch provider {
+	case cloud.AlibabaCloud:
+		region = "cn-beijing"
+	case cloud.HuaweiCloud:
+		region = "cn-north-4"
+	case cloud.TencentCloud:
+		region = ""
+	case cloud.BaiduCloud:
+		region = "bj"
+	case cloud.AWSCloud:
+		region = "cn-north-1"
+	}
+	return
+}

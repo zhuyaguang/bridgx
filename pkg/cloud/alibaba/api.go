@@ -850,7 +850,7 @@ func (p *AlibabaCloud) GetOrders(req cloud.GetOrdersRequest) (cloud.GetOrdersRes
 	return cloud.GetOrdersResponse{Orders: orders}, nil
 }
 
-//miss ChargeType,Status
+// miss ChargeType,Status
 func ecsInsType2CloudInsType(ecsInsType []*ecsClient.DescribeInstanceTypesResponseBodyInstanceTypesInstanceType) []cloud.InstanceType {
 	insType := make([]cloud.InstanceType, 0, len(ecsInsType))
 	for _, info := range ecsInsType {
@@ -939,12 +939,80 @@ func getInvalidIds(msg string) []string {
 	}
 	return invalidIds
 }
+
 func (p *AlibabaCloud) CreateKeyPair(req cloud.CreateKeyPairRequest) (cloud.CreateKeyPairResponse, error) {
-	return cloud.CreateKeyPairResponse{}, nil
+	response, err := p.ecsClient.CreateKeyPair(&ecsClient.CreateKeyPairRequest{
+		RegionId:    tea.String(req.RegionId),
+		KeyPairName: tea.String(req.KeyPairName),
+	})
+	if err != nil {
+		logs.Logger.Errorf("CreateKeyPair AlibabaCloud failed.err:[%v] req:[%v]", err, req)
+		return cloud.CreateKeyPairResponse{}, err
+	}
+	if response.Body == nil {
+		errMsg := "response.Body is null"
+		logs.Logger.Errorf("CreateKeyPair AlibabaCloud failed.err:[%v] req:[%v]", errMsg, req)
+		return cloud.CreateKeyPairResponse{}, errors.New(errMsg)
+	}
+	return cloud.CreateKeyPairResponse{
+		KeyPairId:   *response.Body.KeyPairId,
+		KeyPairName: *response.Body.KeyPairName,
+		PrivateKey:  *response.Body.PrivateKeyBody,
+	}, nil
 }
+
 func (p *AlibabaCloud) ImportKeyPair(req cloud.ImportKeyPairRequest) (cloud.ImportKeyPairResponse, error) {
-	return cloud.ImportKeyPairResponse{}, nil
+	response, err := p.ecsClient.ImportKeyPair(&ecsClient.ImportKeyPairRequest{
+		RegionId:      tea.String(req.RegionId),
+		KeyPairName:   tea.String(req.KeyPairName),
+		PublicKeyBody: tea.String(req.PublicKey),
+	})
+	if err != nil {
+		logs.Logger.Errorf("ImportKeyPair AlibabaCloud failed.err:[%v] req:[%v]", err, req)
+		return cloud.ImportKeyPairResponse{}, err
+	}
+	if response.Body == nil {
+		errMsg := "response.Body is null"
+		logs.Logger.Errorf("ImportKeyPair AlibabaCloud failed.err:[%v] req:[%v]", errMsg, req)
+		return cloud.ImportKeyPairResponse{}, errors.New(errMsg)
+	}
+	return cloud.ImportKeyPairResponse{
+		KeyPairName: *response.Body.KeyPairName,
+	}, nil
 }
+
 func (p *AlibabaCloud) DescribeKeyPairs(req cloud.DescribeKeyPairsRequest) (cloud.DescribeKeyPairsResponse, error) {
-	return cloud.DescribeKeyPairsResponse{}, nil
+	response, err := p.ecsClient.DescribeKeyPairs(&ecsClient.DescribeKeyPairsRequest{
+		OwnerId:              nil,
+		ResourceOwnerAccount: nil,
+		ResourceOwnerId:      nil,
+		RegionId:             tea.String(req.RegionId),
+		KeyPairName:          nil,
+		KeyPairFingerPrint:   nil,
+		PageNumber:           tea.Int32(int32(req.PageNumber)),
+		PageSize:             tea.Int32(int32(req.PageSize)),
+		ResourceGroupId:      nil,
+		Tag:                  nil,
+	})
+	if err != nil {
+		logs.Logger.Errorf("DescribeKeyPairs AlibabaCloud failed.err:[%v] req:[%v]", err, req)
+		return cloud.DescribeKeyPairsResponse{}, err
+	}
+	if response.Body == nil {
+		errMsg := "response.Body is null"
+		logs.Logger.Errorf("DescribeKeyPairs AlibabaCloud failed.err:[%v] req:[%v]", errMsg, req)
+		return cloud.DescribeKeyPairsResponse{}, errors.New(errMsg)
+	}
+	rsp := cloud.DescribeKeyPairsResponse{
+		TotalCount: int(*response.Body.TotalCount),
+	}
+	if response.Body.KeyPairs != nil && len(response.Body.KeyPairs.KeyPair) > 0 {
+		for _, pair := range response.Body.KeyPairs.KeyPair {
+			rsp.KeyPairs = append(rsp.KeyPairs, cloud.KeyPair{
+				KeyPairName: *pair.KeyPairName,
+			})
+		}
+	}
+
+	return rsp, nil
 }

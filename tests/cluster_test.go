@@ -177,6 +177,29 @@ func TestCreateKeyPair(t *testing.T) {
 		})
 	}
 }
+func TestDescribeKeyPair(t *testing.T) {
+	tests := []request.ListKeyPairRequest{
+		{
+			AK:       AKGenerator(cloud.BaiduCloud),
+			Provider: cloud.BaiduCloud,
+			RegionId: "bj",
+			PageReq:  types.PageReq{},
+		},
+	}
+	for i, tt := range tests {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			s := fmt.Sprintf("?account_key=%s&provider=%s&region_id=%s&marker=%s&page_number=%d&page_size=%d", tt.AK, tt.Provider, tt.RegionId, tt.Marker, tt.PageNum, tt.PageSize)
+			w := httptest.NewRecorder()
+			req, _ := http.NewRequest("GET", _keyPair+"list"+s, nil)
+			req.Header.Set("Authorization", "Bear "+_Token)
+			req.Header.Set("content-type", "application/json")
+			r.ServeHTTP(w, req)
+			fmt.Println(w.Body.String())
+			assert.Equal(t, 200, w.Code)
+			time.Sleep(7 * time.Second)
+		})
+	}
+}
 func TestGetClusterAuth(t *testing.T) {
 	tests := []request.ClusterAuthRequest{
 		{
