@@ -222,11 +222,6 @@ func (p *HuaweiCloud) listPrePaidResources(ids []string) (map[string]prePaidReso
 	return resource, nil
 }
 
-func (p *HuaweiCloud) GetOrders(req cloud.GetOrdersRequest) (cloud.GetOrdersResponse, error) {
-	orders := make([]cloud.Order, 0, 0)
-	return cloud.GetOrdersResponse{Orders: orders}, nil
-}
-
 func (p *HuaweiCloud) CreateKeyPair(req cloud.CreateKeyPairRequest) (cloud.CreateKeyPairResponse, error) {
 	request := &model.NovaCreateKeypairRequest{}
 	//typeKeypair := model.GetNovaCreateKeypairOptionTypeEnum().SSH

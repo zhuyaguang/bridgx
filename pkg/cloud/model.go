@@ -348,3 +348,151 @@ type KeyPair struct {
 	KeyPairId   string
 	KeyPairName string
 }
+
+type AllocateEipRequest struct {
+	RegionId                string
+	Name                    string
+	InternetServiceProvider string
+	Bandwidth               int
+	Charge                  *Charge
+	Num                     int
+}
+
+type DescribeEipRequest struct {
+	RegionId    string
+	InstanceId  string
+	PageNum     int
+	OlderMarker string
+	PageSize    int
+}
+type DescribeEipResponse struct {
+	List       []Eip  `json:"list"`
+	NewMarker  string `json:"new_maker"`
+	TotalCount int    `json:"total_count"`
+}
+type Eip struct {
+	Id         string `json:"id"`
+	Name       string `json:"name"`
+	Ip         string `json:"ip"`
+	InstanceId string `json:"instance_id,omitempty"`
+}
+
+type ConvertPublicIpToEipRequest struct {
+	RegionId   string
+	InstanceId string
+}
+
+type ObjectProperties struct {
+	Name string `json:"name"`
+}
+
+type BucketProperties struct {
+	Name string `json:"name"`
+}
+
+
+type AcrInstanceListResponse struct {
+	EnterpriseContainerCommon
+	Instances []RegistryInstance `json:"Instances"`
+}
+
+type EnterpriseContainerCommon struct {
+	TotalCount int    `json:"TotalCount"`
+	PageSize   int    `json:"PageSize"`
+	PageNum    int    `json:"PageNo"`
+	Code       string `json:"Code"`
+}
+
+type RegistryInstance struct {
+	InstanceName string `json:"InstanceName"`
+	InstanceId   string `json:"InstanceId"`
+}
+
+type Namespace struct {
+	Name string `json:"namespace"`
+}
+
+type EnterpriseNamespaceListResponse struct {
+	EnterpriseContainerCommon
+	Namespaces []EnterpriseNamespace `json:"Namespaces"`
+}
+
+type EnterpriseNamespace struct {
+	NamespaceName string `json:"NamespaceName"`
+	NamespaceId   string `json:"NamespaceId"`
+}
+
+type EnterpriseRepositoryListResponse struct {
+	EnterpriseContainerCommon
+	Repositories []EnterpriseRepository `json:"repositories"`
+}
+
+type Repository struct {
+	Name string `json:"name"`
+	ID   string `json:"id"`
+}
+
+type EnterpriseRepository struct {
+	RepoNamespaceName string `json:"RepoNamespaceName"`
+	RepoName          string `json:"RepoName"`
+	RepoId            string `json:"RepoId"`
+}
+
+type EnterpriseImageListResponse struct {
+	EnterpriseContainerCommon
+	Images []EnterpriseImage `json:"Images"`
+}
+
+type EnterpriseImage struct {
+	Status string `json:"Status"`
+	Tag    string `json:"Tag"`
+}
+
+type PersonalNamespaceListResponse struct {
+	Data PersonalNamespaceListData `json:"data"`
+}
+
+type PersonalNamespaceListData struct {
+	Namespaces []PersonalNamespace `json:"namespaces"`
+}
+
+type PersonalNamespace struct {
+	Namespace string `json:"namespace"`
+}
+
+type PersonalRepositoryListResponse struct {
+	Data PersonalRepositoryListData `json:"data"`
+}
+
+type PersonalRepositoryListData struct {
+	Total    int            `json:"total"`
+	Page     int            `json:"page"`
+	PageSize int            `json:"pageSize"`
+	Repos    []PersonalRepo `json:"repos"`
+}
+
+type PersonalRepo struct {
+	RepoName string `json:"repoName"`
+}
+
+type DockerArtifact struct {
+	Name string `json:"name"`
+}
+
+type TagsResponse struct {
+	Data TagData `json:"data"`
+}
+
+
+type TagData struct {
+	Total    int        `json:"total"`
+	Page     int        `json:"page"`
+	PageSize int        `json:"page_size"`
+	Tags     []ImageTag `json:"tags"`
+}
+
+
+type ImageTag struct {
+	Tag    string `json:"tag"`
+	Status string `json:"status"`
+}

@@ -105,7 +105,7 @@ func (b BaiduCloud) BatchCreate(m cloud.Params, num int) (instanceIds []string, 
 
 	periodUnit := "Month"
 	period := m.Charge.Period
-	if m.Charge.ChargeType == cloud.OrderPrePaid && m.Charge.PeriodUnit == cloud.Year {
+	if m.Charge.ChargeType == cloud.PrePaid && m.Charge.PeriodUnit == cloud.Year {
 		period *= 12
 	}
 	request := &api.CreateInstanceBySpecArgs{
@@ -681,9 +681,6 @@ func (b BaiduCloud) DescribeGroupRules(req cloud.DescribeGroupRulesRequest) (clo
 	}, nil
 }
 
-func (b BaiduCloud) GetOrders(req cloud.GetOrdersRequest) (cloud.GetOrdersResponse, error) {
-	return cloud.GetOrdersResponse{}, nil
-}
 func (b BaiduCloud) ListbyId(instanceIds []string) (instances []cloud.Instance, err error) {
 	arg := &api.ListInstanceByInstanceIdArgs{
 		InstanceIds: instanceIds,

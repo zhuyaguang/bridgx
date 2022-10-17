@@ -75,6 +75,7 @@ require (
 require (
 	github.com/Rican7/retry v0.3.1
 	github.com/aliyun/alibaba-cloud-sdk-go v1.61.1348
+	github.com/aliyun/aliyun-oss-go-sdk v2.2.5+incompatible
 	github.com/bytedance/gopkg v0.0.0-20211014123740-7f50af4459eb
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/emirpasic/gods v1.12.0
@@ -93,6 +94,7 @@ require (
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
+	github.com/pkg/errors v0.9.1
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/satori/go.uuid v1.2.0
 	github.com/ugorji/go/codec v1.2.6 // indirect

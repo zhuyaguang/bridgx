@@ -87,6 +87,8 @@ github.com/alibabacloud-go/vpc-20160428/v2 v2.0.0 h1:DTLaUlA9LzUq6BZytzg9JiZkqc5
 github.com/alibabacloud-go/vpc-20160428/v2 v2.0.0/go.mod h1:IefwHDx2ZEPWD1qLfuCHT/+7EIteMW51YokJ4D94a4k=
 github.com/aliyun/alibaba-cloud-sdk-go v1.61.1348 h1:K7hvjJntgWV8EXJAQf3amfZ2X6GuCBoYTUFc/CWxazI=
 github.com/aliyun/alibaba-cloud-sdk-go v1.61.1348/go.mod h1:9CMdKNL3ynIGPpfTcdwTvIm8SGuAZYYC4jFVSSvE1YQ=
+github.com/aliyun/aliyun-oss-go-sdk v2.2.5+incompatible h1:QoRMR0TCctLDqBCMyOu1eXdZyMw3F7uGA9qPn2J4+R8=
+github.com/aliyun/aliyun-oss-go-sdk v2.2.5+incompatible/go.mod h1:T/Aws4fEfogEE9v+HPhhw+CntffsBHJ8nXQCwKr0/g8=
 github.com/aliyun/credentials-go v1.1.2 h1:qU1vwGIBb3UJ8BwunHDRFtAhS6jnQLnde/yk0+Ih2GY=
 github.com/aliyun/credentials-go v1.1.2/go.mod h1:ozcZaMR5kLM7pwtCMEpVmQ242suV6qTJya2bDq4X1Tw=
 github.com/allegro/bigcache v1.2.1 h1:hg1sY1raCwic3Vnsvje6TT7/pnZba83LeFck5NrFKSc=
