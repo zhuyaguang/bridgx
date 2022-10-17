@@ -31,9 +31,9 @@ type Provider interface {
 	CreateKeyPair(req CreateKeyPairRequest) (CreateKeyPairResponse, error)
 	ImportKeyPair(req ImportKeyPairRequest) (ImportKeyPairResponse, error)
 	DescribeKeyPairs(req DescribeKeyPairsRequest) (DescribeKeyPairsResponse, error)
+	// eip
 	AllocateEip(req AllocateEipRequest) (ids []string, err error)
 	GetEips(ids []string, regionId string) (map[string]Eip, error)
-	// eip
 	ReleaseEip(ids []string) (err error)
 	AssociateEip(id, instanceId, vpcId string) error
 	DisassociateEip(id string) error
