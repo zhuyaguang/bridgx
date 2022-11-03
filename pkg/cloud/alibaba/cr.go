@@ -2,6 +2,7 @@ package alibaba
 
 import (
 	"fmt"
+
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests"
 	"github.com/galaxy-future/BridgX/pkg/cloud"
 	jsoniter "github.com/json-iterator/go"
@@ -178,7 +179,6 @@ func getEnterpriseContainerRequest(region, method string) *requests.CommonReques
 	request.Version = "2018-12-01"
 	return request
 }
-
 
 func getPersonalContainerRequest(region, method string) *requests.CommonRequest {
 	request := getCommonContainerRequest(region, method)

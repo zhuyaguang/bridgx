@@ -29,4 +29,3 @@ func (p *TencentCloud) EnterpriseRepositoryList(region, instanceId, namespace st
 func (p *TencentCloud) PersonalRepositoryList(region, namespace string, pageNumber, pageSize int) ([]cloud.Repository, int, error) {
 	return []cloud.Repository{}, 0, nil
 }
-

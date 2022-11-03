@@ -145,7 +145,7 @@ func GetByClusterNames(clusterNames []string) ([]Cluster, error) {
 	return out, nil
 }
 
-//GetClusterById find cluster with given cluster id
+// GetClusterById find cluster with given cluster id
 func GetClusterById(id int64) (*Cluster, error) {
 	var cluster Cluster
 	if err := clients.ReadDBCli.Where("id = ?", id).First(&cluster).Error; err != nil {
@@ -155,7 +155,7 @@ func GetClusterById(id int64) (*Cluster, error) {
 	return &cluster, nil
 }
 
-//GetOneRegionByAccKey find one region_id with given accountKey
+// GetOneRegionByAccKey find one region_id with given accountKey
 func GetOneRegionByAccKey(accountKey string) (*Cluster, error) {
 	var cluster Cluster
 	if err := clients.ReadDBCli.Where("account_key = ?", accountKey).First(&cluster).Error; err != nil {
@@ -165,7 +165,7 @@ func GetOneRegionByAccKey(accountKey string) (*Cluster, error) {
 	return &cluster, nil
 }
 
-//GetUpdatedCluster 获取任务更新时间大于指定时间的所有cluster实例
+// GetUpdatedCluster 获取任务更新时间大于指定时间的所有cluster实例
 func GetUpdatedCluster(currentTime time.Time) ([]Cluster, error) {
 	var clusters []Cluster
 	if err := clients.ReadDBCli.Where("update_at >=  ", currentTime).First(&clusters).Error; err != nil {
@@ -175,7 +175,7 @@ func GetUpdatedCluster(currentTime time.Time) ([]Cluster, error) {
 	return clusters, nil
 }
 
-//GetClusterSnapshot 获取集群现状快照
+// GetClusterSnapshot 获取集群现状快照
 func GetClusterSnapshot(clusterName string) (*ClusterSnapshot, error) {
 	cluster, err := GetByClusterName(clusterName)
 	if err != nil {

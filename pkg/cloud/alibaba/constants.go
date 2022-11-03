@@ -32,7 +32,7 @@ var _protocol = map[string]string{
 	cloud.ProtocolAll:  "ALL",
 }
 
-//out
+// out
 var _orderChargeType = map[string]string{
 	"Subscription": cloud.PrePaid,
 	"PayAsYouGo":   cloud.PostPaid,

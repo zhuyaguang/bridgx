@@ -7,7 +7,7 @@ import (
 	"github.com/galaxy-future/BridgX/pkg/cloud"
 )
 
-//CreateVPC output missing field: RequestId
+// CreateVPC output missing field: RequestId
 func (p *AWSCloud) CreateVPC(req cloud.CreateVpcRequest) (cloud.CreateVpcResponse, error) {
 	input := &ec2.CreateVpcInput{
 		CidrBlock: aws.String(req.CidrBlock),

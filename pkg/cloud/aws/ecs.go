@@ -271,7 +271,7 @@ func (p *AWSCloud) GetZones(req cloud.GetZonesRequest) (cloud.GetZonesResponse, 
 	return cloud.GetZonesResponse{Zones: zones}, nil
 }
 
-//DescribeAvailableResource
+// DescribeAvailableResource
 func (p *AWSCloud) DescribeAvailableResource(req cloud.DescribeAvailableResourceRequest) (cloud.DescribeAvailableResourceResponse, error) {
 	pageSize := _pageSize * 10
 	var awsInstanceTypes = make([]*ec2.InstanceTypeOffering, 0, pageSize)
@@ -348,7 +348,7 @@ func (p *AWSCloud) DescribeAvailableResource(req cloud.DescribeAvailableResource
 	return cloud.DescribeAvailableResourceResponse{InstanceTypes: zoneInsTypeMap}, nil
 }
 
-//DescribeInstanceTypes
+// DescribeInstanceTypes
 func (p *AWSCloud) DescribeInstanceTypes(req cloud.DescribeInstanceTypesRequest) (cloud.DescribeInstanceTypesResponse, error) {
 	var instanceTypeInfos = make([]cloud.InstanceType, 0, _pageSize)
 	var awsInstanceTypeInfos = make([]*ec2.InstanceTypeInfo, 0, _pageSize)

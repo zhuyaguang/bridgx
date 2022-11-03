@@ -11,7 +11,7 @@ import (
 	gf_cluster "github.com/galaxy-future/BridgX/pkg/gf-cluster"
 )
 
-//GetBridgxUnusedCluster 获取所有没有被占用的集群
+// GetBridgxUnusedCluster 获取所有没有被占用的集群
 func GetBridgxUnusedCluster(ctx context.Context, user *authorization.CustomClaims, pageSize, pageNum int) ([]*gf_cluster.BridgxUnusedCluster, int, error) {
 	tags := map[string]string{gf_cluster.UsageKey: gf_cluster.UnusedValue}
 	clusters, total, err := GetClustersByTags(ctx, tags, pageSize, pageNum)
@@ -44,7 +44,7 @@ func GetBridgxUnusedCluster(ctx context.Context, user *authorization.CustomClaim
 	return clustersList, int(total), nil
 }
 
-//TagBridgxClusterUsage 将集群设置为被系统占用
+// TagBridgxClusterUsage 将集群设置为被系统占用
 func TagBridgxClusterUsage(clusterName, systemName string) error {
 	tag := model.ClusterTag{
 		ClusterName: clusterName,
@@ -54,7 +54,7 @@ func TagBridgxClusterUsage(clusterName, systemName string) error {
 	return EditClusterTags([]model.ClusterTag{tag})
 }
 
-//GetClusterInfo 根据集群名称获取集群名称
+// GetClusterInfo 根据集群名称获取集群名称
 func GetClusterInfo(ctx context.Context, clusterName string) (*types.ClusterInfo, error) {
 	cm, err := GetClusterByName(ctx, clusterName)
 	if err != nil {
@@ -67,7 +67,7 @@ func GetClusterInfo(ctx context.Context, clusterName string) (*types.ClusterInfo
 	return ConvertToClusterInfo(cm, tags)
 }
 
-//GetAllInstanceInCluster 获取集群中所有节点实例
+// GetAllInstanceInCluster 获取集群中所有节点实例
 func GetAllInstanceInCluster(ctx context.Context, user *authorization.CustomClaims, clusterName string) ([]model.Instance, error) {
 	pageNum := 1
 	pageSize := 50
@@ -89,7 +89,7 @@ func GetAllInstanceInCluster(ctx context.Context, user *authorization.CustomClai
 	return instances, nil
 }
 
-//getClusterInstances 根据clusterName获取实例列表
+// getClusterInstances 根据clusterName获取实例列表
 func getClusterInstances(ctx context.Context, user *authorization.CustomClaims, clusterName string, pageNum, pageSize int) ([]model.Instance, int, error) {
 	instances, total, err := GetInstancesByCond(ctx, InstancesSearchCond{
 		Status:      string(constants.Running),
@@ -104,7 +104,7 @@ func getClusterInstances(ctx context.Context, user *authorization.CustomClaims, 
 
 }
 
-//GetClusterAccount 根据集群获取Account信息
+// GetClusterAccount 根据集群获取Account信息
 func GetClusterAccount(cluster *types.ClusterInfo) (*model.Account, error) {
 	account, err := GetAccount(cluster.Provider, cluster.AccountKey)
 	if account == nil {
@@ -116,7 +116,7 @@ func GetClusterAccount(cluster *types.ClusterInfo) (*model.Account, error) {
 	return account, nil
 }
 
-//getCustomClusterInstances 根据clusterName获取自定义实例列表
+// getCustomClusterInstances 根据clusterName获取自定义实例列表
 func getCustomClusterInstances(ctx context.Context, user *authorization.CustomClaims, clusterName string, pageNum, pageSize int) ([]model.Instance, int, error) {
 	instances, total, err := GetInstancesByCond(ctx, InstancesSearchCond{
 		ClusterName: clusterName,
@@ -130,7 +130,7 @@ func getCustomClusterInstances(ctx context.Context, user *authorization.CustomCl
 
 }
 
-//GetAllCustomInstanceInCluster 获取自定义集群中所有节点实例
+// GetAllCustomInstanceInCluster 获取自定义集群中所有节点实例
 func GetAllCustomInstanceInCluster(ctx context.Context, user *authorization.CustomClaims, clusterName string) ([]model.Instance, error) {
 	pageNum := 1
 	pageSize := 50

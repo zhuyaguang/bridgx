@@ -6,13 +6,14 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/galaxy-future/BridgX/pkg/cloud"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
 	"time"
+
+	"github.com/galaxy-future/BridgX/pkg/cloud"
+	"github.com/pkg/errors"
 )
 
 func (p *BaiduCloud) ContainerInstanceList(region string, pageNumber, pageSize int) ([]cloud.RegistryInstance, int, error) {
@@ -243,7 +244,6 @@ func (p *BaiduCloud) PersonalRepositoryList(region, namespace string, pageNumber
 	return repos, 0, nil
 }
 
-
 func (b BaiduCloud) PersonalImageList(region, projectID, repoName string, pageNum, pageSize int) ([]cloud.DockerArtifact, int, error) {
 	imagesVersion := []cloud.DockerArtifact{}
 	//use utc time
@@ -289,7 +289,7 @@ func (b BaiduCloud) PersonalImageList(region, projectID, repoName string, pageNu
 	return imagesVersion, 0, nil
 }
 
-//list images version
+// list images version
 func (p *BaiduCloud) EnterpriseImageList(region, instanceId, repoId, namespace, repoName string, pageNumber, pageSize int) ([]cloud.DockerArtifact, int, error) {
 	imagesVersion := []cloud.DockerArtifact{}
 	//use utc time

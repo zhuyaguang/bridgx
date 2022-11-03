@@ -1,6 +1,6 @@
 package gf_cluster
 
-//ClusterNodeSummary 节点综述
+// ClusterNodeSummary 节点综述
 type ClusterNodeSummary struct {
 	//Status节点状态
 	Status string `json:"status"`
@@ -46,7 +46,7 @@ func (array ClusterNodeSummaryArray) Swap(i, j int) {
 	array[i], array[j] = array[j], array[i]
 }
 
-//ListClusterNodesResponse get api/v1/kubernetes/nodes get response
+// ListClusterNodesResponse get api/v1/kubernetes/nodes get response
 type ListClusterNodesResponse struct {
 	*ResponseBase
 	Pager

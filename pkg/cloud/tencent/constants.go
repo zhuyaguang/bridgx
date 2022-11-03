@@ -24,7 +24,7 @@ var (
 	_errIsNotOne      = errors.New("totalCount isn't one")
 )
 
-//in
+// in
 var _inEcsChargeType = map[string]string{
 	cloud.InstanceChargeTypePrePaid:  "PREPAID",
 	cloud.InstanceChargeTypePostPaid: "POSTPAID_BY_HOUR",
@@ -56,7 +56,7 @@ var _protocol = map[string]string{
 	cloud.ProtocolAll:    "ALL",
 }
 
-//out
+// out
 var _ecsChargeType = map[string]string{
 	"POSTPAID_BY_HOUR": cloud.InstanceChargeTypePostPaid,
 	"PREPAID":          cloud.InstanceChargeTypePrePaid,

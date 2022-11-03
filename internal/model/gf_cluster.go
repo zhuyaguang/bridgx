@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
-//RegisterKubernetesCluster  注册集群
+// RegisterKubernetesCluster  注册集群
 func RegisterKubernetesCluster(kubernetes *gf_cluster.KubernetesInfo) error {
 	if err := clients.WriteDBCli.Create(kubernetes).Error; err != nil {
 		logErr("CreateCluster from WriteDBCli db", err)
@@ -15,7 +15,7 @@ func RegisterKubernetesCluster(kubernetes *gf_cluster.KubernetesInfo) error {
 	return nil
 }
 
-//DeleteKubernetesCluster 删除集群记录
+// DeleteKubernetesCluster 删除集群记录
 func DeleteKubernetesCluster(kubernetesId int64) error {
 	err := clients.WriteDBCli.Delete(&gf_cluster.KubernetesInfo{}, kubernetesId).Error
 	if err == gorm.ErrRecordNotFound {
@@ -28,7 +28,7 @@ func DeleteKubernetesCluster(kubernetesId int64) error {
 	return nil
 }
 
-//UpdateKubernetesCluster 更新集群信息
+// UpdateKubernetesCluster 更新集群信息
 func UpdateKubernetesCluster(kubernetes *gf_cluster.KubernetesInfo) error {
 	if err := clients.WriteDBCli.Save(kubernetes).Error; err != nil {
 		logErr("UpdateCluster from WriteDBCli db", err)
@@ -37,7 +37,7 @@ func UpdateKubernetesCluster(kubernetes *gf_cluster.KubernetesInfo) error {
 	return nil
 }
 
-//GetKubernetesCluster 获取集群
+// GetKubernetesCluster 获取集群
 func GetKubernetesCluster(kubernetesId int64) (*gf_cluster.KubernetesInfo, error) {
 
 	var cluster gf_cluster.KubernetesInfo
@@ -48,7 +48,7 @@ func GetKubernetesCluster(kubernetesId int64) (*gf_cluster.KubernetesInfo, error
 	return &cluster, nil
 }
 
-//ListKubernetesClusters 列出所有集群
+// ListKubernetesClusters 列出所有集群
 func ListKubernetesClusters(id string, name string, pageNumber int, pageSize int) ([]*gf_cluster.KubernetesInfo, int, error) {
 	clients := clients.ReadDBCli.Model(gf_cluster.KubernetesInfo{})
 	if id != "" {
@@ -71,7 +71,7 @@ func ListKubernetesClusters(id string, name string, pageNumber int, pageSize int
 
 }
 
-//ListRunningKubernetesClusters 列出所有正在运行的集群
+// ListRunningKubernetesClusters 列出所有正在运行的集群
 func ListRunningKubernetesClusters() ([]*gf_cluster.KubernetesInfo, error) {
 	var clusters []*gf_cluster.KubernetesInfo
 	if err := clients.ReadDBCli.Where("status = ?", "running").Find(&clusters).Error; err != nil {
@@ -81,7 +81,7 @@ func ListRunningKubernetesClusters() ([]*gf_cluster.KubernetesInfo, error) {
 	return clusters, nil
 }
 
-//GetKubernetesClusterByName 根据集群名称获取集群配置信息
+// GetKubernetesClusterByName 根据集群名称获取集群配置信息
 func GetKubernetesClusterByName(clusterName string) (*gf_cluster.KubernetesInfo, error) {
 	var cluster gf_cluster.KubernetesInfo
 	if err := clients.ReadDBCli.Where("name = ?", clusterName).First(&cluster).Error; err != nil {

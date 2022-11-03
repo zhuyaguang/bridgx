@@ -18,6 +18,7 @@ import (
 	"github.com/huaweicloud/huaweicloud-sdk-go-v3/services/ecs/v2/model"
 	ecsRegion "github.com/huaweicloud/huaweicloud-sdk-go-v3/services/ecs/v2/region"
 	eip "github.com/huaweicloud/huaweicloud-sdk-go-v3/services/eip/v2"
+	EIPregion "github.com/huaweicloud/huaweicloud-sdk-go-v3/services/eip/v2/region"
 	iam "github.com/huaweicloud/huaweicloud-sdk-go-v3/services/iam/v3"
 	iamModel "github.com/huaweicloud/huaweicloud-sdk-go-v3/services/iam/v3/model"
 	iamRegion "github.com/huaweicloud/huaweicloud-sdk-go-v3/services/iam/v3/region"
@@ -90,7 +91,7 @@ func New(ak, sk, regionId string) (h *HuaweiCloud, err error) {
 			Build())
 	eipClt := eip.NewEipClient(
 		eip.EipClientBuilder().
-			WithRegion(bssRegion.ValueOf("cn-north-1")).
+			WithRegion(EIPregion.ValueOf(regionId)).
 			WithCredential(auth).
 			Build())
 

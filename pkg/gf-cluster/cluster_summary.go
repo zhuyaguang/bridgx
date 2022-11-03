@@ -1,6 +1,6 @@
 package gf_cluster
 
-//ClusterSummary 集群概要信息
+// ClusterSummary 集群概要信息
 type ClusterSummary struct {
 	//ClusterId 集群ID
 	ClusterId int64 `json:"cluster_id"`
@@ -43,14 +43,14 @@ type ClusterSummary struct {
 	InstallStep string `json:"install_step"`
 }
 
-//ListClusterSummaryResponse get api/v1/kubernetes/summary get response
+// ListClusterSummaryResponse get api/v1/kubernetes/summary get response
 type ListClusterSummaryResponse struct {
 	*ResponseBase
 	Pager
 	Clusters []*ClusterSummary `json:"clusters"`
 }
 
-//NewListClusterSummaryResponse 新建正常返回结构
+// NewListClusterSummaryResponse 新建正常返回结构
 func NewListClusterSummaryResponse(clusters []*ClusterSummary, pager Pager) *ListClusterSummaryResponse {
 	return &ListClusterSummaryResponse{
 		ResponseBase: NewSuccessResponse(),
@@ -59,13 +59,13 @@ func NewListClusterSummaryResponse(clusters []*ClusterSummary, pager Pager) *Lis
 	}
 }
 
-//GetClusterSummaryResponse 获取单个集群信息
+// GetClusterSummaryResponse 获取单个集群信息
 type GetClusterSummaryResponse struct {
 	*ResponseBase
 	Cluster *ClusterSummary `json:"cluster"`
 }
 
-//NewGetClusterSummaryResponse 新建正常返回结构
+// NewGetClusterSummaryResponse 新建正常返回结构
 func NewGetClusterSummaryResponse(cluster *ClusterSummary) *GetClusterSummaryResponse {
 	return &GetClusterSummaryResponse{
 		ResponseBase: NewSuccessResponse(),
@@ -73,7 +73,7 @@ func NewGetClusterSummaryResponse(cluster *ClusterSummary) *GetClusterSummaryRes
 	}
 }
 
-//BridgxClusterBuildRequest 集群构建请求
+// BridgxClusterBuildRequest 集群构建请求
 type BridgxClusterBuildRequest struct {
 	ClusterName       string `json:"cluster_name"`
 	BridgxClusterName string `json:"bridgx_cluster_name"`

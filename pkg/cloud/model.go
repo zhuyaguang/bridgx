@@ -390,7 +390,6 @@ type BucketProperties struct {
 	Name string `json:"name"`
 }
 
-
 type AcrInstanceListResponse struct {
 	EnterpriseContainerCommon
 	Instances []RegistryInstance `json:"Instances"`
@@ -483,14 +482,12 @@ type TagsResponse struct {
 	Data TagData `json:"data"`
 }
 
-
 type TagData struct {
 	Total    int        `json:"total"`
 	Page     int        `json:"page"`
 	PageSize int        `json:"page_size"`
 	Tags     []ImageTag `json:"tags"`
 }
-
 
 type ImageTag struct {
 	Tag    string `json:"tag"`

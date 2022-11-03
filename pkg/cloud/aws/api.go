@@ -54,7 +54,7 @@ func (p *AWSCloud) GetRegions() (cloud.GetRegionsResponse, error) {
 	return cloud.GetRegionsResponse{Regions: regions}, nil
 }
 
-//DescribeImages req:InsType isn't use
+// DescribeImages req:InsType isn't use
 func (p *AWSCloud) DescribeImages(req cloud.DescribeImagesRequest) (cloud.DescribeImagesResponse, error) {
 	instanceType, err := p.describeInstanceType(req.InsType)
 	if err != nil {

@@ -6,7 +6,7 @@ import (
 	"github.com/galaxy-future/BridgX/internal/model"
 )
 
-//TaskKiller 负责将执行时间超过最大执行时间的任务设置为失败
+// TaskKiller 负责将执行时间超过最大执行时间的任务设置为失败
 type TaskKiller struct {
 }
 

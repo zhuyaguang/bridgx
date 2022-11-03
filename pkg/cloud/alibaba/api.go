@@ -3,11 +3,12 @@ package alibaba
 import (
 	"errors"
 	"fmt"
-	"github.com/aliyun/alibaba-cloud-sdk-go/sdk"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/aliyun/alibaba-cloud-sdk-go/sdk"
 
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 
@@ -37,7 +38,7 @@ type AlibabaCloud struct {
 	ecsClient *ecsClient.Client
 	bssClient *bssopenapi.Client
 	ossClient *oss.Client
-	sdkClient    *sdk.Client
+	sdkClient *sdk.Client
 	lock      sync.Mutex
 }
 
@@ -77,7 +78,7 @@ func New(AK, SK, region string) (*AlibabaCloud, error) {
 		ecsClient: ecsClt,
 		bssClient: bssCtl,
 		ossClient: ossClient,
-		sdkClient:    sdkClient,
+		sdkClient: sdkClient,
 	}, nil
 }
 
