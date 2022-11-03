@@ -17,6 +17,7 @@ import (
 	ecs "github.com/huaweicloud/huaweicloud-sdk-go-v3/services/ecs/v2"
 	"github.com/huaweicloud/huaweicloud-sdk-go-v3/services/ecs/v2/model"
 	ecsRegion "github.com/huaweicloud/huaweicloud-sdk-go-v3/services/ecs/v2/region"
+	eip "github.com/huaweicloud/huaweicloud-sdk-go-v3/services/eip/v2"
 	iam "github.com/huaweicloud/huaweicloud-sdk-go-v3/services/iam/v3"
 	iamModel "github.com/huaweicloud/huaweicloud-sdk-go-v3/services/iam/v3/model"
 	iamRegion "github.com/huaweicloud/huaweicloud-sdk-go-v3/services/iam/v3/region"
@@ -36,6 +37,7 @@ type HuaweiCloud struct {
 	vpcClient    *vpc.VpcClient
 	iamClient    *iam.IamClient
 	bssClient    *bss.BssClient
+	eipClient    *eip.EipClient
 }
 
 func New(ak, sk, regionId string) (h *HuaweiCloud, err error) {
@@ -86,8 +88,14 @@ func New(ak, sk, regionId string) (h *HuaweiCloud, err error) {
 			WithRegion(bssRegion.ValueOf("cn-north-1")).
 			WithCredential(gAuth).
 			Build())
+	eipClt := eip.NewEipClient(
+		eip.EipClientBuilder().
+			WithRegion(bssRegion.ValueOf("cn-north-1")).
+			WithCredential(auth).
+			Build())
+
 	return &HuaweiCloud{ecsClient: ecsClt, imsClient: imsClt, secGrpClient: secGrpClt, vpcClient: vpcClt,
-		iamClient: iamClt, bssClient: bssClt}, nil
+		iamClient: iamClt, bssClient: bssClt, eipClient: eipClt}, nil
 }
 
 func (HuaweiCloud) ProviderType() string {
@@ -224,9 +232,9 @@ func (p *HuaweiCloud) listPrePaidResources(ids []string) (map[string]prePaidReso
 
 func (p *HuaweiCloud) CreateKeyPair(req cloud.CreateKeyPairRequest) (cloud.CreateKeyPairResponse, error) {
 	request := &model.NovaCreateKeypairRequest{}
-	//typeKeypair := model.GetNovaCreateKeypairOptionTypeEnum().SSH
+	// typeKeypair := model.GetNovaCreateKeypairOptionTypeEnum().SSH
 	keypairBody := &model.NovaCreateKeypairOption{
-		//Type: &typeKeypair,
+		// Type: &typeKeypair,
 		Name: req.KeyPairName,
 	}
 	request.Body = &model.NovaCreateKeypairRequestBody{
@@ -251,10 +259,10 @@ func (p *HuaweiCloud) CreateKeyPair(req cloud.CreateKeyPairRequest) (cloud.Creat
 
 func (p *HuaweiCloud) ImportKeyPair(req cloud.ImportKeyPairRequest) (cloud.ImportKeyPairResponse, error) {
 	request := &model.NovaCreateKeypairRequest{}
-	//typeKeypair := model.GetNovaCreateKeypairOptionTypeEnum().SSH
+	// typeKeypair := model.GetNovaCreateKeypairOptionTypeEnum().SSH
 	keypairBody := &model.NovaCreateKeypairOption{
 		PublicKey: tea.String(req.PublicKey),
-		//Type:      &typeKeypair,
+		// Type:      &typeKeypair,
 		Name: req.KeyPairName,
 	}
 	request.Body = &model.NovaCreateKeypairRequestBody{
