@@ -7,12 +7,15 @@ import (
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/profile"
 	cvm "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cvm/v20170312"
 	vpc "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/vpc/v20170312"
+	"github.com/tencentyun/cos-go-sdk-v5"
+	"net/http"
 )
 
 type TencentCloud struct {
 	vpcClient *vpc.Client
 	cvmClient *cvm.Client
 	apiClient *api.Client
+	cosClient *cos.Client
 }
 
 func New(ak, sk, region string) (h *TencentCloud, err error) {
@@ -38,10 +41,17 @@ func New(ak, sk, region string) (h *TencentCloud, err error) {
 		return nil, err
 	}
 
-	return &TencentCloud{vpcClient: vpcClient, cvmClient: cvmClient, apiClient: apiClient}, nil
+	cosClient := cos.NewClient(nil, &http.Client{
+		Transport: &cos.AuthorizationTransport{
+			SecretID:  ak,
+			SecretKey: sk,
+		},
+	})
+
+	return &TencentCloud{vpcClient: vpcClient, cvmClient: cvmClient, apiClient: apiClient, cosClient: cosClient}, nil
 }
 
-func (TencentCloud) ProviderType() string {
+func (p *TencentCloud) ProviderType() string {
 	return cloud.TencentCloud
 }
 
