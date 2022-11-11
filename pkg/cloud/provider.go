@@ -29,6 +29,9 @@ type Provider interface {
 	CreateKeyPair(req CreateKeyPairRequest) (CreateKeyPairResponse, error)
 	ImportKeyPair(req ImportKeyPairRequest) (ImportKeyPairResponse, error)
 	DescribeKeyPairs(req DescribeKeyPairsRequest) (DescribeKeyPairsResponse, error)
+	//ListObjects(req ListObjectsRequest)(ListObjectsResponse,error)
+	//ListBucket()(ListBucketResponse,error)
+	//GetObjectDownloadUrl(req GetObjectDownloadUrlRequest)(GetObjectDownloadUrlResponse,error)
 }
 
 type ProviderDriverFunc func(keyId ...string) (Provider, error)

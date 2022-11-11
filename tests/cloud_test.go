@@ -421,3 +421,52 @@ func TestQueryOrders(t *testing.T) {
 		pageNum += 1
 	}
 }
+
+func TestListBucket(t *testing.T) {
+	client, err := tencent.New("ak", "sk", "ap-shanghai")
+	if err != nil {
+		t.Log(err.Error())
+		return
+	}
+	res, err := client.ListBucket()
+	for _, b := range res.CosBucket {
+		t.Log(b)
+	}
+
+}
+
+func TestListListObjects(t *testing.T) {
+	client, err := tencent.New("sk", "sk", "ap-shanghai")
+	if err != nil {
+		t.Log(err.Error())
+		return
+	}
+	res, err := client.ListObjects(cloud.ListObjectsRequest{
+		BucketName: "zhuyaguang-1308110266",
+		CosRegion:  "ap-shanghai",
+		Prefix:     "img/",
+		MaxKeys:    3,
+	})
+	if err != nil {
+		t.Log(err.Error())
+		return
+	}
+	for _, c := range res.CosObjects {
+		t.Logf("%s, %d\n", c.Key, c.Size)
+	}
+}
+
+func TestGetObjectDownloadUrl(t *testing.T) {
+	client, err := tencent.New("ak", "sk", "ap-shanghai")
+	if err != nil {
+		t.Log(err.Error())
+		return
+	}
+	res := client.GetObjectDownloadUrl(cloud.GetObjectDownloadUrlRequest{
+		BucketName: "zhuyaguang-1308110266",
+		CosRegion:  "ap-shanghai",
+		Key:        "img/20220916184018.png",
+	})
+	t.Log(res.URL)
+
+}

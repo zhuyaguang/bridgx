@@ -1,6 +1,8 @@
 package cloud
 
 import (
+	"github.com/tencentyun/cos-go-sdk-v5"
+	"net/url"
 	"time"
 )
 
@@ -347,4 +349,29 @@ type DescribeKeyPairsResponse struct {
 type KeyPair struct {
 	KeyPairId   string
 	KeyPairName string
+}
+
+type ListObjectsRequest struct {
+	BucketName string
+	CosRegion string
+	Prefix string
+	MaxKeys int
+}
+
+type ListObjectsResponse struct {
+	CosObjects []cos.Object
+}
+
+type ListBucketResponse struct {
+	CosBucket []cos.Bucket
+}
+
+type GetObjectDownloadUrlRequest struct {
+	BucketName string
+	CosRegion string
+	Key string
+}
+
+type GetObjectDownloadUrlResponse struct {
+	URL *url.URL
 }

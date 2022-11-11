@@ -23,6 +23,7 @@ require (
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.320
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cvm v1.0.320
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/vpc v1.0.320
+	github.com/tencentyun/cos-go-sdk-v5 v0.7.39
 	github.com/tovenja/cron/v3 v3.0.2
 	github.com/vmihailenco/msgpack/v5 v5.3.5
 	github.com/wxnacy/wgo v1.0.4
@@ -43,13 +44,17 @@ require (
 	github.com/alibabacloud-go/openapi-util v0.0.8 // indirect
 	github.com/alibabacloud-go/tea-utils v1.3.9 // indirect
 	github.com/aliyun/credentials-go v1.1.2 // indirect
+	github.com/clbanning/mxj v1.8.4 // indirect
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
 	github.com/go-logr/logr v1.2.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.1.0 // indirect
 	github.com/googleapis/gnostic v0.5.5 // indirect
 	github.com/imdario/mergo v0.3.5 // indirect
+	github.com/mitchellh/mapstructure v1.5.0 // indirect
+	github.com/mozillazg/go-httpheader v0.3.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/tjfoc/gmsm v1.3.2 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
