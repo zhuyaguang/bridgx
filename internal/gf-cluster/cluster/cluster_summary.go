@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
-//ListClustersSummary 列出所有集群summary
+// ListClustersSummary 列出所有集群summary
 func ListClustersSummary(id string, name string, pageNumber int, pageSize int) ([]*gf_cluster.ClusterSummary, int, error) {
 	clusters, total, err := model.ListKubernetesClusters(id, name, pageNumber, pageSize)
 	if err != nil {
@@ -35,7 +35,7 @@ func ListClustersSummary(id string, name string, pageNumber int, pageSize int) (
 
 }
 
-//GetClustersSummary 获得集群概述
+// GetClustersSummary 获得集群概述
 func GetClustersSummary(clusterId int64) (*gf_cluster.ClusterSummary, error) {
 	cluster, err := model.GetKubernetesCluster(clusterId)
 	if err != nil {

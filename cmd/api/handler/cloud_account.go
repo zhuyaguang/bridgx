@@ -97,7 +97,7 @@ func DeleteCloudAccount(ctx *gin.Context) {
 	return
 }
 
-//GetAccountInfo get accountKey and encrypt accountSecret by clusterName
+// GetAccountInfo get accountKey and encrypt accountSecret by clusterName
 func GetAccountInfo(ctx *gin.Context) {
 	clusterName, ok := ctx.GetQuery("cluster_name")
 	if !ok || clusterName == "" {

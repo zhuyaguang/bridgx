@@ -143,7 +143,7 @@ func GetInstancesByIPs(ipList []string, clusterName string) ([]Instance, error) 
 	return *instances, nil
 }
 
-//GetActiveInstancesByClusterName 获取当前cluster下状态不为deleted状态的所有节点
+// GetActiveInstancesByClusterName 获取当前cluster下状态不为deleted状态的所有节点
 func GetActiveInstancesByClusterName(clusterName string) ([]Instance, error) {
 	var instances []Instance
 	if err := clients.ReadDBCli.Where("cluster_name = ? AND status != ? ", clusterName, constants.Deleted).Find(&instances).Error; err != nil {
@@ -153,7 +153,7 @@ func GetActiveInstancesByClusterName(clusterName string) ([]Instance, error) {
 	return instances, nil
 }
 
-//GetActiveInstancesWithCount 获取当前cluster下状态不为deleted状态的count个节点
+// GetActiveInstancesWithCount 获取当前cluster下状态不为deleted状态的count个节点
 func GetActiveInstancesWithCount(clusterName string, count int) ([]Instance, error) {
 	var instances []Instance
 	if err := clients.ReadDBCli.Where("cluster_name = ? AND status != ? ", clusterName, constants.Deleted).Limit(count).Find(&instances).Error; err != nil {
@@ -163,7 +163,7 @@ func GetActiveInstancesWithCount(clusterName string, count int) ([]Instance, err
 	return instances, nil
 }
 
-//GetActiveInstancesByClusters 获取clusters下状态不为deleted状态的count个节点
+// GetActiveInstancesByClusters 获取clusters下状态不为deleted状态的count个节点
 func GetActiveInstancesByClusters(ctx context.Context, clusterName []string) ([]Instance, error) {
 	var instances []Instance
 	if err := clients.ReadDBCli.WithContext(ctx).Where("cluster_name IN (?) AND status != ? ", clusterName, constants.Deleted).Find(&instances).Error; err != nil {
@@ -173,7 +173,7 @@ func GetActiveInstancesByClusters(ctx context.Context, clusterName []string) ([]
 	return instances, nil
 }
 
-//GetDeletedInstancesByTime 获取clusters下状态为deleted状态的节点
+// GetDeletedInstancesByTime 获取clusters下状态为deleted状态的节点
 func GetDeletedInstancesByTime(ctx context.Context, clusterName []string, createBefore, deleteAfter time.Time) ([]Instance, error) {
 	//取在createBefore之前&&在deleteAfter之后的实例
 	var instances []Instance
@@ -184,7 +184,7 @@ func GetDeletedInstancesByTime(ctx context.Context, clusterName []string, create
 	return instances, nil
 }
 
-//GetUsageInstancesBySpecifyDay 获取clusters下 指定时间段内存活过或仍然存活的节点
+// GetUsageInstancesBySpecifyDay 获取clusters下 指定时间段内存活过或仍然存活的节点
 func GetUsageInstancesBySpecifyDay(ctx context.Context, clusterName []string, createBefore, deleteAfter time.Time, pageNum, pageSize int) ([]Instance, int64, error) {
 	//取在createBefore之前&&在deleteAfter之后的实例
 	var instances []Instance
@@ -200,7 +200,7 @@ func GetUsageInstancesBySpecifyDay(ctx context.Context, clusterName []string, cr
 	return instances, total, nil
 }
 
-//CountActiveInstancesByClusterName 获取clusters下状态不为deleted状态节点数量
+// CountActiveInstancesByClusterName 获取clusters下状态不为deleted状态节点数量
 func CountActiveInstancesByClusterName(ctx context.Context, clusterNames []string) (int64, error) {
 	if len(clusterNames) == 0 {
 		return 0, nil
@@ -213,7 +213,7 @@ func CountActiveInstancesByClusterName(ctx context.Context, clusterNames []strin
 	return ret, nil
 }
 
-//GetInstanceByInstanceId 获取Instance
+// GetInstanceByInstanceId 获取Instance
 func GetInstanceByInstanceId(instanceId string) (*Instance, error) {
 	var ret Instance
 	if err := clients.ReadDBCli.Model(&ret).Where("instance_id IN (?) ", instanceId).Find(&ret).Error; err != nil {

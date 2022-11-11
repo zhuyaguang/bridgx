@@ -16,8 +16,8 @@ const (
 )
 
 const (
-	OrderPrePaid  = "PrePaid"
-	OrderPostPaid = "PostPaid"
+	PrePaid  = "PrePaid"
+	PostPaid = "PostPaid"
 )
 
 const (
@@ -44,6 +44,7 @@ const (
 const (
 	BandwidthPayByTraffic = "PayByTraffic"
 	BandwidthPayByFix     = "PayByBandwidth"
+	BandwidthPrePaid      = "PrePaid"
 )
 
 const (

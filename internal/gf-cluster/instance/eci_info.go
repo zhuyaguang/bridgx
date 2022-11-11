@@ -20,7 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 )
 
-//createInstance 创建实例
+// createInstance 创建实例
 func createInstance(kubeCluster *cluster.KubernetesClient, request *gf_cluster.InstanceGroup, instanceName string) (*v1.Pod, error) {
 
 	//获取资源
@@ -97,7 +97,7 @@ func createInstance(kubeCluster *cluster.KubernetesClient, request *gf_cluster.I
 	return pod, nil
 }
 
-//listElasticInstance 列出所有实例
+// listElasticInstance 列出所有实例
 func listElasticInstance(client *cluster.KubernetesClient, clusterName string, id int64) ([]*gf_cluster.Instance, error) {
 	selector := metav1.LabelSelector{MatchLabels: createInstanceLabels(clusterName, strconv.FormatInt(id, 10))}
 	pods, err := client.ClientSet.CoreV1().Pods("default").List(context.Background(), metav1.ListOptions{

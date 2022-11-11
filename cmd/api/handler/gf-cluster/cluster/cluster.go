@@ -24,7 +24,7 @@ import (
 	"go.uber.org/zap"
 )
 
-//HandleCreateCluster 创建集群
+// HandleCreateCluster 创建集群
 func HandleCreateCluster(c *gin.Context) {
 	//读取请求体
 	var buildRequest gf_cluster.BridgxClusterBuildRequest
@@ -186,7 +186,7 @@ func HandleCreateCluster(c *gin.Context) {
 
 }
 
-//HandleListClusterSummary 列出所有集群
+// HandleListClusterSummary 列出所有集群
 func HandleListClusterSummary(c *gin.Context) {
 	id, _ := c.GetQuery("id")
 	name, _ := c.GetQuery("name")
@@ -203,7 +203,7 @@ func HandleListClusterSummary(c *gin.Context) {
 	}))
 }
 
-//HandleGetClusterSummary 获得集群概述信息
+// HandleGetClusterSummary 获得集群概述信息
 func HandleGetClusterSummary(c *gin.Context) {
 	clusterId, err := strconv.ParseInt(c.Param("clusterId"), 10, 64)
 	if err != nil {
@@ -219,7 +219,7 @@ func HandleGetClusterSummary(c *gin.Context) {
 	c.JSON(http.StatusOK, gf_cluster.NewGetClusterSummaryResponse(theCluster))
 }
 
-//HandleDeleteKubernetes 删除集群
+// HandleDeleteKubernetes 删除集群
 func HandleDeleteKubernetes(c *gin.Context) {
 	clusterId, err := strconv.ParseInt(c.Param("clusterId"), 10, 64)
 	if err != nil {
@@ -267,7 +267,7 @@ func HandleDeleteKubernetes(c *gin.Context) {
 	c.JSON(http.StatusOK, gf_cluster.NewSuccessResponse())
 }
 
-//HandleListNodesSummary 获取集群节点概要信息
+// HandleListNodesSummary 获取集群节点概要信息
 func HandleListNodesSummary(c *gin.Context) {
 	nodeIp := c.Query("node_ip")
 	clusterName := c.Query("cluster_name")
@@ -325,7 +325,7 @@ func HandleListNodesSummary(c *gin.Context) {
 
 }
 
-//HandleListClusterPodsSummary 获取集群pod概述信息
+// HandleListClusterPodsSummary 获取集群pod概述信息
 func HandleListClusterPodsSummary(c *gin.Context) {
 	nodeIp := c.Query("node_ip")
 	podIp := c.Query("pod_ip")
@@ -378,7 +378,7 @@ func HandleListClusterPodsSummary(c *gin.Context) {
 	}))
 }
 
-//HandleListClusterLogsSummary 获取集群log概述信息
+// HandleListClusterLogsSummary 获取集群log概述信息
 func HandleListClusterLogsSummary(c *gin.Context) {
 	clusterId := cast.ToInt64(c.Param("clusterId"))
 	if clusterId == 0 {

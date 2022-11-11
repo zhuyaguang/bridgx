@@ -9,8 +9,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-//HandleListUnusedBridgxCluster lie列出没有被使用的集群
-//TODO 使用Brdigx方法
+// HandleListUnusedBridgxCluster lie列出没有被使用的集群
+// TODO 使用Brdigx方法
 func HandleListUnusedBridgxCluster(c *gin.Context) {
 	claims := helper.GetUserClaims(c)
 	if claims == nil {

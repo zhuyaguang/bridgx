@@ -9,12 +9,13 @@ import (
 )
 
 // ClusterTag
-//使用Tags来描述Cluster的用途，属性等
+// 使用Tags来描述Cluster的用途，属性等
 // 比如使用
-//	{
-//		"group": "serviceName"
-//  	"imageId": "xxx:1.2"
-//  }
+//
+//		{
+//			"group": "serviceName"
+//	 	"imageId": "xxx:1.2"
+//	 }
 type ClusterTag struct {
 	Base
 	ClusterName string
@@ -71,18 +72,20 @@ func GetBySpecifyClusterTag(clusterName string, tagKey string) (*ClusterTag, err
 	return &ret, nil
 }
 
-//GetClusterNamesByTags list cluster names(contains deleted cluster) by tags:
+// GetClusterNamesByTags list cluster names(contains deleted cluster) by tags:
 // e.g.
-// {
-//		"k1": "v1",
-//		"k2": "v2",
-//		"k3": "",
-// }
+//
+//	{
+//			"k1": "v1",
+//			"k2": "v2",
+//			"k3": "",
+//	}
+//
 // ===>
 // should search distinct(cluster_name) from database using condition:
 // (tag_key = 'k1' AND tag_value = 'v1') OR tag_key = 'k3' OR (tag_key = 'k2' AND tag_value = 'v2'))
-//	group by cluster_name
 //
+//	group by cluster_name
 func GetClusterNamesByTags(ctx context.Context, tags map[string]string, pageSize, pageNum int) ([]ClusterTag, int64, error) {
 	where := clients.ReadDBCli.WithContext(ctx)
 	validCondCount := 0

@@ -36,7 +36,7 @@ func StringSliceDiff(s1, s2 []string) []string {
 	return diff
 }
 
-//多个切片求交集
+// 多个切片求交集
 func Intersect(lists [][]string) []string {
 	var inter []string
 	mp := make(map[string]int)

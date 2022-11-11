@@ -16,7 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 )
 
-//ListClusterPodsSummary 获得集群下所有Pod详情
+// ListClusterPodsSummary 获得集群下所有Pod详情
 func ListClusterPodsSummary(clusterId int64) (gf_cluster.ClusterPodsSummaryArray, error) {
 	cluster, err := model.GetKubernetesCluster(clusterId)
 	if err != nil {
@@ -30,8 +30,8 @@ func ListClusterPodsSummary(clusterId int64) (gf_cluster.ClusterPodsSummaryArray
 
 }
 
-//getClusterPodInfo 获取集群pod信息，当前使用clientset直接查询kubernetes集群，有性能压力
-//TODO 使用client-to watcher/informer机制，缓存对象，防止频繁获取信息对与k8s集群的压力
+// getClusterPodInfo 获取集群pod信息，当前使用clientset直接查询kubernetes集群，有性能压力
+// TODO 使用client-to watcher/informer机制，缓存对象，防止频繁获取信息对与k8s集群的压力
 func getClusterPodInfo(info *gf_cluster.KubernetesInfo) ([]*gf_cluster.PodSummary, error) {
 
 	if info.Status != gf_cluster.KubernetesStatusRunning {

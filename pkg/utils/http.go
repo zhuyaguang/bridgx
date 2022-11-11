@@ -84,7 +84,7 @@ func HttpPostJsonDataT(addr string, jsonDataBytes []byte, timeout int) (ret []by
 	return body, nil
 }
 
-//带超时的http get
+// 带超时的http get
 func HttpGetT(addr string, timeout int) (ret []byte, err error) {
 	if timeout < 0 {
 		timeout = 3

@@ -34,12 +34,12 @@ func (array ClusterPodsSummaryArray) Swap(i, j int) {
 	array[i], array[j] = array[j], array[i]
 }
 
-//ListClusterPodDetail 节点详细信息
+// ListClusterPodDetail 节点详细信息
 type ListClusterPodDetail struct {
 	ClusterPodsSummaryArray `json:"pods_information"`
 }
 
-//ListClusterPodsDetailResponse 返回集群pod信息
+// ListClusterPodsDetailResponse 返回集群pod信息
 type ListClusterPodsDetailResponse struct {
 	*ResponseBase
 	Pager

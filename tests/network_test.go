@@ -126,7 +126,7 @@ func TestCreateVPC(t *testing.T) {
 					RegionId:  "cn-qingdao",
 					VpcName:   "vpc测试自动更新",
 					CidrBlock: "",
-					AK:        "LTAI5t7qCv6L8ZFh3hzSYpSv",
+					AK:        "test_ak",
 				},
 			},
 			wantVpcId: "",
@@ -437,7 +437,7 @@ func TestGetSecurityGroup(t *testing.T) {
 	}
 }
 
-//使用本函数前需要将 updateOrCreateSecurityGroupRules 改为同步调用
+// 使用本函数前需要将 updateOrCreateSecurityGroupRules 改为同步调用
 func TestSyncNetwork(t *testing.T) {
 	accounts := make([]model.Account, 0)
 	if err := model.QueryAll(map[string]interface{}{}, &accounts, ""); err != nil {

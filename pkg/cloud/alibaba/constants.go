@@ -8,9 +8,11 @@ const (
 	_subOrderNumPerMain    = 3
 	_maxNumEcsPerOperation = 100
 	_pageSize              = 100
+
+	_payByBandwidth = "PayByBandwidth"
+	_payByTraffic   = "PayByTraffic"
 )
 
-//in
 var _inEcsChargeType = map[string]string{
 	cloud.InstanceChargeTypePrePaid:  "PrePaid",
 	cloud.InstanceChargeTypePostPaid: "PostPaid",
@@ -30,10 +32,10 @@ var _protocol = map[string]string{
 	cloud.ProtocolAll:  "ALL",
 }
 
-//out
+// out
 var _orderChargeType = map[string]string{
-	"Subscription": cloud.OrderPrePaid,
-	"PayAsYouGo":   cloud.OrderPostPaid,
+	"Subscription": cloud.PrePaid,
+	"PayAsYouGo":   cloud.PostPaid,
 }
 
 var _payStatus = map[string]int8{

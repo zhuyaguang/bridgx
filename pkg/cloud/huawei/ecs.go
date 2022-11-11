@@ -379,12 +379,12 @@ func (p *HuaweiCloud) DescribeAvailableResource(req cloud.DescribeAvailableResou
 	return cloud.DescribeAvailableResourceResponse{InstanceTypes: zoneInsType}, nil
 }
 
-//DescribeInstanceTypes NovaShowFlavor 华为云还没实现
+// DescribeInstanceTypes NovaShowFlavor 华为云还没实现
 func (p *HuaweiCloud) DescribeInstanceTypes(req cloud.DescribeInstanceTypesRequest) (cloud.DescribeInstanceTypesResponse, error) {
 	return cloud.DescribeInstanceTypesResponse{}, nil
 }
 
-//缺少子网id,eip带宽相关信息. ListServerInterfaces 可以拿到子网id,ListPublicips 可以获取eip信息
+// 缺少子网id,eip带宽相关信息. ListServerInterfaces 可以拿到子网id,ListPublicips 可以获取eip信息
 func ecsInfo2CloudIns(ecsInfos []model.ServerDetail, resources map[string]prePaidResources) []cloud.Instance {
 	instances := make([]cloud.Instance, 0, len(ecsInfos))
 	for _, info := range ecsInfos {

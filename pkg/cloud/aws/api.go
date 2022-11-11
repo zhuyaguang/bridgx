@@ -14,6 +14,7 @@ import (
 
 type AWSCloud struct {
 	ec2Client *ec2.EC2
+	sess      *session.Session
 }
 
 func New(ak, sk, regionId string) (*AWSCloud, error) {
@@ -25,8 +26,10 @@ func New(ak, sk, regionId string) (*AWSCloud, error) {
 		logs.Logger.Errorf("AWSCloud new session failed. err:[%v]", err)
 		return nil, err
 	}
-	svc := ec2.New(sess)
-	return &AWSCloud{svc}, nil
+	return &AWSCloud{
+		ec2Client: ec2.New(sess),
+		sess:      sess,
+	}, nil
 }
 
 func (*AWSCloud) ProviderType() string {
@@ -51,7 +54,7 @@ func (p *AWSCloud) GetRegions() (cloud.GetRegionsResponse, error) {
 	return cloud.GetRegionsResponse{Regions: regions}, nil
 }
 
-//DescribeImages req:InsType isn't use
+// DescribeImages req:InsType isn't use
 func (p *AWSCloud) DescribeImages(req cloud.DescribeImagesRequest) (cloud.DescribeImagesResponse, error) {
 	instanceType, err := p.describeInstanceType(req.InsType)
 	if err != nil {
@@ -95,9 +98,6 @@ func formatOsType(platfrom, platformDetails string) string {
 	return cloud.OsOther
 }
 
-func (p *AWSCloud) GetOrders(req cloud.GetOrdersRequest) (cloud.GetOrdersResponse, error) {
-	return cloud.GetOrdersResponse{}, nil
-}
 func (p *AWSCloud) CreateKeyPair(req cloud.CreateKeyPairRequest) (cloud.CreateKeyPairResponse, error) {
 	input := &ec2.CreateKeyPairInput{
 		KeyName: aws.String(req.KeyPairName),
