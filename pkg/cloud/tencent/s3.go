@@ -3,9 +3,10 @@ package tencent
 import (
 	"context"
 	"fmt"
+	"net/url"
+
 	"github.com/galaxy-future/BridgX/pkg/cloud"
 	"github.com/tencentyun/cos-go-sdk-v5"
-	"net/url"
 )
 
 func getCosEndpoint(bucketName, region string) string {
@@ -56,7 +57,7 @@ func (p *TencentCloud) ListBucket(endpoint string) (res []cloud.BucketProperties
 }
 
 func (p *TencentCloud) GetOssDownloadUrl(endpoint, bucketName, region string) string {
-	return ""
+	return getCosEndpoint(bucketName, region)
 }
 
 func (p *TencentCloud) GetObjectDownloadUrl(endpoint, objectKey string) (string, error) {

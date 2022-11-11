@@ -1,6 +1,8 @@
 package tencent
 
 import (
+	"net/http"
+
 	"github.com/galaxy-future/BridgX/pkg/cloud"
 	api "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/api/v20201106"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
@@ -8,7 +10,6 @@ import (
 	cvm "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cvm/v20170312"
 	vpc "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/vpc/v20170312"
 	"github.com/tencentyun/cos-go-sdk-v5"
-	"net/http"
 )
 
 type TencentCloud struct {

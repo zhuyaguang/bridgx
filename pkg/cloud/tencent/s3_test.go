@@ -2,13 +2,18 @@ package tencent
 
 import "testing"
 
+const (
+	_ak = ""
+	_sk = ""
+)
+
 func TestListBucket(t *testing.T) {
-	client, err := New("ak", "sk", "ap-shanghai")
+	client, err := New(_ak, _sk, "ap-beijing")
 	if err != nil {
 		t.Log(err.Error())
 		return
 	}
-	res, err := client.ListBucket(getCosEndpoint("zhuyaguang-1308110266", "ap-shanghai"))
+	res, err := client.ListBucket(getCosEndpoint("dt-demo-1308988865", "ap-beijing"))
 	for _, b := range res {
 		t.Log(b.Name)
 	}
@@ -16,12 +21,12 @@ func TestListBucket(t *testing.T) {
 }
 
 func TestListListObjects(t *testing.T) {
-	client, err := New("ak", "sk", "ap-shanghai")
+	client, err := New(_ak, _sk, "ap-beijing")
 	if err != nil {
 		t.Log(err.Error())
 		return
 	}
-	res, err := client.ListObjects(getCosEndpoint("zhuyaguang-1308110266", "ap-shanghai"), "", "img/")
+	res, err := client.ListObjects(getCosEndpoint("dt-demo-1308988865", "ap-beijing"), "", "luhuajun/")
 	if err != nil {
 		t.Log(err.Error())
 		return
@@ -32,11 +37,11 @@ func TestListListObjects(t *testing.T) {
 }
 
 func TestGetObjectDownloadUrl(t *testing.T) {
-	client, err := New("ak", "sk", "ap-shanghai")
+	client, err := New(_ak, _sk, "ap-beijing")
 	if err != nil {
 		t.Log(err.Error())
 		return
 	}
-	res, _ := client.GetObjectDownloadUrl(getCosEndpoint("zhuyaguang-1308110266", "ap-shanghai"), "img/20220916184018.png")
+	res, _ := client.GetObjectDownloadUrl(getCosEndpoint("dt-demo-1308988865", "ap-beijing"), "luhuajun/123.txt")
 	t.Log(res)
 }
