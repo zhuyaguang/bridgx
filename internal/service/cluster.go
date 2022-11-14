@@ -208,7 +208,7 @@ func GetStandardClusterNamesByAccounts(ctx context.Context, accountKeys []string
 
 }
 
-//ConvertToClusterInfo 将cluster，和tags转换为一个Cloud clusterInfo
+// ConvertToClusterInfo 将cluster，和tags转换为一个Cloud clusterInfo
 func ConvertToClusterInfo(m *model.Cluster, tags []model.ClusterTag) (*types.ClusterInfo, error) {
 	imageConfig := &types.ImageConfig{}
 	networkConfig := &types.NetworkConfig{}
@@ -380,7 +380,7 @@ func CreateShrinkAllTask(ctx context.Context, clusterName, taskName string, uid 
 	return CreateShrinkTask(ctx, clusterName, int(count), "", taskName, uid)
 }
 
-//CleanClusterUnusedInstances 清除由于系统异常导致的云厂商中残留的机器
+// CleanClusterUnusedInstances 清除由于系统异常导致的云厂商中残留的机器
 func CleanClusterUnusedInstances(clusterInfo *types.ClusterInfo) (int, error) {
 	instancesInBridgx, err := model.GetActiveInstancesByClusterName(clusterInfo.Name)
 	if err != nil {

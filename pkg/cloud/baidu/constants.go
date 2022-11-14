@@ -15,7 +15,7 @@ var _imageType = map[string]string{
 	cloud.ImagePrivate: "Custom",
 }
 
-//out
+// out
 var _ecsChargeType = map[string]string{
 	"Prepaid":  cloud.InstanceChargeTypePrePaid,
 	"Postpaid": cloud.InstanceChargeTypePostPaid,

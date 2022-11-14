@@ -9,14 +9,14 @@ const (
 	GalaxyfutureCloudUsage = "galaxyfuture-cloud"
 )
 
-//ListBridgxClusterByTagRequest 获取集群请求的Request
+// ListBridgxClusterByTagRequest 获取集群请求的Request
 type ListBridgxClusterByTagRequest struct {
 	Tags       map[string]string `json:"tags"`
 	PageNumber int               `json:"page_number"`
 	PageSize   int               `json:"page_size"`
 }
 
-//BridgxClusterName 集群名称信息
+// BridgxClusterName 集群名称信息
 type BridgxClusterName struct {
 	ClusterId   string            `json:"cluster_id"`
 	ClusterName string            `json:"cluster_name"`
@@ -32,32 +32,32 @@ type ListBirdgxClusterData struct {
 	Pager       Pager                `json:"pager"`
 }
 
-//ListBirdgxClusterByClusterResponse Bridgx返回
+// ListBirdgxClusterByClusterResponse Bridgx返回
 type ListBirdgxClusterByClusterResponse struct {
 	Code int                    `json:"code"`
 	Msg  string                 `json:"msg"`
 	Data *ListBirdgxClusterData `json:"data"`
 }
 
-//EditBridgxClusterTagRequst 编辑tag请求
+// EditBridgxClusterTagRequst 编辑tag请求
 type EditBridgxClusterTagRequst struct {
 	Tags        map[string]string `json:"tags"`
 	ClusterName string            `json:"cluster_name"`
 }
 
-//EditBridgxClusterTagResponse 编辑请求返回
+// EditBridgxClusterTagResponse 编辑请求返回
 type EditBridgxClusterTagResponse struct {
 	Code int    `json:"code"`
 	Msg  string `json:"msg"`
 }
 
-//GetBridgxClusterInstanceRequest 获得Bridgx信息的Request
+// GetBridgxClusterInstanceRequest 获得Bridgx信息的Request
 type GetBridgxClusterInstanceRequest struct {
 	ClusterName string `json:"cluster_name"`
 	Status      string `json:"status"`
 }
 
-//BridgxInstance Bridgx集群实例
+// BridgxInstance Bridgx集群实例
 type BridgxInstance struct {
 	InstanceId   string `json:"instance_id"`
 	IpInner      string `json:"ip_inner"`
@@ -69,20 +69,20 @@ type BridgxInstance struct {
 	Status       string `json:"status"`
 }
 
-//GetBridgxClusterInstanceData 获取集群data
+// GetBridgxClusterInstanceData 获取集群data
 type GetBridgxClusterInstanceData struct {
 	InstanceList []*BridgxInstance `json:"instance_list"`
 	Pager        Pager             `json:"pager"`
 }
 
-//GetBridgxClusterInstanceResponse 获得集群实例返回
+// GetBridgxClusterInstanceResponse 获得集群实例返回
 type GetBridgxClusterInstanceResponse struct {
 	Code int                           `json:"code"`
 	Msg  string                        `json:"msg"`
 	Data *GetBridgxClusterInstanceData `json:"data"`
 }
 
-//BridgxClusterDetails 集群相信信息
+// BridgxClusterDetails 集群相信信息
 type BridgxClusterDetails struct {
 	Id           int    `json:"id"`
 	Name         string `json:"name"`
@@ -96,14 +96,14 @@ type BridgxClusterDetails struct {
 	Password     string `json:"password"`
 }
 
-//BridgxClusterDetailsResponse 集群相信信息response
+// BridgxClusterDetailsResponse 集群相信信息response
 type BridgxClusterDetailsResponse struct {
 	Code int                   `json:"code"`
 	Msg  string                `json:"msg"`
 	Data *BridgxClusterDetails `json:"data"`
 }
 
-//AKSKData 集群AKSK数据
+// AKSKData 集群AKSK数据
 type AKSKData struct {
 	AccountName          string `json:"account_name"`
 	AccountKey           string `json:"account_key"`
@@ -112,14 +112,14 @@ type AKSKData struct {
 	Salt                 string `json:"salt"`
 }
 
-//GetAKSKResponse 获得AKSKresponse
+// GetAKSKResponse 获得AKSKresponse
 type GetAKSKResponse struct {
 	Code int       `json:"code"`
 	Data *AKSKData `json:"data"`
 	Msg  string    `json:"msg"`
 }
 
-//BridgxUnusedCluster 未被占用的集群
+// BridgxUnusedCluster 未被占用的集群
 type BridgxUnusedCluster struct {
 	ClusterName string   `json:"cluster_name"`
 	CloudType   string   `json:"cloud_type"`
@@ -127,14 +127,14 @@ type BridgxUnusedCluster struct {
 	Total       int      `json:"total"`
 }
 
-//ListUnusedBridgxClusterResponse 未被占用集群list相应体
+// ListUnusedBridgxClusterResponse 未被占用集群list相应体
 type ListUnusedBridgxClusterResponse struct {
 	*ResponseBase
 	Pager
 	Clusters []*BridgxUnusedCluster `json:"clusters"`
 }
 
-//NewListUnusedBridgxClusterResponse 新建未被占用的集群的相应体
+// NewListUnusedBridgxClusterResponse 新建未被占用的集群的相应体
 func NewListUnusedBridgxClusterResponse(clusters []*BridgxUnusedCluster, pager Pager) *ListUnusedBridgxClusterResponse {
 	return &ListUnusedBridgxClusterResponse{
 		ResponseBase: NewSuccessResponse(),

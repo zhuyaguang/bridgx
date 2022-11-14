@@ -4,7 +4,7 @@ const (
 	DefaultPageSize = 10
 )
 
-//Kubernetes step
+// Kubernetes step
 const (
 	KubernetesStepInitializeCluster = "集群初始化"
 	KubernetesStepInstallMaster     = "master安装"
@@ -13,14 +13,14 @@ const (
 	KubernetesStepDone              = "运行中"
 )
 
-//KubernetesStatus
+// KubernetesStatus
 const (
 	KubernetesStatusInitializing = "initialize"
 	KubernetesStatusFailed       = "failed"
 	KubernetesStatusRunning      = "running"
 )
 
-//Kubernetes Labels
+// Kubernetes Labels
 const (
 	KubernetesRoleKey    = "node-role.kubernetes.io/master"
 	KubernetesRoleMaster = "master"

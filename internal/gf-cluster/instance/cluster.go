@@ -6,12 +6,12 @@ import (
 	gf_cluster "github.com/galaxy-future/BridgX/pkg/gf-cluster"
 )
 
-//CreateInstanceGroup 新建实例组
+// CreateInstanceGroup 新建实例组
 func CreateInstanceGroup(instanceGroup *gf_cluster.InstanceGroup) error {
 	return model.CreateInstanceGroupFromDB(instanceGroup)
 }
 
-//DeleteInstanceGroup 删除实例组
+// DeleteInstanceGroup 删除实例组
 func DeleteInstanceGroup(instanceGroup *gf_cluster.InstanceGroup) error {
 
 	client, err := cluster.GetKubeClient(instanceGroup.KubernetesId)
@@ -30,7 +30,7 @@ func DeleteInstanceGroup(instanceGroup *gf_cluster.InstanceGroup) error {
 	return nil
 }
 
-//GetInstanceGroup 获取实例组
+// GetInstanceGroup 获取实例组
 func GetInstanceGroup(instanceGroupId int64) (*gf_cluster.InstanceGroup, error) {
 	return model.GetInstanceGroupFromDB(instanceGroupId)
 }

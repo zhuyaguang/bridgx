@@ -32,7 +32,7 @@ func NewFailedResponse(message string) *ResponseBase {
 	}
 }
 
-//PingResponse 用于测试服务是否可用
+// PingResponse 用于测试服务是否可用
 type PingResponse struct {
 	*ResponseBase
 	Module  string
