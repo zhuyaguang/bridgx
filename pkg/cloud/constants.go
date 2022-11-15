@@ -1,13 +1,14 @@
 package cloud
 
 const (
-	PrivateCloud = "PrivateCloud" //自建机房 私有云
+	PrivateCloud = "PrivateCloud" // 自建机房 私有云
 
 	AlibabaCloud = "AlibabaCloud"
 	HuaweiCloud  = "HuaweiCloud"
 	TencentCloud = "TencentCloud"
 	BaiduCloud   = "BaiduCloud"
 	AWSCloud     = "AWSCloud"
+	ECloud       = "ECloud"
 )
 
 const (

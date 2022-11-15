@@ -9,21 +9,23 @@ import (
 	"sync"
 	"time"
 
-	"github.com/galaxy-future/BridgX/pkg/cloud/aws"
-	"github.com/galaxy-future/BridgX/pkg/cloud/baidu"
-	"github.com/spf13/cast"
-
 	"github.com/Rican7/retry"
 	"github.com/Rican7/retry/backoff"
 	"github.com/Rican7/retry/strategy"
+
 	"github.com/galaxy-future/BridgX/internal/constants"
 	"github.com/galaxy-future/BridgX/internal/logs"
 	"github.com/galaxy-future/BridgX/internal/model"
 	"github.com/galaxy-future/BridgX/internal/types"
 	"github.com/galaxy-future/BridgX/pkg/cloud"
 	"github.com/galaxy-future/BridgX/pkg/cloud/alibaba"
+	"github.com/galaxy-future/BridgX/pkg/cloud/aws"
+	"github.com/galaxy-future/BridgX/pkg/cloud/baidu"
+	"github.com/galaxy-future/BridgX/pkg/cloud/ecloud"
 	"github.com/galaxy-future/BridgX/pkg/cloud/huawei"
 	"github.com/galaxy-future/BridgX/pkg/cloud/tencent"
+
+	"github.com/spf13/cast"
 )
 
 var clientMap sync.Map
@@ -273,6 +275,8 @@ func getProvider(provider, ak, regionId string) (cloud.Provider, error) {
 		client, err = baidu.New(ak, sk, regionId)
 	case cloud.AWSCloud:
 		client, err = aws.New(ak, sk, regionId)
+	case cloud.ECloud:
+		client, err = ecloud.New(ak, sk, regionId)
 	default:
 		return nil, errors.New("invalid provider")
 	}

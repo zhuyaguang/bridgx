@@ -23,9 +23,13 @@ require (
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.320
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cvm v1.0.320
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/vpc v1.0.320
+	github.com/tencentyun/cos-go-sdk-v5 v0.7.39
 	github.com/tovenja/cron/v3 v3.0.2
 	github.com/vmihailenco/msgpack/v5 v5.3.5
 	github.com/wxnacy/wgo v1.0.4
+	gitlab.ecloud.com/ecloud/ecloudsdkcore v1.0.0
+	gitlab.ecloud.com/ecloud/ecloudsdkecs v1.0.11
+	gitlab.ecloud.com/ecloud/ecloudsdkeip v1.0.4
 	go.etcd.io/etcd/client/v3 v3.5.4
 	go.uber.org/atomic v1.7.0
 	go.uber.org/zap v1.21.0
@@ -55,7 +59,6 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mozillazg/go-httpheader v0.3.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/tencentyun/cos-go-sdk-v5 v0.7.39 // indirect
 	github.com/tjfoc/gmsm v1.3.2 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	go.etcd.io/etcd/api/v3 v3.5.4 // indirect
