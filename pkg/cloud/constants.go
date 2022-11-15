@@ -1,13 +1,14 @@
 package cloud
 
 const (
-	PrivateCloud = "PrivateCloud" //自建机房 私有云
+	PrivateCloud = "PrivateCloud" // 自建机房 私有云
 
 	AlibabaCloud = "AlibabaCloud"
 	HuaweiCloud  = "HuaweiCloud"
 	TencentCloud = "TencentCloud"
 	BaiduCloud   = "BaiduCloud"
 	AWSCloud     = "AWSCloud"
+	ECloud       = "ECloud"
 )
 
 const (
@@ -16,8 +17,8 @@ const (
 )
 
 const (
-	OrderPrePaid  = "PrePaid"
-	OrderPostPaid = "PostPaid"
+	PrePaid  = "PrePaid"
+	PostPaid = "PostPaid"
 )
 
 const (
@@ -44,6 +45,7 @@ const (
 const (
 	BandwidthPayByTraffic = "PayByTraffic"
 	BandwidthPayByFix     = "PayByBandwidth"
+	BandwidthPrePaid      = "PrePaid"
 )
 
 const (

@@ -9,8 +9,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-//HandleRegisterKubernetes 注册集群，用于支持已有k8s集群注册
-//后期用于其他集群直接录入
+// HandleRegisterKubernetes 注册集群，用于支持已有k8s集群注册
+// 后期用于其他集群直接录入
 func HandleRegisterKubernetes(c *gin.Context) {
 	var theCluster gf_cluster.KubernetesInfo
 	err := c.ShouldBindJSON(&theCluster)
@@ -28,7 +28,7 @@ func HandleRegisterKubernetes(c *gin.Context) {
 	c.JSON(http.StatusOK, gf_cluster.NewSuccessResponse())
 }
 
-//HandleListKubernetes 列出所有集群
+// HandleListKubernetes 列出所有集群
 func HandleListKubernetes(c *gin.Context) {
 	kubernetes, err := model.ListRunningKubernetesClusters()
 	if err != nil {
@@ -38,7 +38,7 @@ func HandleListKubernetes(c *gin.Context) {
 	c.JSON(http.StatusOK, gf_cluster.NewKubernetesInfoListResponse(kubernetes))
 }
 
-//HandleGetKubernetes 获取指定集群详细信息
+// HandleGetKubernetes 获取指定集群详细信息
 func HandleGetKubernetes(c *gin.Context) {
 	clusterId, err := strconv.ParseInt(c.Param("cluster"), 10, 64)
 	if err != nil {
@@ -57,7 +57,7 @@ func HandleGetKubernetes(c *gin.Context) {
 	c.JSON(http.StatusOK, gf_cluster.NewKubernetesInfoGetResponse(kubernetes))
 }
 
-//HandleUpdateKubernetes 更新集群信息
+// HandleUpdateKubernetes 更新集群信息
 func HandleUpdateKubernetes(c *gin.Context) {
 	var cluster gf_cluster.KubernetesInfo
 	err := c.ShouldBindJSON(&cluster)

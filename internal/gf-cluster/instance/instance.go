@@ -97,7 +97,7 @@ func ShrinkCustomInstanceGroup(instanceGroup *gf_cluster.InstanceGroup, count in
 	return nil
 }
 
-//ListCustomInstances 列出所有eci
+// ListCustomInstances 列出所有eci
 func ListCustomInstances(instanceGroupId int64) ([]*gf_cluster.Instance, error) {
 	instanceGroup, err := GetInstanceGroup(instanceGroupId)
 	if err != nil {
@@ -111,7 +111,7 @@ func ListCustomInstances(instanceGroupId int64) ([]*gf_cluster.Instance, error) 
 	return listElasticInstance(client, instanceGroup.Name, instanceGroupId)
 }
 
-//RestartInstance 重启实例
+// RestartInstance 重启实例
 func RestartInstance(instanceGroupId int64, name string) error {
 	instanceGroup, err := GetInstanceGroup(instanceGroupId)
 	if err != nil {
@@ -135,7 +135,7 @@ func RestartInstance(instanceGroupId int64, name string) error {
 	return nil
 }
 
-//DeleteInstance 删除实例
+// DeleteInstance 删除实例
 func DeleteInstance(instanceGroup *gf_cluster.InstanceGroup, name string) error {
 	client, err := cluster.GetKubeClient(instanceGroup.KubernetesId)
 	if err != nil {

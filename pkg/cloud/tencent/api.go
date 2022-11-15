@@ -1,18 +1,22 @@
 package tencent
 
 import (
+	"net/http"
+
 	"github.com/galaxy-future/BridgX/pkg/cloud"
 	api "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/api/v20201106"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/profile"
 	cvm "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cvm/v20170312"
 	vpc "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/vpc/v20170312"
+	"github.com/tencentyun/cos-go-sdk-v5"
 )
 
 type TencentCloud struct {
 	vpcClient *vpc.Client
 	cvmClient *cvm.Client
 	apiClient *api.Client
+	cosClient *cos.Client
 }
 
 func New(ak, sk, region string) (h *TencentCloud, err error) {
@@ -38,10 +42,17 @@ func New(ak, sk, region string) (h *TencentCloud, err error) {
 		return nil, err
 	}
 
-	return &TencentCloud{vpcClient: vpcClient, cvmClient: cvmClient, apiClient: apiClient}, nil
+	cosClient := cos.NewClient(nil, &http.Client{
+		Transport: &cos.AuthorizationTransport{
+			SecretID:  ak,
+			SecretKey: sk,
+		},
+	})
+
+	return &TencentCloud{vpcClient: vpcClient, cvmClient: cvmClient, apiClient: apiClient, cosClient: cosClient}, nil
 }
 
-func (TencentCloud) ProviderType() string {
+func (p *TencentCloud) ProviderType() string {
 	return cloud.TencentCloud
 }
 
@@ -89,15 +100,14 @@ func (p *TencentCloud) GetZones(req cloud.GetZonesRequest) (cloud.GetZonesRespon
 	return cloud.GetZonesResponse{Zones: zones}, nil
 }
 
-func (p *TencentCloud) GetOrders(req cloud.GetOrdersRequest) (cloud.GetOrdersResponse, error) {
-	return cloud.GetOrdersResponse{}, nil
-}
 func (p *TencentCloud) CreateKeyPair(req cloud.CreateKeyPairRequest) (cloud.CreateKeyPairResponse, error) {
 	return cloud.CreateKeyPairResponse{}, nil
 }
+
 func (p *TencentCloud) ImportKeyPair(req cloud.ImportKeyPairRequest) (cloud.ImportKeyPairResponse, error) {
 	return cloud.ImportKeyPairResponse{}, nil
 }
+
 func (p *TencentCloud) DescribeKeyPairs(req cloud.DescribeKeyPairsRequest) (cloud.DescribeKeyPairsResponse, error) {
 	return cloud.DescribeKeyPairsResponse{}, nil
 }

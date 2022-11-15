@@ -14,6 +14,12 @@ var (
 	instances []string
 )
 
+type account struct {
+	ak       string
+	sk       string
+	regionID string
+}
+
 const (
 	_vpcID           = "vpc-i21un0x7mmtz"
 	_switchID        = "sbn-mgiqutgye6ui"

@@ -827,7 +827,7 @@ Find information on the VPCs that the user has created based on the name of the 
     <td>page_size</td>
     <td>int32</td>
     <td>No</td>
-    <td>Default 10 Maximun 50</td>
+    <td>Default 10 Maximum 50</td>
     <td>15</td>
   </tr>
 </table>

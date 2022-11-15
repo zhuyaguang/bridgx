@@ -20,7 +20,7 @@ import (
 	"go.uber.org/zap"
 )
 
-//HandleCreateInstanceGroup  创建实例组
+// HandleCreateInstanceGroup  创建实例组
 func HandleCreateInstanceGroup(c *gin.Context) {
 	begin := time.Now()
 
@@ -82,7 +82,7 @@ func HandleCreateInstanceGroup(c *gin.Context) {
 	c.JSON(http.StatusOK, gf_cluster.NewSuccessResponse())
 }
 
-//HandleBatchCreateInstanceGroup 批量新建实例组
+// HandleBatchCreateInstanceGroup 批量新建实例组
 func HandleBatchCreateInstanceGroup(c *gin.Context) {
 	//解析请求
 	var instanceGroups []gf_cluster.InstanceGroupCreateRequest
@@ -210,7 +210,7 @@ func HandleDeleteInstanceGroup(c *gin.Context) {
 	c.JSON(http.StatusOK, gf_cluster.NewSuccessResponse())
 }
 
-//HandleBatchDeleteInstanceGroup 批量删除集群
+// HandleBatchDeleteInstanceGroup 批量删除集群
 func HandleBatchDeleteInstanceGroup(c *gin.Context) {
 	//解析请求体
 	var request gf_cluster.InstanceGroupBatchDeleteRequest
@@ -262,7 +262,7 @@ func HandleBatchDeleteInstanceGroup(c *gin.Context) {
 	c.JSON(http.StatusOK, gf_cluster.NewSuccessResponse())
 }
 
-//HandleGetInstanceGroup 获取实例组信息
+// HandleGetInstanceGroup 获取实例组信息
 func HandleGetInstanceGroup(c *gin.Context) {
 	instanceGroupId, err := strconv.ParseInt(c.Param("instanceGroup"), 10, 64)
 	if err != nil {
@@ -278,7 +278,7 @@ func HandleGetInstanceGroup(c *gin.Context) {
 	c.JSON(http.StatusOK, gf_cluster.NewGetInstanceGroupResponse(group))
 }
 
-//HandleUpdateInstanceGroup 更新实例组信息
+// HandleUpdateInstanceGroup 更新实例组信息
 func HandleUpdateInstanceGroup(c *gin.Context) {
 
 	var group gf_cluster.InstanceGroupUpdateRequest
@@ -307,7 +307,7 @@ func HandleUpdateInstanceGroup(c *gin.Context) {
 
 }
 
-//HandleExpandInstanceGroup 扩容实例组
+// HandleExpandInstanceGroup 扩容实例组
 func HandleExpandInstanceGroup(c *gin.Context) {
 	//读取请求体
 	var request gf_cluster.InstanceGroupExpandRequest
@@ -340,7 +340,7 @@ func HandleExpandInstanceGroup(c *gin.Context) {
 	c.JSON(http.StatusOK, gf_cluster.NewSuccessResponse())
 }
 
-//HandleShrinkInstanceGroup 缩容实例组
+// HandleShrinkInstanceGroup 缩容实例组
 func HandleShrinkInstanceGroup(c *gin.Context) {
 	var request gf_cluster.InstanceGroupShrinkRequest
 	err := c.ShouldBindJSON(&request)
@@ -371,7 +371,7 @@ func HandleShrinkInstanceGroup(c *gin.Context) {
 	c.JSON(http.StatusOK, gf_cluster.NewSuccessResponse())
 }
 
-//HandleExpandOrShrinkInstanceGroup 扩缩容接口
+// HandleExpandOrShrinkInstanceGroup 扩缩容接口
 func HandleExpandOrShrinkInstanceGroup(c *gin.Context) {
 	begin := time.Now()
 	// 1 解析请求体

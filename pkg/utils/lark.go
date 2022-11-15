@@ -20,16 +20,19 @@ const (
 
 /*
 // err response
-{
-    "code": 19002,
-    "msg": "params error, msg_type need"
-}
+
+	{
+	    "code": 19002,
+	    "msg": "params error, msg_type need"
+	}
+
 // success response
-{
-    "Extra": null,
-    "StatusCode": 0,
-    "StatusMessage": "success"
-}
+
+	{
+	    "Extra": null,
+	    "StatusCode": 0,
+	    "StatusMessage": "success"
+	}
 */
 type LarkMsgResponse struct {
 	Code          int64  `json:"code"`

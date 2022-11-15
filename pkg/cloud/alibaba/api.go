@@ -8,6 +8,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/aliyun/alibaba-cloud-sdk-go/sdk"
+
+	"github.com/aliyun/aliyun-oss-go-sdk/oss"
+
 	openapi "github.com/alibabacloud-go/darabonba-openapi/client"
 	ecsClient "github.com/alibabacloud-go/ecs-20140526/v2/client"
 	"github.com/alibabacloud-go/tea/tea"
@@ -33,6 +37,8 @@ type AlibabaCloud struct {
 	vpcClient *vpcClient.Client
 	ecsClient *ecsClient.Client
 	bssClient *bssopenapi.Client
+	ossClient *oss.Client
+	sdkClient *sdk.Client
 	lock      sync.Mutex
 }
 
@@ -58,7 +64,22 @@ func New(AK, SK, region string) (*AlibabaCloud, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &AlibabaCloud{client: client, vpcClient: vpcClt, ecsClient: ecsClt, bssClient: bssCtl}, nil
+	ossClient, err := oss.New(getOssEndpoint(region), AK, SK)
+	if err != nil {
+		return nil, err
+	}
+	sdkClient, err := sdk.NewClientWithAccessKey(region, AK, SK)
+	if err != nil {
+		return nil, err
+	}
+	return &AlibabaCloud{
+		client:    client,
+		vpcClient: vpcClt,
+		ecsClient: ecsClt,
+		bssClient: bssCtl,
+		ossClient: ossClient,
+		sdkClient: sdkClient,
+	}, nil
 }
 
 // BatchCreate the maximum of 'num' is 100
@@ -774,80 +795,6 @@ func (p *AlibabaCloud) DescribeGroupRules(req cloud.DescribeGroupRulesRequest) (
 	}
 
 	return cloud.DescribeGroupRulesResponse{Rules: rules}, nil
-}
-
-func (p *AlibabaCloud) GetOrders(req cloud.GetOrdersRequest) (cloud.GetOrdersResponse, error) {
-	request := bssopenapi.CreateQueryOrdersRequest()
-	request.Scheme = "https"
-	request.CreateTimeStart = req.StartTime.Format("2006-01-02T15:04:05Z")
-	request.CreateTimeEnd = req.EndTime.Format("2006-01-02T15:04:05Z")
-	request.PageNum = requests.NewInteger(req.PageNum)
-	request.PageSize = requests.NewInteger(req.PageSize)
-	response, err := p.bssClient.QueryOrders(request)
-	if err != nil {
-		return cloud.GetOrdersResponse{}, err
-	}
-	if !response.Success {
-		return cloud.GetOrdersResponse{}, errors.New(response.Message)
-	}
-	orderNum := len(response.Data.OrderList.Order)
-	if orderNum == 0 {
-		return cloud.GetOrdersResponse{}, nil
-	}
-
-	orders := make([]cloud.Order, 0, orderNum*_subOrderNumPerMain)
-	detailReq := bssopenapi.CreateGetOrderDetailRequest()
-	detailReq.Scheme = "https"
-	for _, row := range response.Data.OrderList.Order {
-		detailReq.OrderId = row.OrderId
-		detailRsp, err := p.bssClient.GetOrderDetail(detailReq)
-		if err != nil {
-			return cloud.GetOrdersResponse{}, err
-		}
-		if !detailRsp.Success {
-			return cloud.GetOrdersResponse{}, errors.New(detailRsp.Message)
-		}
-		if len(detailRsp.Data.OrderList.Order) == 0 {
-			continue
-		}
-
-		for _, subOrder := range detailRsp.Data.OrderList.Order {
-			orderTime, _ := time.Parse("2006-01-02T15:04:05Z", subOrder.CreateTime)
-			var usageStartTime, usageEndTime time.Time
-			if subOrder.UsageStartTime == "" {
-				usageStartTime = orderTime
-			} else {
-				usageStartTime, _ = time.Parse("2006-01-02T15:04:05Z", subOrder.UsageStartTime)
-			}
-			if subOrder.UsageEndTime == "" {
-				usageEndTime = orderTime
-			} else {
-				usageEndTime, _ = time.Parse("2006-01-02T15:04:05Z", subOrder.UsageEndTime)
-			}
-			if _orderChargeType[subOrder.SubscriptionType] == cloud.OrderPostPaid && usageEndTime.Sub(usageStartTime).Hours() > 24*365*20 {
-				usageEndTime, _ = time.Parse("2006-01-02 15:04:05", "2038-01-01 00:00:00")
-			}
-
-			orders = append(orders, cloud.Order{
-				OrderId:        subOrder.SubOrderId,
-				OrderTime:      orderTime,
-				Product:        subOrder.ProductCode,
-				Quantity:       cast.ToInt32(subOrder.Quantity),
-				UsageStartTime: usageStartTime,
-				UsageEndTime:   usageEndTime,
-				RegionId:       subOrder.Region,
-				ChargeType:     _orderChargeType[subOrder.SubscriptionType],
-				PayStatus:      _payStatus[subOrder.PaymentStatus],
-				Currency:       subOrder.Currency,
-				Cost:           cast.ToFloat32(subOrder.PretaxAmount),
-				Extend: map[string]interface{}{
-					"main_order_id": subOrder.OrderId,
-					"order_type":    subOrder.OrderType,
-				},
-			})
-		}
-	}
-	return cloud.GetOrdersResponse{Orders: orders}, nil
 }
 
 // miss ChargeType,Status

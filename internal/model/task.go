@@ -127,7 +127,7 @@ func CountByTaskStatus(taskFilter string, statuses []string) (int64, error) {
 	return cnt, nil
 }
 
-//GetTaskByStatus 获取当前cluster下状态zai在列表中的所有实例
+// GetTaskByStatus 获取当前cluster下状态zai在列表中的所有实例
 func GetTaskByStatus(clusterName string, statuses []string) ([]Task, error) {
 	var tasks []Task
 	if err := clients.ReadDBCli.Where("task_filter = ? AND status in (?) ", clusterName, statuses).Find(&tasks).Error; err != nil {
@@ -137,7 +137,7 @@ func GetTaskByStatus(clusterName string, statuses []string) ([]Task, error) {
 	return tasks, nil
 }
 
-//GetExpireRunningTask 获取执行状态为Running并且最后更新时间（应该为执行时间）大于指定时间的所有的task
+// GetExpireRunningTask 获取执行状态为Running并且最后更新时间（应该为执行时间）大于指定时间的所有的task
 func GetExpireRunningTask(duration time.Duration) ([]Task, error) {
 	var tasks []Task
 	if err := clients.ReadDBCli.Where("status = ? AND update_at < ?  ", constants.TaskStatusRunning, time.Now().Add(-duration)).Find(&tasks).Error; err != nil {
