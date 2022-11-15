@@ -15,7 +15,7 @@ const (
 	VxLanNetMode    = "vxlan"
 )
 
-//ClusterBuilderParams  集群创建相关参数
+// ClusterBuilderParams  集群创建相关参数
 type ClusterBuilderParams struct {
 	PodCidr      string                `json:"pod_cidr"`
 	SvcCidr      string                `json:"svc_cidr"`
@@ -27,7 +27,7 @@ type ClusterBuilderParams struct {
 	AccessSecret string                `json:"sk"`
 }
 
-//ClusterBuildMachine 创建集群所用的物理机实体
+// ClusterBuildMachine 创建集群所用的物理机实体
 type ClusterBuildMachine struct {
 	IP       string            `json:"ip"`
 	Hostname string            `json:"hostname"`
@@ -36,7 +36,7 @@ type ClusterBuildMachine struct {
 	Labels   map[string]string `json:"labels"`
 }
 
-//String2BuildMode 字符串到创建模式转换
+// String2BuildMode 字符串到创建模式转换
 func String2BuildMode(mode string) BuildMode {
 	switch mode {
 	case KubernetesStandalone:

@@ -16,7 +16,7 @@ import (
 	"go.uber.org/atomic"
 )
 
-//InstanceCountWatchJob 负责监控一个cluster是否有变更，如果有变更会schedule一个任务，保证需求可以满足
+// InstanceCountWatchJob 负责监控一个cluster是否有变更，如果有变更会schedule一个任务，保证需求可以满足
 type InstanceCountWatchJob struct {
 	ClusterName  string
 	VersionNo    *atomic.String

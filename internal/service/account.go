@@ -59,7 +59,7 @@ func DecryptAccounts(accounts []*model.Account) {
 	_ = decryptAccounts(accounts, false)
 }
 
-//GetAccount query account info by provider and accountKey
+// GetAccount query account info by provider and accountKey
 func GetAccount(provider, accountKey string) (*model.Account, error) {
 	var ret model.Account
 	err := model.QueryFirst(map[string]interface{}{"provider": provider, "account_key": accountKey}, &ret)

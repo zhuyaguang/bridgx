@@ -30,7 +30,7 @@ func (a Account) TableName() string {
 	return "account"
 }
 
-//GetAccounts search accounts by condition
+// GetAccounts search accounts by condition
 func GetAccounts(provider, accountName, accountKey string, pageNum, pageSize int) ([]*Account, int64, error) {
 	res := make([]*Account, 0)
 	query := clients.ReadDBCli.Table(Account{}.TableName())
@@ -50,7 +50,7 @@ func GetAccounts(provider, accountName, accountKey string, pageNum, pageSize int
 	return res, count, nil
 }
 
-//GetAccountsByOrgId get accounts belongs to specify orgId
+// GetAccountsByOrgId get accounts belongs to specify orgId
 func GetAccountsByOrgId(orgId int64) (accounts []*Account, err error) {
 	if err := clients.ReadDBCli.Where("org_id = ?", orgId).Find(&accounts).Error; err != nil {
 		logErr("GetAccountSecretByAccountKey from read db", err)
@@ -59,7 +59,7 @@ func GetAccountsByOrgId(orgId int64) (accounts []*Account, err error) {
 	return accounts, nil
 }
 
-//GetDefaultAccountByProvider return default accounts by provider
+// GetDefaultAccountByProvider return default accounts by provider
 func GetDefaultAccountByProvider(provider string) (account *Account, err error) {
 	account = &Account{}
 	if err := clients.ReadDBCli.Where("provider = ?", provider).First(account).Error; err != nil {
@@ -69,7 +69,7 @@ func GetDefaultAccountByProvider(provider string) (account *Account, err error) 
 	return account, nil
 }
 
-//GetAksByOrgAk get aks by ak
+// GetAksByOrgAk get aks by ak
 func GetAksByOrgAk(ctx context.Context, orgId int64, ak string) ([]string, error) {
 	aks := make([]string, 0)
 	query := clients.ReadDBCli.WithContext(ctx).

@@ -19,7 +19,7 @@ import (
 	"go.uber.org/zap"
 )
 
-//HandleRestartInstance  c重启实例
+// HandleRestartInstance  c重启实例
 func HandleRestartInstance(c *gin.Context) {
 	var request gf_cluster.InstanceRestartRequest
 	err := c.ShouldBindJSON(&request)
@@ -43,7 +43,7 @@ func HandleRestartInstance(c *gin.Context) {
 	c.JSON(http.StatusOK, gf_cluster.NewSuccessResponse())
 }
 
-//HandleDeleteInstance 删除节点
+// HandleDeleteInstance 删除节点
 func HandleDeleteInstance(c *gin.Context) {
 	begin := time.Now()
 
@@ -88,7 +88,7 @@ func HandleDeleteInstance(c *gin.Context) {
 
 }
 
-//HandleListInstance 列出所欲实例
+// HandleListInstance 列出所欲实例
 func HandleListInstance(c *gin.Context) {
 	instanceGroupId, err := strconv.ParseInt(c.Param("instanceGroup"), 10, 64)
 	if err != nil {
@@ -102,7 +102,7 @@ func HandleListInstance(c *gin.Context) {
 	c.JSON(http.StatusOK, gf_cluster.NewInstanceListResponse(items))
 }
 
-//HandleListMyInstance 列出我的实例
+// HandleListMyInstance 列出我的实例
 func HandleListMyInstance(c *gin.Context) {
 	nodeIp := c.Query("node_ip")
 	podIp := c.Query("pod_ip")
@@ -150,7 +150,7 @@ func HandleListMyInstance(c *gin.Context) {
 	}))
 }
 
-//getKubernetesMap 获取kubernetes集群&实例组map
+// getKubernetesMap 获取kubernetes集群&实例组map
 func getKubernetesMap(groups []*gf_cluster.InstanceGroup) map[int64][]string {
 	kubernetesMap := make(map[int64][]string, len(groups))
 	for _, group := range groups {
@@ -159,7 +159,7 @@ func getKubernetesMap(groups []*gf_cluster.InstanceGroup) map[int64][]string {
 	return kubernetesMap
 }
 
-//filterPods 过滤pod列表
+// filterPods 过滤pod列表
 func filterPods(pods gf_cluster.ClusterPodsSummaryArray, nodeIp string, podIp string, groupNames []string, instanceGroupName string, result gf_cluster.ClusterPodsSummaryArray) gf_cluster.ClusterPodsSummaryArray {
 	for _, pod := range pods {
 		if nodeIp != "" && strings.Index(pod.NodeIp, nodeIp) != 0 {
@@ -179,7 +179,7 @@ func filterPods(pods gf_cluster.ClusterPodsSummaryArray, nodeIp string, podIp st
 	return result
 }
 
-//HandleListInstanceForm 列出所有集群
+// HandleListInstanceForm 列出所有集群
 func HandleListInstanceForm(c *gin.Context) {
 	id, _ := c.GetQuery("id")
 	pagerNumber, pageSize := helper.GetPagerParamFromQuery(c)

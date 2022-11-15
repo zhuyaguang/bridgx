@@ -21,7 +21,6 @@ import (
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
-
 	config.MustInit()
 	logs.Init()
 	clients.MustInit()

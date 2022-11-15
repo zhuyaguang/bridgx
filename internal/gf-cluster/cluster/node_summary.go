@@ -15,7 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-//ListClusterNodeSummary 获得集群下所有节点详情
+// ListClusterNodeSummary 获得集群下所有节点详情
 func ListClusterNodeSummary(clusterId int64) (gf_cluster.ClusterNodeSummaryArray, error) {
 	cluster, err := model.GetKubernetesCluster(clusterId)
 	if err != nil {
@@ -154,7 +154,7 @@ type PodResources struct {
 	Storage *resource.Quantity `json:"storage"`
 }
 
-//ListKubeSystemInstance 列出kuber-system所占用资源
+// ListKubeSystemInstance 列出kuber-system所占用资源
 func ListKubeSystemInstance(info *gf_cluster.KubernetesInfo) (map[string]*PodResources, error) {
 	if info.Status != gf_cluster.KubernetesStatusRunning {
 		return nil, nil

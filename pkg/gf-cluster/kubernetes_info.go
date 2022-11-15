@@ -2,7 +2,7 @@ package gf_cluster
 
 type KubernetesType string
 
-//KubernetesInfo 代表一个Kubernetes集群
+// KubernetesInfo 代表一个Kubernetes集群
 type KubernetesInfo struct {
 	Id                int64  `json:"id"`
 	Name              string `json:"name"`

@@ -23,7 +23,7 @@ type prePaidResources struct {
 	Status        int       //2:使用中3:已关闭(页面不展示这个状态)4:已冻结5:已过期
 }
 
-//in
+// in
 var _inEcsChargeType = map[string]model.PrePaidServerExtendParamChargingMode{
 	cloud.InstanceChargeTypePrePaid:  model.GetPrePaidServerExtendParamChargingModeEnum().PRE_PAID,
 	cloud.InstanceChargeTypePostPaid: model.GetPrePaidServerExtendParamChargingModeEnum().POST_PAID,
@@ -71,7 +71,7 @@ var _protocol = map[string]string{
 	cloud.ProtocolAll:    "",
 }
 
-//out
+// out
 var _ecsChargeType = map[string]string{
 	"0": cloud.InstanceChargeTypePostPaid,
 	"1": cloud.InstanceChargeTypePrePaid,

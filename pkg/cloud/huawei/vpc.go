@@ -166,7 +166,7 @@ func (p *HuaweiCloud) DescribeSwitches(req cloud.DescribeSwitchesRequest) (cloud
 	return cloud.DescribeSwitchesResponse{Switches: subnetInfo2CloudSwitch(subnets, usedIpNum)}, nil
 }
 
-//miss CreateAt
+// miss CreateAt
 func vpcInfo2CloudVpc(vpcInfo []model.Vpc, regionId string) []cloud.VPC {
 	vpcs := make([]cloud.VPC, 0, len(vpcInfo))
 	for _, vpc := range vpcInfo {
@@ -182,7 +182,7 @@ func vpcInfo2CloudVpc(vpcInfo []model.Vpc, regionId string) []cloud.VPC {
 	return vpcs
 }
 
-//miss IsDefault,CreateAt
+// miss IsDefault,CreateAt
 func subnetInfo2CloudSwitch(subnetInfo []model.Subnet, UsedIpNum map[string]int) []cloud.Switch {
 	switchs := make([]cloud.Switch, 0, len(subnetInfo))
 	for _, subnet := range subnetInfo {

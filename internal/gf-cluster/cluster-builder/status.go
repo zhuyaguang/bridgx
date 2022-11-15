@@ -17,7 +17,7 @@ func updateStatus(id int64, status string) {
 }
 
 // TODO: drop this func on future
-//deprecated
+// deprecated
 func updateInstallStep(id int64, step string) {
 	kubernetes := gf_cluster.KubernetesInfo{
 		Id:          id,

@@ -105,7 +105,7 @@ func (b BaiduCloud) BatchCreate(m cloud.Params, num int) (instanceIds []string, 
 
 	periodUnit := "Month"
 	period := m.Charge.Period
-	if m.Charge.ChargeType == cloud.OrderPrePaid && m.Charge.PeriodUnit == cloud.Year {
+	if m.Charge.ChargeType == cloud.PrePaid && m.Charge.PeriodUnit == cloud.Year {
 		period *= 12
 	}
 	request := &api.CreateInstanceBySpecArgs{
@@ -332,7 +332,7 @@ func (b BaiduCloud) GetSwitch(req cloud.GetSwitchRequest) (cloud.GetSwitchRespon
 	}
 }
 
-//rules 不用，securitGroupType没有用到
+// rules 不用，securitGroupType没有用到
 func (b BaiduCloud) CreateSecurityGroup(req cloud.CreateSecurityGroupRequest) (cloud.CreateSecurityGroupResponse, error) {
 	request := &api.CreateSecurityGroupArgs{
 		Name:  req.SecurityGroupName,
@@ -390,7 +390,7 @@ func (b BaiduCloud) AddEgressSecurityGroupRule(req cloud.AddSecurityGroupRuleReq
 	return b.bccClient.AuthorizeSecurityGroupRule(req.SecurityGroupId, request)
 }
 
-//maxkeys每页包含的最大数量，最大数量通常不超过1000，缺省值为1000。 缺少creatAt和RegionId
+// maxkeys每页包含的最大数量，最大数量通常不超过1000，缺省值为1000。 缺少creatAt和RegionId
 func (b BaiduCloud) DescribeSecurityGroups(req cloud.DescribeSecurityGroupsRequest) (cloud.DescribeSecurityGroupsResponse, error) {
 	r, err := b.bccClient.ListSecurityGroup(&api.ListSecurityGroupArgs{
 		Marker:     "",
@@ -467,7 +467,7 @@ func (b BaiduCloud) GetZones(req cloud.GetZonesRequest) (cloud.GetZonesResponse,
 	}
 }
 
-//缺失family,status设置为默认
+// 缺失family,status设置为默认
 func (b BaiduCloud) DescribeAvailableResource(req cloud.DescribeAvailableResourceRequest) (cloud.DescribeAvailableResourceResponse, error) {
 	zoneIds := make([]string, 0, 8)
 	if req.ZoneId == "" {
@@ -514,13 +514,13 @@ func (b BaiduCloud) DescribeAvailableResource(req cloud.DescribeAvailableResourc
 	}, nil
 }
 
-//缺失family,status设置为默认
+// 缺失family,status设置为默认
 func (b BaiduCloud) DescribeInstanceTypes(req cloud.DescribeInstanceTypesRequest) (cloud.DescribeInstanceTypesResponse, error) {
 	return cloud.DescribeInstanceTypesResponse{}, nil
 }
 
-//maxkeys每页包含的最大数量，最大数量通常不超过1000
-//TODO 通过instancetype找可用镜像  查了文档，没有这个接口
+// maxkeys每页包含的最大数量，最大数量通常不超过1000
+// TODO 通过instancetype找可用镜像  查了文档，没有这个接口
 func (b BaiduCloud) DescribeImages(req cloud.DescribeImagesRequest) (cloud.DescribeImagesResponse, error) {
 	request := &api.ListImageArgs{
 		Marker:    "",
@@ -549,8 +549,8 @@ func (b BaiduCloud) DescribeImages(req cloud.DescribeImagesRequest) (cloud.Descr
 	}
 }
 
-//maxkeys每页包含的最大数量，最大数量通常不超过1000
-//status设置为默认，createAt、regionId缺失
+// maxkeys每页包含的最大数量，最大数量通常不超过1000
+// status设置为默认，createAt、regionId缺失
 func (b BaiduCloud) DescribeVpcs(req cloud.DescribeVpcsRequest) (cloud.DescribeVpcsResponse, error) {
 	request := &vpc.ListVPCArgs{
 		Marker:    "",
@@ -578,8 +578,8 @@ func (b BaiduCloud) DescribeVpcs(req cloud.DescribeVpcsRequest) (cloud.DescribeV
 	}
 }
 
-//maxkeys每页包含的最大数量，最大数量通常不超过1000
-//VsStatussh设置为默认，gatewayIpqu缺失
+// maxkeys每页包含的最大数量，最大数量通常不超过1000
+// VsStatussh设置为默认，gatewayIpqu缺失
 func (b BaiduCloud) DescribeSwitches(req cloud.DescribeSwitchesRequest) (cloud.DescribeSwitchesResponse, error) {
 	request := &vpc.ListSubnetArgs{
 		Marker:     "",
@@ -624,7 +624,7 @@ func (b BaiduCloud) DescribeSwitches(req cloud.DescribeSwitchesRequest) (cloud.D
 	}
 }
 
-//缺失createAt和prefixListId
+// 缺失createAt和prefixListId
 func (b BaiduCloud) DescribeGroupRules(req cloud.DescribeGroupRulesRequest) (cloud.DescribeGroupRulesResponse, error) {
 	request := &api.ListSecurityGroupArgs{
 		Marker:     "",
@@ -681,9 +681,6 @@ func (b BaiduCloud) DescribeGroupRules(req cloud.DescribeGroupRulesRequest) (clo
 	}, nil
 }
 
-func (b BaiduCloud) GetOrders(req cloud.GetOrdersRequest) (cloud.GetOrdersResponse, error) {
-	return cloud.GetOrdersResponse{}, nil
-}
 func (b BaiduCloud) ListbyId(instanceIds []string) (instances []cloud.Instance, err error) {
 	arg := &api.ListInstanceByInstanceIdArgs{
 		InstanceIds: instanceIds,
