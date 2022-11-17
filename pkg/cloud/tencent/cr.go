@@ -2,6 +2,7 @@ package tencent
 
 import (
 	"fmt"
+
 	"github.com/galaxy-future/BridgX/pkg/cloud"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/errors"
@@ -23,7 +24,7 @@ func (p *TencentCloud) PersonalImageList(instanceId, repoNamespace, repoName str
 		return DockerArtifactList, 0, err
 	}
 	if err != nil {
-		panic(err)
+		return DockerArtifactList, 0, err
 	}
 	for _, d := range response.Response.ImageInfoList {
 		var docker cloud.DockerArtifact
@@ -47,7 +48,7 @@ func (p *TencentCloud) EnterpriseImageList(region, instanceId, repoId, namespace
 		return DockerArtifactList, 0, err
 	}
 	if err != nil {
-		panic(err)
+		return DockerArtifactList, 0, err
 	}
 
 	for _, d := range response.Response.ImageInfoList {
@@ -69,7 +70,7 @@ func (p *TencentCloud) ContainerInstanceList(region string, pageNumber, pageSize
 		return RegistryInstanceList, 0, err
 	}
 	if err != nil {
-		panic(err)
+		return RegistryInstanceList, 0, err
 	}
 
 	for _, r := range response.Response.Registries {
@@ -93,7 +94,7 @@ func (p *TencentCloud) EnterpriseNamespaceList(region, instanceId string, pageNu
 		return NamespaceList, 0, err
 	}
 	if err != nil {
-		panic(err)
+		return NamespaceList, 0, err
 	}
 	for _, n := range response.Response.NamespaceList {
 		namespace := cloud.Namespace{Name: *n.Name}
@@ -115,7 +116,7 @@ func (p *TencentCloud) PersonalNamespaceList(region string) ([]cloud.Namespace, 
 		return NamespaceList, err
 	}
 	if err != nil {
-		panic(err)
+		return NamespaceList, err
 	}
 	for _, n := range response.Response.Data.NamespaceInfo {
 		namespace := cloud.Namespace{Name: *n.Namespace}
@@ -135,7 +136,7 @@ func (p *TencentCloud) EnterpriseRepositoryList(region, instanceId, namespace st
 		return RepositoryList, 0, err
 	}
 	if err != nil {
-		panic(err)
+		return RepositoryList, 0, err
 	}
 	for _, r := range response.Response.RepositoryList {
 		repository := cloud.Repository{
@@ -156,7 +157,7 @@ func (p *TencentCloud) PersonalRepositoryList(region, namespace string, pageNumb
 		return RepositoryList, 0, err
 	}
 	if err != nil {
-		panic(err)
+		return RepositoryList, 0, err
 	}
 	for _, r := range response.Response.Data.RepoInfo {
 		repository := cloud.Repository{
