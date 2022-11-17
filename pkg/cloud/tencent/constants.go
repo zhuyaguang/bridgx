@@ -16,6 +16,7 @@ const (
 	_vpcEndpoint       = "vpc.tencentcloudapi.com"
 	_cvmEndpoint       = "cvm.tencentcloudapi.com"
 	_apiEndpoint       = "api.tencentcloudapi.com"
+	_tcrEndpoint       = "tcr.tencentcloudapi.com"
 	_subnetFilterVpcId = "vpc-id"
 )
 

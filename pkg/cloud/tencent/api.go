@@ -1,6 +1,7 @@
 package tencent
 
 import (
+	tcr "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/tcr/v20190924"
 	"net/http"
 
 	"github.com/galaxy-future/BridgX/pkg/cloud"
@@ -17,6 +18,7 @@ type TencentCloud struct {
 	cvmClient *cvm.Client
 	apiClient *api.Client
 	cosClient *cos.Client
+	tcrClient *tcr.Client
 }
 
 func New(ak, sk, region string) (h *TencentCloud, err error) {
@@ -42,6 +44,13 @@ func New(ak, sk, region string) (h *TencentCloud, err error) {
 		return nil, err
 	}
 
+	cpf = profile.NewClientProfile()
+	cpf.HttpProfile.Endpoint = _tcrEndpoint
+	tcrClient, err := tcr.NewClient(credential, region, cpf)
+	if err != nil {
+		return nil, err
+	}
+
 	cosClient := cos.NewClient(nil, &http.Client{
 		Transport: &cos.AuthorizationTransport{
 			SecretID:  ak,
@@ -49,7 +58,7 @@ func New(ak, sk, region string) (h *TencentCloud, err error) {
 		},
 	})
 
-	return &TencentCloud{vpcClient: vpcClient, cvmClient: cvmClient, apiClient: apiClient, cosClient: cosClient}, nil
+	return &TencentCloud{vpcClient: vpcClient, cvmClient: cvmClient, apiClient: apiClient, cosClient: cosClient, tcrClient: tcrClient}, nil
 }
 
 func (p *TencentCloud) ProviderType() string {
