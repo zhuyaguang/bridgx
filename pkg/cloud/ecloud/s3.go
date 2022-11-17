@@ -15,7 +15,7 @@ func getOssEndpoint(region string) string {
 }
 
 func (p *ECloud) ListObjects(endpoint, bucketName, prefix string) ([]cloud.ObjectProperties, error) {
-	var ObjectPropertiesList []cloud.ObjectProperties
+	var objectPropertiesList []cloud.ObjectProperties
 	svc := s3.New(p.eosSession)
 
 	params := &s3.ListObjectsInput{
@@ -26,30 +26,30 @@ func (p *ECloud) ListObjects(endpoint, bucketName, prefix string) ([]cloud.Objec
 	resp, err := svc.ListObjects(params)
 	if err != nil {
 		fmt.Printf("Unable to list items in bucket %q, %v\n", bucketName, err)
-		return ObjectPropertiesList, err
+		return objectPropertiesList, err
 	}
 	for _, item := range resp.Contents {
 		objectProperties := cloud.ObjectProperties{Name: *item.Key}
-		ObjectPropertiesList = append(ObjectPropertiesList, objectProperties)
+		objectPropertiesList = append(objectPropertiesList, objectProperties)
 	}
-	return ObjectPropertiesList, nil
+	return objectPropertiesList, nil
 }
 
 func (p *ECloud) ListBucket(endpoint string) ([]cloud.BucketProperties, error) {
-	var BucketPropertiesList []cloud.BucketProperties
+	var bucketPropertiesList []cloud.BucketProperties
 	svc := s3.New(p.eosSession)
 	result, err := svc.ListBuckets(nil)
 	if err != nil {
 		fmt.Printf("Unable to list buckets, %v\n", err)
-		return BucketPropertiesList, err
+		return bucketPropertiesList, err
 	}
 
 	for _, b := range result.Buckets {
 		bucketProperties := cloud.BucketProperties{Name: *b.Name}
-		BucketPropertiesList = append(BucketPropertiesList, bucketProperties)
+		bucketPropertiesList = append(bucketPropertiesList, bucketProperties)
 
 	}
-	return BucketPropertiesList, nil
+	return bucketPropertiesList, nil
 }
 
 func (p *ECloud) GetOssDownloadUrl(s string, s2 string, s3 string) string {
