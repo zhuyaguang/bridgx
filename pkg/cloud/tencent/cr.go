@@ -8,6 +8,11 @@ import (
 	tcr "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/tcr/v20190924"
 )
 
+//此处与阿里云对齐，各名称定义如下示例
+//namespce : galaxy-future
+//repository name : bridgX
+//image : galaxy-future/bridgX:v0.01
+
 func (p *TencentCloud) PersonalImageList(region, repoNamespace, repoName string, pageNumber, pageSize int) ([]cloud.DockerArtifact, int, error) {
 
 	var DockerArtifactList []cloud.DockerArtifact
@@ -107,8 +112,8 @@ func (p *TencentCloud) EnterpriseNamespaceList(region, instanceId string, pageNu
 
 func (p *TencentCloud) PersonalNamespaceList(region string) ([]cloud.Namespace, error) {
 	request := tcr.NewDescribeNamespacePersonalRequest()
-	request.Namespace = common.StringPtr("")
-	request.Offset, request.Limit = SizeNumConvert(1, 10)
+	request.Namespace = common.StringPtr("")              // 此处可能有问题，需要修改
+	request.Offset, request.Limit = SizeNumConvert(1, 10) //应该for循环翻页查出所有结果
 	var NamespaceList []cloud.Namespace
 
 	response, err := p.tcrClient.DescribeNamespacePersonal(request)
@@ -173,6 +178,7 @@ func (p *TencentCloud) PersonalRepositoryList(region, namespace string, pageNumb
 }
 
 func SizeNumConvert(pageNumber, pageSize int) (offset, limit *int64) {
+	// offset 是偏移量，与pageNumber 有区别
 	var num, size int64
 	num = int64(pageNumber)
 	size = int64(pageSize)
