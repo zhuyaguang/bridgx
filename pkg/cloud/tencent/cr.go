@@ -113,8 +113,8 @@ func (p *TencentCloud) EnterpriseNamespaceList(region, instanceId string, pageNu
 
 func (p *TencentCloud) PersonalNamespaceList(region string) ([]cloud.Namespace, error) {
 	request := tcr.NewDescribeNamespacePersonalRequest()
-	request.Namespace = common.StringPtr("")              // 此处可能有问题，需要修改
-	request.Offset, request.Limit = SizeNumConvert(1, 10) //应该for循环翻页查出所有结果
+	request.Namespace = common.StringPtr("")
+	request.Offset, request.Limit = SizeNumConvert(1, 10)
 	var NamespaceList []cloud.Namespace
 
 	response, err := p.tcrClient.DescribeNamespacePersonal(request)
