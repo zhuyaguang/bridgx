@@ -9,11 +9,13 @@ import (
 	tcr "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/tcr/v20190924"
 )
 
-func (p *TencentCloud) PersonalImageList(instanceId, repoNamespace, repoName string, pageNum, pageSize int) ([]cloud.DockerArtifact, int, error) {
+func (p *TencentCloud) PersonalImageList(region, repoNamespace, repoName string, pageNum, pageSize int) ([]cloud.DockerArtifact, int, error) {
 	request := tcr.NewDescribeImagesRequest()
-	request.RegistryId = &instanceId
+	request.RegistryId = &region
 	request.NamespaceName = &repoNamespace
 	request.RepositoryName = &repoName
+	*request.Limit = int64(pageSize)
+	*request.Offset = int64(pageNum)
 
 	var DockerArtifactList []cloud.DockerArtifact
 
@@ -39,6 +41,8 @@ func (p *TencentCloud) EnterpriseImageList(region, instanceId, repoId, namespace
 	request.RegistryId = &instanceId
 	request.NamespaceName = &namespace
 	request.RepositoryName = &repoName
+	*request.Limit = int64(pageSize)
+	*request.Offset = int64(pageNumber)
 
 	var DockerArtifactList []cloud.DockerArtifact
 	// 返回的resp是一个DescribeImagesResponse的实例，与请求对象对应
@@ -62,6 +66,8 @@ func (p *TencentCloud) EnterpriseImageList(region, instanceId, repoId, namespace
 func (p *TencentCloud) ContainerInstanceList(region string, pageNumber, pageSize int) ([]cloud.RegistryInstance, int, error) {
 
 	request := tcr.NewDescribeInstancesRequest()
+	*request.Limit = int64(pageSize)
+	*request.Offset = int64(pageNumber)
 	var RegistryInstanceList []cloud.RegistryInstance
 
 	response, err := p.tcrClient.DescribeInstances(request)
@@ -87,6 +93,8 @@ func (p *TencentCloud) EnterpriseNamespaceList(region, instanceId string, pageNu
 	request := tcr.NewDescribeNamespacesRequest()
 	var NamespaceList []cloud.Namespace
 	request.RegistryId = common.StringPtr(instanceId)
+	*request.Limit = int64(pageSize)
+	*request.Offset = int64(pageNumber)
 
 	response, err := p.tcrClient.DescribeNamespaces(request)
 	if _, ok := err.(*errors.TencentCloudSDKError); ok {
@@ -129,6 +137,8 @@ func (p *TencentCloud) EnterpriseRepositoryList(region, instanceId, namespace st
 	request := tcr.NewDescribeRepositoriesRequest()
 	var RepositoryList []cloud.Repository
 	request.RegistryId = common.StringPtr(instanceId)
+	*request.Limit = int64(pageSize)
+	*request.Offset = int64(pageNumber)
 
 	response, err := p.tcrClient.DescribeRepositories(request)
 	if _, ok := err.(*errors.TencentCloudSDKError); ok {
@@ -150,6 +160,8 @@ func (p *TencentCloud) EnterpriseRepositoryList(region, instanceId, namespace st
 
 func (p *TencentCloud) PersonalRepositoryList(region, namespace string, pageNumber, pageSize int) ([]cloud.Repository, int, error) {
 	request := tcr.NewDescribeRepositoryOwnerPersonalRequest()
+	*request.Limit = int64(pageSize)
+	*request.Offset = int64(pageNumber)
 	var RepositoryList []cloud.Repository
 	response, err := p.tcrClient.DescribeRepositoryOwnerPersonal(request)
 	if _, ok := err.(*errors.TencentCloudSDKError); ok {
