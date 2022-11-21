@@ -1,8 +1,7 @@
 package tencent
 
 import (
-	"fmt"
-
+	"github.com/galaxy-future/BridgX/internal/logs"
 	"github.com/galaxy-future/BridgX/pkg/cloud"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/errors"
@@ -22,7 +21,7 @@ func (p *TencentCloud) PersonalImageList(region, repoNamespace, repoName string,
 	// 返回的resp是一个DescribeImagesResponse的实例，与请求对象对应
 	response, err := p.tcrClient.DescribeImages(request)
 	if _, ok := err.(*errors.TencentCloudSDKError); ok {
-		fmt.Printf("An API error has returned: %s", err)
+		logs.Logger.Errorf("An API error has returned: %s", err)
 		return DockerArtifactList, 0, err
 	}
 	if err != nil {
@@ -48,7 +47,7 @@ func (p *TencentCloud) EnterpriseImageList(region, instanceId, repoId, namespace
 	// 返回的resp是一个DescribeImagesResponse的实例，与请求对象对应
 	response, err := p.tcrClient.DescribeImages(request)
 	if _, ok := err.(*errors.TencentCloudSDKError); ok {
-		fmt.Printf("An API error has returned: %s", err)
+		logs.Logger.Errorf("An API error has returned: %s", err)
 		return DockerArtifactList, 0, err
 	}
 	if err != nil {
@@ -72,7 +71,7 @@ func (p *TencentCloud) ContainerInstanceList(region string, pageNumber, pageSize
 
 	response, err := p.tcrClient.DescribeInstances(request)
 	if _, ok := err.(*errors.TencentCloudSDKError); ok {
-		fmt.Printf("An API error has returned: %s", err)
+		logs.Logger.Errorf("An API error has returned: %s", err)
 		return RegistryInstanceList, 0, err
 	}
 	if err != nil {
@@ -98,7 +97,7 @@ func (p *TencentCloud) EnterpriseNamespaceList(region, instanceId string, pageNu
 
 	response, err := p.tcrClient.DescribeNamespaces(request)
 	if _, ok := err.(*errors.TencentCloudSDKError); ok {
-		fmt.Printf("An API error has returned: %s", err)
+		logs.Logger.Errorf("An API error has returned: %s", err)
 		return NamespaceList, 0, err
 	}
 	if err != nil {
@@ -120,7 +119,7 @@ func (p *TencentCloud) PersonalNamespaceList(region string) ([]cloud.Namespace, 
 
 	response, err := p.tcrClient.DescribeNamespacePersonal(request)
 	if _, ok := err.(*errors.TencentCloudSDKError); ok {
-		fmt.Printf("An API error has returned: %s", err)
+		logs.Logger.Errorf("An API error has returned: %s", err)
 		return NamespaceList, err
 	}
 	if err != nil {
@@ -142,7 +141,7 @@ func (p *TencentCloud) EnterpriseRepositoryList(region, instanceId, namespace st
 
 	response, err := p.tcrClient.DescribeRepositories(request)
 	if _, ok := err.(*errors.TencentCloudSDKError); ok {
-		fmt.Printf("An API error has returned: %s", err)
+		logs.Logger.Errorf("An API error has returned: %s", err)
 		return RepositoryList, 0, err
 	}
 	if err != nil {
@@ -165,7 +164,7 @@ func (p *TencentCloud) PersonalRepositoryList(region, namespace string, pageNumb
 	var RepositoryList []cloud.Repository
 	response, err := p.tcrClient.DescribeRepositoryOwnerPersonal(request)
 	if _, ok := err.(*errors.TencentCloudSDKError); ok {
-		fmt.Printf("An API error has returned: %s", err)
+		logs.Logger.Errorf("An API error has returned: %s", err)
 		return RepositoryList, 0, err
 	}
 	if err != nil {
