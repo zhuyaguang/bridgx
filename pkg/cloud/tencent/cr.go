@@ -12,6 +12,7 @@ import (
 //namespce : galaxy-future
 //repository name : bridgX
 //image : galaxy-future/bridgX:v0.01
+//需检查各函数中的相关实现
 
 func (p *TencentCloud) PersonalImageList(region, repoNamespace, repoName string, pageNumber, pageSize int) ([]cloud.DockerArtifact, int, error) {
 
