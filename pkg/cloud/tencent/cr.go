@@ -181,7 +181,7 @@ func (p *TencentCloud) PersonalRepositoryList(region, namespace string, pageNumb
 func SizeNumConvert(pageNumber, pageSize int) (offset, limit *int64) {
 	// offset 是偏移量，与pageNumber 有区别
 	var num, size int64
-	num = int64(pageNumber)
 	size = int64(pageSize)
+	num = (int64(pageNumber) - 1) * size
 	return &num, &size
 }
