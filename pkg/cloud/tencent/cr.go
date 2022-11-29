@@ -33,7 +33,7 @@ func (p *TencentCloud) PersonalImageList(region, repoNamespace, repoName string,
 
 	for _, d := range response.Response.Data.TagInfo {
 		var docker cloud.DockerArtifact
-		docker.Name = repoName + ":" + *d.TagName
+		docker.Name = repoNamespace + "/" + repoName + ":" + *d.TagName
 		DockerArtifactList = append(DockerArtifactList, docker)
 	}
 	return DockerArtifactList, int(*response.Response.Data.TagCount), nil
