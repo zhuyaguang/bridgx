@@ -37,46 +37,6 @@ func (p *ECloud) StopInstances(ids []string) error {
 	panic("implement me")
 }
 
-func (p *ECloud) CreateVPC(req cloud.CreateVpcRequest) (cloud.CreateVpcResponse, error) {
-	// TODO implement me
-	panic("implement me")
-}
-
-func (p *ECloud) GetVPC(req cloud.GetVpcRequest) (cloud.GetVpcResponse, error) {
-	// TODO implement me
-	panic("implement me")
-}
-
-func (p *ECloud) CreateSwitch(req cloud.CreateSwitchRequest) (cloud.CreateSwitchResponse, error) {
-	// TODO implement me
-	panic("implement me")
-}
-
-func (p *ECloud) GetSwitch(req cloud.GetSwitchRequest) (cloud.GetSwitchResponse, error) {
-	// TODO implement me
-	panic("implement me")
-}
-
-func (p *ECloud) CreateSecurityGroup(req cloud.CreateSecurityGroupRequest) (cloud.CreateSecurityGroupResponse, error) {
-	// TODO implement me
-	panic("implement me")
-}
-
-func (p *ECloud) AddIngressSecurityGroupRule(req cloud.AddSecurityGroupRuleRequest) error {
-	// TODO implement me
-	panic("implement me")
-}
-
-func (p *ECloud) AddEgressSecurityGroupRule(req cloud.AddSecurityGroupRuleRequest) error {
-	// TODO implement me
-	panic("implement me")
-}
-
-func (p *ECloud) DescribeSecurityGroups(req cloud.DescribeSecurityGroupsRequest) (cloud.DescribeSecurityGroupsResponse, error) {
-	// TODO implement me
-	panic("implement me")
-}
-
 func (p *ECloud) GetRegions() (cloud.GetRegionsResponse, error) {
 	// TODO implement me
 	panic("implement me")
