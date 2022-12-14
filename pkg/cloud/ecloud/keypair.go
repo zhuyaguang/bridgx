@@ -16,7 +16,7 @@ func (p *ECloud) DescribeGroupRules(req cloud.DescribeGroupRulesRequest) (cloud.
 
 func (p *ECloud) CreateKeyPair(req cloud.CreateKeyPairRequest) (cloud.CreateKeyPairResponse, error) {
 	vmCreateKeypairRequest := &model.VmCreateKeypairRequest{
-		&model.VmCreateKeypairBody{
+		VmCreateKeypairBody: &model.VmCreateKeypairBody{
 			Name: req.KeyPairName,
 		},
 	}
@@ -25,7 +25,7 @@ func (p *ECloud) CreateKeyPair(req cloud.CreateKeyPairRequest) (cloud.CreateKeyP
 		logs.Logger.Errorf("CreateKeyPair Ecloud failed.err:[%v] req:[%v]", err, req)
 		return cloud.CreateKeyPairResponse{}, err
 	}
-	if vmCreateKeypair.State != State_OK {
+	if vmCreateKeypair.State != _State_OK {
 		errMsg := vmCreateKeypair.ErrorMessage
 		logs.Logger.Errorf("CreateKeyPair resp state not ok :[%v] req:[%v]", errMsg, req)
 		return cloud.CreateKeyPairResponse{}, errors.New(errMsg)
@@ -36,10 +36,10 @@ func (p *ECloud) CreateKeyPair(req cloud.CreateKeyPairRequest) (cloud.CreateKeyP
 		return cloud.CreateKeyPairResponse{}, errors.New(errMsg)
 	}
 	vmGetKeyPairDetailRequest := &model.VmGetKeyPairDetailRequest{
-		&model.VmGetKeyPairDetailPath{
+		VmGetKeyPairDetailPath: &model.VmGetKeyPairDetailPath{
 			KeypairName: req.KeyPairName,
 		},
-		&model.VmGetKeyPairDetailQuery{
+		VmGetKeyPairDetailQuery: &model.VmGetKeyPairDetailQuery{
 			Region: req.RegionId,
 		},
 	}
@@ -68,7 +68,7 @@ func (p *ECloud) ImportKeyPair(req cloud.ImportKeyPairRequest) (cloud.ImportKeyP
 
 func (p *ECloud) DescribeKeyPairs(req cloud.DescribeKeyPairsRequest) (cloud.DescribeKeyPairsResponse, error) {
 	vmListKeyPairRequest := &model.VmListKeyPairRequest{
-		&model.VmListKeyPairQuery{
+		VmListKeyPairQuery: &model.VmListKeyPairQuery{
 			Page: utils.Int32(int32(req.PageNumber)),
 			Size: utils.Int32(int32(req.PageSize)),
 		},

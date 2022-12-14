@@ -460,8 +460,6 @@ github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9dec
 github.com/yuin/goldmark v1.3.5/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=
 gitlab.ecloud.com/ecloud/ecloudsdkcore v1.0.0 h1:V1596NLFZLajplVxiBsjcWXKAtvwG+sVGV4wf0yHK5I=
 gitlab.ecloud.com/ecloud/ecloudsdkcore v1.0.0/go.mod h1:e0US/f6Yzrdzn4GkHxLcyrUfzzJtv+GFO5SGK5MAY9g=
-gitlab.ecloud.com/ecloud/ecloudsdkecs v1.0.11 h1:4yi5N16ZB43HcUS+SaP1FCTH+ap40DkNXUYXgykN69A=
-gitlab.ecloud.com/ecloud/ecloudsdkecs v1.0.11/go.mod h1:JKHcRchll42rnQfvxKmlMGCTvH8GYEPRxG3yYyZu1DA=
 gitlab.ecloud.com/ecloud/ecloudsdkecs v1.0.12 h1:Dp05McMafdlHTy35pDEwjaSKbxCuqEfpv+S/ZEEYSkQ=
 gitlab.ecloud.com/ecloud/ecloudsdkecs v1.0.12/go.mod h1:JKHcRchll42rnQfvxKmlMGCTvH8GYEPRxG3yYyZu1DA=
 gitlab.ecloud.com/ecloud/ecloudsdkeip v1.0.4 h1:BELamPNmNbhNVNGkYBzLxpeA0LYJ4vzrH8Yn8Q/mYqs=
