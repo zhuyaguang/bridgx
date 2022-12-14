@@ -59,6 +59,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mozillazg/go-httpheader v0.3.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/tencentyun/cos-go-sdk-v5 v0.7.39 // indirect
 	github.com/tjfoc/gmsm v1.3.2 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	go.etcd.io/etcd/api/v3 v3.5.4 // indirect
@@ -105,6 +106,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/satori/go.uuid v1.2.0
+	github.com/tencentyun/cos-go-sdk-v5 v0.7.39
 	github.com/ugorji/go/codec v1.2.6 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
