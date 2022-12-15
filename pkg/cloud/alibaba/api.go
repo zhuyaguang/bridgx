@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk"
-
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 
 	openapi "github.com/alibabacloud-go/darabonba-openapi/client"
@@ -64,22 +63,15 @@ func New(AK, SK, region string) (*AlibabaCloud, error) {
 	if err != nil {
 		return nil, err
 	}
-	ossClient, err := oss.New(getOssEndpoint(region), AK, SK)
-	if err != nil {
-		return nil, err
-	}
 	sdkClient, err := sdk.NewClientWithAccessKey(region, AK, SK)
 	if err != nil {
 		return nil, err
 	}
-	return &AlibabaCloud{
-		client:    client,
-		vpcClient: vpcClt,
-		ecsClient: ecsClt,
-		bssClient: bssCtl,
-		ossClient: ossClient,
-		sdkClient: sdkClient,
-	}, nil
+	ossClient, err := oss.New(getOssEndpoint(region), AK, SK)
+	if err != nil {
+		return nil, err
+	}
+	return &AlibabaCloud{client: client, vpcClient: vpcClt, ecsClient: ecsClt, bssClient: bssCtl, ossClient: ossClient, sdkClient: sdkClient}, nil
 }
 
 // BatchCreate the maximum of 'num' is 100
