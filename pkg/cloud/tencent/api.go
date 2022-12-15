@@ -99,15 +99,3 @@ func (p *TencentCloud) GetZones(req cloud.GetZonesRequest) (cloud.GetZonesRespon
 	}
 	return cloud.GetZonesResponse{Zones: zones}, nil
 }
-
-func (p *TencentCloud) CreateKeyPair(req cloud.CreateKeyPairRequest) (cloud.CreateKeyPairResponse, error) {
-	return cloud.CreateKeyPairResponse{}, nil
-}
-
-func (p *TencentCloud) ImportKeyPair(req cloud.ImportKeyPairRequest) (cloud.ImportKeyPairResponse, error) {
-	return cloud.ImportKeyPairResponse{}, nil
-}
-
-func (p *TencentCloud) DescribeKeyPairs(req cloud.DescribeKeyPairsRequest) (cloud.DescribeKeyPairsResponse, error) {
-	return cloud.DescribeKeyPairsResponse{}, nil
-}

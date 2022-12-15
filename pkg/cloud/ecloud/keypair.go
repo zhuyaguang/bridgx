@@ -11,7 +11,7 @@ import (
 
 func (p *ECloud) DescribeGroupRules(req cloud.DescribeGroupRulesRequest) (cloud.DescribeGroupRulesResponse, error) {
 
-	panic("implement me")
+	return cloud.DescribeGroupRulesResponse{}, errors.New("implement me")
 }
 
 func (p *ECloud) CreateKeyPair(req cloud.CreateKeyPairRequest) (cloud.CreateKeyPairResponse, error) {
@@ -63,7 +63,7 @@ func (p *ECloud) CreateKeyPair(req cloud.CreateKeyPairRequest) (cloud.CreateKeyP
 
 func (p *ECloud) ImportKeyPair(req cloud.ImportKeyPairRequest) (cloud.ImportKeyPairResponse, error) {
 	// TODO implement me
-	panic("implement me")
+	return cloud.ImportKeyPairResponse{}, errors.New("implement me")
 }
 
 func (p *ECloud) DescribeKeyPairs(req cloud.DescribeKeyPairsRequest) (cloud.DescribeKeyPairsResponse, error) {
