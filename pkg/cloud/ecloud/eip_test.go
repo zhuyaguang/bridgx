@@ -6,12 +6,6 @@ import (
 	"testing"
 )
 
-var (
-	_AK       = ""
-	_SK       = ""
-	_regionId = "CIDC-RP-29"
-)
-
 func TestEcloud_AllocateEip(t *testing.T) {
 	type args struct {
 		req cloud.AllocateEipRequest

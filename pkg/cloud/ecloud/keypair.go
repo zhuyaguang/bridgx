@@ -25,7 +25,7 @@ func (p *ECloud) CreateKeyPair(req cloud.CreateKeyPairRequest) (cloud.CreateKeyP
 		logs.Logger.Errorf("CreateKeyPair Ecloud failed.err:[%v] req:[%v]", err, req)
 		return cloud.CreateKeyPairResponse{}, err
 	}
-	if vmCreateKeypair.State != State_OK {
+	if vmCreateKeypair.State != model.VmCreateKeypairResponseStateEnumOk {
 		errMsg := vmCreateKeypair.ErrorMessage
 		logs.Logger.Errorf("CreateKeyPair resp state not ok :[%v] req:[%v]", errMsg, req)
 		return cloud.CreateKeyPairResponse{}, errors.New(errMsg)

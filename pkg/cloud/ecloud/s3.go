@@ -79,7 +79,6 @@ func (p *ECloud) GetObjectDownloadUrl(bucketName, objectKey string) (string, err
 		logs.Logger.Errorf("Unable to get bucketLocation %q, %v", bucketName, err)
 	}
 	*p.eosSession.Config.Endpoint = bucketLocation.String()
-
 	req, _ := svc.GetObjectRequest(&s3.GetObjectInput{
 		Bucket: aws.String(bucketName),
 		Key:    aws.String(objectKey),

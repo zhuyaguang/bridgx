@@ -460,12 +460,14 @@ github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9dec
 github.com/yuin/goldmark v1.3.5/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=
 gitlab.ecloud.com/ecloud/ecloudsdkcore v1.0.0 h1:V1596NLFZLajplVxiBsjcWXKAtvwG+sVGV4wf0yHK5I=
 gitlab.ecloud.com/ecloud/ecloudsdkcore v1.0.0/go.mod h1:e0US/f6Yzrdzn4GkHxLcyrUfzzJtv+GFO5SGK5MAY9g=
-gitlab.ecloud.com/ecloud/ecloudsdkecs v1.0.11 h1:4yi5N16ZB43HcUS+SaP1FCTH+ap40DkNXUYXgykN69A=
-gitlab.ecloud.com/ecloud/ecloudsdkecs v1.0.11/go.mod h1:JKHcRchll42rnQfvxKmlMGCTvH8GYEPRxG3yYyZu1DA=
 gitlab.ecloud.com/ecloud/ecloudsdkecs v1.0.12 h1:Dp05McMafdlHTy35pDEwjaSKbxCuqEfpv+S/ZEEYSkQ=
 gitlab.ecloud.com/ecloud/ecloudsdkecs v1.0.12/go.mod h1:JKHcRchll42rnQfvxKmlMGCTvH8GYEPRxG3yYyZu1DA=
 gitlab.ecloud.com/ecloud/ecloudsdkeip v1.0.4 h1:BELamPNmNbhNVNGkYBzLxpeA0LYJ4vzrH8Yn8Q/mYqs=
 gitlab.ecloud.com/ecloud/ecloudsdkeip v1.0.4/go.mod h1:1yfwzcSXT5+WABWTJsBhac+d84EUJ91Qe1zYq32QZwE=
+gitlab.ecloud.com/ecloud/ecloudsdkims v1.0.4 h1:78v2OXVEsnsDFK8+XztggibzdrIoRXcvG6aGvJXGTxg=
+gitlab.ecloud.com/ecloud/ecloudsdkims v1.0.4/go.mod h1:16oPNq+EHY47YmEW2wimsbz2A27m0LyF6aJK70APyVg=
+gitlab.ecloud.com/ecloud/ecloudsdkims v1.0.5 h1:QW5z/uywnpSHExIImKJmBrMROZ+YDiO05JtIywFDIeE=
+gitlab.ecloud.com/ecloud/ecloudsdkims v1.0.5/go.mod h1:R/+pGXee1H51Jf+ZSd7PQEudobjE27S+WQX2ItOqcx4=
 go.etcd.io/etcd/api/v3 v3.5.4 h1:OHVyt3TopwtUQ2GKdd5wu3PmmipR4FTwCqoEjSyRdIc=
 go.etcd.io/etcd/api/v3 v3.5.4/go.mod h1:5GB2vv4A4AOn3yk7MftYGHkUfGtDHnEraIjym4dYz5A=
 go.etcd.io/etcd/client/pkg/v3 v3.5.4 h1:lrneYvz923dvC14R54XcA7FXoZ3mlGZAgmwhfm7HqOg=

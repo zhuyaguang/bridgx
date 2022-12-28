@@ -1,6 +1,8 @@
 package ecloud
 
-import "github.com/galaxy-future/BridgX/pkg/cloud"
+import (
+	"github.com/galaxy-future/BridgX/pkg/cloud"
+)
 
 func (p *ECloud) CreateVPC(req cloud.CreateVpcRequest) (cloud.CreateVpcResponse, error) {
 	// TODO implement me
