@@ -2,7 +2,6 @@ package ecloud
 
 import (
 	"errors"
-	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -72,7 +71,6 @@ func (p *ECloud) DescribeImages(req cloud.DescribeImagesRequest) (cloud.Describe
 	request.IMSgetImageRespPath = iMSgetImageRespPath
 	response, err := p.imsClient.IMSgetImageResp(request)
 	if err == nil {
-		fmt.Printf("%+v\n", response)
 		if response.State == model.IMSgetImageRespResponseStateEnumOk {
 			var images cloud.Image
 			images.ImageName = response.Body.Name
@@ -82,10 +80,9 @@ func (p *ECloud) DescribeImages(req cloud.DescribeImagesRequest) (cloud.Describe
 			images.OsType = string(response.Body.OsType)
 			images.Platform = string(response.Body.PublicImageType)
 			return cloud.DescribeImagesResponse{Images: []cloud.Image{images}}, nil
-		} else {
-			err := errors.New(response.ErrorMessage)
-			return cloud.DescribeImagesResponse{}, err
 		}
+		err = errors.New(response.ErrorMessage)
+		return cloud.DescribeImagesResponse{}, err
 	}
 	return cloud.DescribeImagesResponse{}, err
 }
