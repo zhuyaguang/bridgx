@@ -1,6 +1,7 @@
 package ecloud
 
 import (
+	"errors"
 	"fmt"
 	"github.com/galaxy-future/BridgX/internal/logs"
 	"github.com/galaxy-future/BridgX/pkg/cloud"
@@ -230,7 +231,7 @@ func (p *ECloud) DescribeEip(req cloud.DescribeEipRequest) (cloud.DescribeEipRes
 
 func (p *ECloud) ConvertPublicIpToEip(req cloud.ConvertPublicIpToEipRequest) error {
 	// TODO implement me
-	panic("implement me")
+	return errors.New("implement me")
 }
 
 func eip2Cloud(eip *model.ListFipWithBandwidthResponseContent) cloud.Eip {

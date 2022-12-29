@@ -107,12 +107,12 @@ func (p *ECloud) GetInstanceStatus(id string) (status string, err error) {
 
 func (p *ECloud) GetInstancesByTags(region string, tags []cloud.Tag) (instances []cloud.Instance, err error) {
 	// TODO implement me
-	panic("implement me")
+	return []cloud.Instance{}, errors.New("implement me")
 }
 
 func (p *ECloud) GetInstancesByCluster(regionId, clusterName string) (instances []cloud.Instance, err error) {
 	// TODO implement me
-	panic("implement me")
+	return []cloud.Instance{}, errors.New("implement me")
 }
 
 func (p *ECloud) BatchDelete(ids []string, regionId string) error {
@@ -180,20 +180,20 @@ func (p *ECloud) StopInstances(ids []string) error {
 
 func (p *ECloud) GetRegions() (cloud.GetRegionsResponse, error) {
 	// TODO implement me
-	panic("implement me")
+	return cloud.GetRegionsResponse{}, errors.New("implement me")
 }
 
 func (p *ECloud) GetZones(req cloud.GetZonesRequest) (cloud.GetZonesResponse, error) {
 	// TODO implement me
-	panic("implement me")
+	return cloud.GetZonesResponse{}, errors.New("implement me")
 }
 
 func (p *ECloud) DescribeAvailableResource(req cloud.DescribeAvailableResourceRequest) (cloud.DescribeAvailableResourceResponse, error) {
 	// TODO implement me
-	panic("implement me")
+	return cloud.DescribeAvailableResourceResponse{}, errors.New("implement me")
 }
 
 func (p *ECloud) DescribeInstanceTypes(req cloud.DescribeInstanceTypesRequest) (cloud.DescribeInstanceTypesResponse, error) {
 	// TODO implement me
-	panic("implement me")
+	return cloud.DescribeInstanceTypesResponse{}, errors.New("implement me")
 }

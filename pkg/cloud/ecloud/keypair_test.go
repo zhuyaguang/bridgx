@@ -7,12 +7,6 @@ import (
 	"testing"
 )
 
-var (
-	_AK       = ""
-	_SK       = ""
-	_regionId = "cn-north-1"
-)
-
 func init() {
 	logs.Init()
 }

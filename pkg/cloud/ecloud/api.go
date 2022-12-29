@@ -88,5 +88,4 @@ func (p *ECloud) DescribeImages(req cloud.DescribeImagesRequest) (cloud.Describe
 		}
 	}
 	return cloud.DescribeImagesResponse{}, err
-
 }
