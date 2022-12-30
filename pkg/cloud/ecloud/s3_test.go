@@ -3,7 +3,7 @@ package ecloud
 import "testing"
 
 func TestListObjects(t *testing.T) {
-	client, err := New("_ak", "_sk", "ap-beijing")
+	client, err := New(_AK, _SK, _regionId)
 	if err != nil {
 		t.Log(err.Error())
 		return
@@ -15,7 +15,7 @@ func TestListObjects(t *testing.T) {
 }
 
 func TestListBucket(t *testing.T) {
-	client, err := New("_ak", "_sk", "ap-beijing")
+	client, err := New(_AK, _SK, _regionId)
 	if err != nil {
 		t.Log(err.Error())
 		return
@@ -27,7 +27,7 @@ func TestListBucket(t *testing.T) {
 }
 
 func TestGetObjectDownloadUrl(t *testing.T) {
-	client, err := New("_ak", "_sk", "ap-beijing")
+	client, err := New(_AK, _SK, _regionId)
 	if err != nil {
 		t.Log(err.Error())
 		return

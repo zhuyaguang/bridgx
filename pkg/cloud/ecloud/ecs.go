@@ -2,7 +2,6 @@ package ecloud
 
 import (
 	"errors"
-	"fmt"
 	"github.com/galaxy-future/BridgX/internal/logs"
 	"github.com/galaxy-future/BridgX/pkg/cloud"
 	"gitlab.ecloud.com/ecloud/ecloudsdkecs/model"
@@ -28,11 +27,11 @@ func (p *ECloud) BatchCreate(m cloud.Params, num int) (instanceIds []string, err
 	request.VmCreateBody = vmCreateBody
 
 	response, err := p.ecsClient.VmCreate(request)
-	if err == nil {
-		fmt.Printf("%+v\n", response)
-	} else {
+	if err != nil {
 		logs.Logger.Errorf(err.Error())
+		return []string{}, err
 	}
+	logs.Logger.Info("%+v\n", response.Body)
 
 	return instanceIds, nil
 }
@@ -59,42 +58,41 @@ func (p *ECloud) generateInstances(id string) (instances cloud.Instance, err err
 	request.VmGetServerDetailQuery = VmGetServerDetailQuery
 
 	response, err := p.ecsClient.VmGetServerDetail(request)
-	if err == nil {
-		if response.State == model.VmGetServerDetailResponseStateEnumOk {
-			expireAt, err := time.Parse("2006-01-02T15:04Z", response.Body.CreatedTime)
-			if err != nil {
-				return instances, err
-			}
-			ipInner := ""
-			for _, p := range *response.Body.Ports {
-				ipInner = ipInner + "," + strings.Join(p.PrivateIp, ",")
-			}
-			ipOuter := ""
-			if len(*response.Body.Ports) > 0 {
-				if len((*response.Body.Ports)[0].PublicIp) > 0 {
-					ipOuter = (*response.Body.Ports)[0].PublicIp[0]
-				}
-			}
-
-			instances = cloud.Instance{
-				Id:       response.Body.Id,
-				CostWay:  "",
-				Provider: cloud.ECloud,
-				IpInner:  ipInner,
-				IpOuter:  ipOuter,
-				Network:  nil,
-				ImageId:  response.Body.ImageId,
-				Status:   string(*response.Body.Status),
-				ExpireAt: &expireAt,
-			}
-			return instances, nil
-		} else {
-			err := errors.New(response.ErrorMessage)
+	if err != nil {
+		return instances, err
+	}
+	if response.State == model.VmGetServerDetailResponseStateEnumOk {
+		expireAt, err := time.Parse("2006-01-02T15:04Z", response.Body.CreatedTime)
+		if err != nil {
 			return instances, err
 		}
-	}
+		ipInner := ""
+		for _, p := range *response.Body.Ports {
+			ipInner = ipInner + "," + strings.Join(p.PrivateIp, ",")
+		}
+		ipOuter := ""
+		if len(*response.Body.Ports) > 0 {
+			if len((*response.Body.Ports)[0].PublicIp) > 0 {
+				ipOuter = (*response.Body.Ports)[0].PublicIp[0]
+			}
+		}
 
-	return instances, err
+		instances = cloud.Instance{
+			Id:       response.Body.Id,
+			CostWay:  "",
+			Provider: cloud.ECloud,
+			IpInner:  ipInner,
+			IpOuter:  ipOuter,
+			Network:  nil,
+			ImageId:  response.Body.ImageId,
+			Status:   string(*response.Body.Status),
+			ExpireAt: &expireAt,
+		}
+		return instances, nil
+	} else {
+		err := errors.New(response.ErrorMessage)
+		return instances, err
+	}
 }
 
 func (p *ECloud) GetInstanceStatus(id string) (status string, err error) {
@@ -122,16 +120,17 @@ func (p *ECloud) BatchDelete(ids []string, regionId string) error {
 		vmDeletePath.ServerId = id
 		request.VmDeletePath = vmDeletePath
 		response, err := p.ecsClient.VmDelete(request)
-		if err == nil {
-			if response.State == model.VmDeleteResponseStateEnumOk {
-				return nil
-			} else {
-				err := errors.New(response.ErrorMessage)
-				return err
-			}
-		} else {
+		if err != nil {
 			return err
 		}
+
+		if response.State == model.VmDeleteResponseStateEnumOk {
+			logs.Logger.Info("BatchDelete %s", id)
+		} else {
+			err := errors.New(response.ErrorMessage)
+			return err
+		}
+
 	}
 	return nil
 }
@@ -143,16 +142,16 @@ func (p *ECloud) StartInstances(ids []string) error {
 		vmStartPath.ServerId = id
 		request.VmStartPath = vmStartPath
 		response, err := p.ecsClient.VmStart(request)
-		if err == nil {
-			if response.State == model.VmStartResponseStateEnumOk {
-				return nil
-			} else {
-				err := errors.New(response.ErrorMessage)
-				return err
-			}
-		} else {
+		if err != nil {
 			return err
 		}
+		if response.State == model.VmStartResponseStateEnumOk {
+			logs.Logger.Info("StartInstances %s", id)
+		} else {
+			err := errors.New(response.ErrorMessage)
+			return err
+		}
+
 	}
 	return nil
 }
@@ -164,14 +163,13 @@ func (p *ECloud) StopInstances(ids []string) error {
 		vmStopPath.ServerId = id
 		request.VmStopPath = vmStopPath
 		response, err := p.ecsClient.VmStop(request)
-		if err == nil {
-			if response.State == model.VmStopResponseStateEnumOk {
-				return nil
-			} else {
-				err := errors.New(response.ErrorMessage)
-				return err
-			}
+		if err != nil {
+			return err
+		}
+		if response.State == model.VmStopResponseStateEnumOk {
+			logs.Logger.Info("StopInstances %s", id)
 		} else {
+			err := errors.New(response.ErrorMessage)
 			return err
 		}
 	}

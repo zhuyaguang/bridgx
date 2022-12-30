@@ -6,7 +6,7 @@ import (
 )
 
 func TestECloud_BatchCreate(t *testing.T) {
-	client, err := New("_ak", "_sk", "ap-beijing")
+	client, err := New(_AK, _SK, _regionId)
 	if err != nil {
 		t.Log(err.Error())
 		return
@@ -36,7 +36,7 @@ func TestECloud_BatchCreate(t *testing.T) {
 }
 
 func TestGetInstances(t *testing.T) {
-	client, err := New(_AK, _SK, "ap-beijing")
+	client, err := New(_AK, _SK, _regionId)
 	if err != nil {
 		t.Log(err.Error())
 		return
@@ -52,7 +52,7 @@ func TestGetInstances(t *testing.T) {
 }
 
 func TestGetInstanceStatus(t *testing.T) {
-	client, err := New(_AK, _SK, "ap-beijing")
+	client, err := New(_AK, _SK, _regionId)
 	if err != nil {
 		t.Log(err.Error())
 		return
@@ -66,7 +66,7 @@ func TestGetInstanceStatus(t *testing.T) {
 }
 
 func TestBatchDelete(t *testing.T) {
-	client, err := New(_AK, _SK, "ap-beijing")
+	client, err := New(_AK, _SK, _regionId)
 	if err != nil {
 		t.Log(err.Error())
 		return
@@ -79,7 +79,7 @@ func TestBatchDelete(t *testing.T) {
 }
 
 func TestStartInstances(t *testing.T) {
-	client, err := New(_AK, _SK, "ap-beijing")
+	client, err := New(_AK, _SK, _regionId)
 	if err != nil {
 		t.Log(err.Error())
 		return
@@ -92,7 +92,7 @@ func TestStartInstances(t *testing.T) {
 }
 
 func TestStopInstances(t *testing.T) {
-	client, err := New(_AK, _SK, "ap-beijing")
+	client, err := New(_AK, _SK, _regionId)
 	if err != nil {
 		t.Log(err.Error())
 		return

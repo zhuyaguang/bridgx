@@ -6,7 +6,7 @@ import (
 )
 
 func TestECloud_DescribeImages(t *testing.T) {
-	client, err := New(_AK, _SK, "ap-beijing")
+	client, err := New(_AK, _SK, _regionId)
 	if err != nil {
 		t.Log(err.Error())
 		return
