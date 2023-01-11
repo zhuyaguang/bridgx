@@ -12,6 +12,6 @@ func TestECloud_DescribeImages(t *testing.T) {
 		return
 	}
 
-	res, err := client.DescribeImages(cloud.DescribeImagesRequest{ImageID: "test"})
+	res, err := client.DescribeImages(cloud.DescribeImagesRequest{RegionId: "shanghai", ImageType: "shared", InsType: "InsType"})
 	t.Log(res.Images)
 }

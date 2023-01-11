@@ -65,24 +65,65 @@ func (p *ECloud) ProviderType() string {
 }
 
 func (p *ECloud) DescribeImages(req cloud.DescribeImagesRequest) (cloud.DescribeImagesResponse, error) {
-	request := &model.IMSgetImageRespRequest{}
-	iMSgetImageRespPath := &model.IMSgetImageRespPath{}
-	iMSgetImageRespPath.ImageId = req.ImageID
-	request.IMSgetImageRespPath = iMSgetImageRespPath
-	response, err := p.imsClient.IMSgetImageResp(request)
-	if err == nil {
-		if response.State == model.IMSgetImageRespResponseStateEnumOk {
-			var images cloud.Image
-			images.ImageName = response.Body.Name
-			images.ImageId = response.Body.ImageId
-			images.OsName = response.Body.OsName
-			images.Size = int(*response.Body.Size)
-			images.OsType = string(response.Body.OsType)
-			images.Platform = string(response.Body.PublicImageType)
-			return cloud.DescribeImagesResponse{Images: []cloud.Image{images}}, nil
+	var Images []cloud.Image
+
+	if req.ImageType == cloud.ImageShared {
+		// 查询共享镜像列表
+		request := &model.ListShareImageRequest{}
+		response, err := p.imsClient.ListShareImage(request)
+		if err != nil {
+			return cloud.DescribeImagesResponse{}, errors.New(response.ErrorMessage)
 		}
-		err = errors.New(response.ErrorMessage)
-		return cloud.DescribeImagesResponse{}, err
+		if response.State == model.ListShareImageResponseStateEnumOk {
+			for _, v := range *response.Body.Content {
+				var image cloud.Image
+				image.ImageId = v.ImageId
+				image.OsName = v.OsName
+				image.Size = int(*v.Size)
+				image.OsType = string(v.OsType)
+				Images = append(Images, image)
+			}
+			return cloud.DescribeImagesResponse{Images: Images}, nil
+		}
+	} else if req.ImageType == cloud.ImageGlobal {
+		// 查询自定义镜像列表
+		request := &model.ListImageRespRequest{}
+		response, err := p.imsClient.ListImageResp(request)
+		if err != nil {
+			return cloud.DescribeImagesResponse{}, errors.New(response.ErrorMessage)
+		}
+		if response.State == model.ListImageRespResponseStateEnumOk {
+			for _, v := range *response.Body.Content {
+				var image cloud.Image
+				image.ImageId = v.ImageId
+				image.OsName = v.OsName
+				image.Size = int(*v.Size)
+				image.OsType = string(v.OsType)
+				image.Platform = string(v.PublicImageType)
+				Images = append(Images, image)
+			}
+			return cloud.DescribeImagesResponse{Images: Images}, nil
+		}
+
+	} else if req.ImageType == cloud.ImagePrivate {
+		// 查询镜像信息
+		request := &model.IMSgetImageRespRequest{}
+		request.IMSgetImageRespPath.ImageId = req.ImageType
+		response, err := p.imsClient.IMSgetImageResp(request)
+		if err != nil {
+			return cloud.DescribeImagesResponse{}, errors.New(response.ErrorMessage)
+		}
+		if response.State == model.IMSgetImageRespResponseStateEnumOk {
+			var image cloud.Image
+			image.ImageId = response.Body.ImageId
+			image.OsName = response.Body.OsName
+			image.Size = int(*response.Body.Size)
+			image.OsType = string(response.Body.OsType)
+			image.Platform = string(response.Body.PublicImageType)
+			Images = append(Images, image)
+			return cloud.DescribeImagesResponse{Images: Images}, nil
+		}
 	}
-	return cloud.DescribeImagesResponse{}, err
+
+	return cloud.DescribeImagesResponse{Images: Images}, nil
 }

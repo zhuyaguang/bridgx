@@ -2,18 +2,29 @@ package ecloud
 
 import (
 	"errors"
+	"fmt"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/galaxy-future/BridgX/internal/logs"
 	"github.com/galaxy-future/BridgX/pkg/cloud"
 	"gitlab.ecloud.com/ecloud/ecloudsdkecs/model"
-	"strings"
-	"time"
 )
 
 func (p *ECloud) BatchCreate(m cloud.Params, num int) (instanceIds []string, err error) {
-	// 参数不对齐 num 循环？
 	request := &model.VmCreateRequest{}
-	vmCreateBody := &model.VmCreateBody{}
+	vmCreateBody := &model.VmCreateBody{
+		BootVolume: &model.VmCreateRequestBootVolume{
+			VolumeType: "",
+			Size:       nil,
+		}, Networks: &model.VmCreateRequestNetworks{
+			NetworkId: "",
+			PortId:    "",
+		}}
 	vmCreateBody.Region = m.Region
+	Num := int32(num)
+	vmCreateBody.Quantity = &Num
 
 	if m.Charge.PeriodUnit == cloud.Year {
 		vmCreateBody.BillingType = model.VmCreateBodyBillingTypeEnumYear
@@ -23,6 +34,23 @@ func (p *ECloud) BatchCreate(m cloud.Params, num int) (instanceIds []string, err
 		vmCreateBody.BillingType = model.VmCreateBodyBillingTypeEnumHour
 	}
 	vmCreateBody.VmType = _vmType[m.InstanceType]
+	vmCreateBody.Cpu = &Num
+	vmCreateBody.Ram = &Num
+	DiskNum := int32(m.Disks.DataDisk[0].Size)
+	vmCreateBody.Disk = &DiskNum
+	BootDiskNum := int32(m.Disks.SystemDisk.Size)
+	vmCreateBody.BootVolume.Size = &BootDiskNum
+	if m.Disks.SystemDisk.Category == "highPerformance" {
+		vmCreateBody.BootVolume.VolumeType = model.VmCreateRequestBootVolumeVolumeTypeEnumHighperformance
+	} else if m.Disks.SystemDisk.Category == "performanceOptimization" {
+		vmCreateBody.BootVolume.VolumeType = model.VmCreateRequestBootVolumeVolumeTypeEnumPerformanceoptimization
+	}
+	vmCreateBody.ImageName = m.ImageId
+	vmCreateBody.Networks.NetworkId = m.Network.VpcId
+	// 云主机名 region + 时间戳
+	vmCreateBody.Name = fmt.Sprintf(m.Region + "-" + strconv.FormatInt(time.Now().Unix(), 10))
+	Duration := int32(m.Charge.Period)
+	vmCreateBody.Duration = &Duration
 
 	request.VmCreateBody = vmCreateBody
 
@@ -31,7 +59,7 @@ func (p *ECloud) BatchCreate(m cloud.Params, num int) (instanceIds []string, err
 		logs.Logger.Errorf(err.Error())
 		return []string{}, err
 	}
-	logs.Logger.Info("%+v\n", response.Body)
+	logs.Logger.Info("[BatchCreate] %+v\n", response.Body)
 
 	return instanceIds, nil
 }
@@ -48,51 +76,50 @@ func (p *ECloud) GetInstances(ids []string) (instances []cloud.Instance, err err
 }
 
 func (p *ECloud) generateInstances(id string) (instances cloud.Instance, err error) {
-	request := &model.VmGetServerDetailRequest{}
-	vmGetServerDetailPath := &model.VmGetServerDetailPath{}
-	VmGetServerDetailQuery := &model.VmGetServerDetailQuery{}
-	vmGetServerDetailPath.ServerId = id
 	b := true
-	VmGetServerDetailQuery.Detail = &b
-	request.VmGetServerDetailPath = vmGetServerDetailPath
-	request.VmGetServerDetailQuery = VmGetServerDetailQuery
+	request := &model.VmGetServerDetailRequest{
+		VmGetServerDetailPath: &model.VmGetServerDetailPath{
+			ServerId: id},
+		VmGetServerDetailQuery: &model.VmGetServerDetailQuery{
+			Detail: &b},
+	}
 
 	response, err := p.ecsClient.VmGetServerDetail(request)
 	if err != nil {
 		return instances, err
 	}
-	if response.State == model.VmGetServerDetailResponseStateEnumOk {
-		expireAt, err := time.Parse("2006-01-02T15:04Z", response.Body.CreatedTime)
-		if err != nil {
-			return instances, err
-		}
-		ipInner := ""
-		for _, p := range *response.Body.Ports {
-			ipInner = ipInner + "," + strings.Join(p.PrivateIp, ",")
-		}
-		ipOuter := ""
-		if len(*response.Body.Ports) > 0 {
-			if len((*response.Body.Ports)[0].PublicIp) > 0 {
-				ipOuter = (*response.Body.Ports)[0].PublicIp[0]
-			}
-		}
+	if response.State != model.VmGetServerDetailResponseStateEnumOk {
+		return instances, errors.New(response.ErrorMessage)
+	}
 
-		instances = cloud.Instance{
-			Id:       response.Body.Id,
-			CostWay:  "",
-			Provider: cloud.ECloud,
-			IpInner:  ipInner,
-			IpOuter:  ipOuter,
-			Network:  nil,
-			ImageId:  response.Body.ImageId,
-			Status:   string(*response.Body.Status),
-			ExpireAt: &expireAt,
-		}
-		return instances, nil
-	} else {
-		err := errors.New(response.ErrorMessage)
+	expireAt, err := time.Parse("2006-01-02T15:04Z", response.Body.CreatedTime)
+	if err != nil {
 		return instances, err
 	}
+	ipInner := ""
+	for _, p := range *response.Body.Ports {
+		ipInner = ipInner + "," + strings.Join(p.PrivateIp, ",")
+	}
+	ipOuter := ""
+	if len(*response.Body.Ports) > 0 {
+		if len((*response.Body.Ports)[0].PublicIp) > 0 {
+			ipOuter = (*response.Body.Ports)[0].PublicIp[0]
+		}
+	}
+
+	instances = cloud.Instance{
+		Id:       response.Body.Id,
+		CostWay:  "",
+		Provider: cloud.ECloud,
+		IpInner:  ipInner,
+		IpOuter:  ipOuter,
+		Network:  nil,
+		ImageId:  response.Body.ImageId,
+		Status:   string(*response.Body.Status),
+		ExpireAt: &expireAt,
+	}
+	return instances, nil
+
 }
 
 func (p *ECloud) GetInstanceStatus(id string) (status string, err error) {
@@ -115,20 +142,19 @@ func (p *ECloud) GetInstancesByCluster(regionId, clusterName string) (instances 
 
 func (p *ECloud) BatchDelete(ids []string, regionId string) error {
 	for _, id := range ids {
-		request := &model.VmDeleteRequest{}
-		vmDeletePath := &model.VmDeletePath{}
-		vmDeletePath.ServerId = id
-		request.VmDeletePath = vmDeletePath
+		request := &model.VmDeleteRequest{
+			VmDeletePath: &model.VmDeletePath{
+				ServerId: id,
+			},
+		}
 		response, err := p.ecsClient.VmDelete(request)
 		if err != nil {
 			return err
 		}
-
-		if response.State == model.VmDeleteResponseStateEnumOk {
-			logs.Logger.Info("BatchDelete %s", id)
+		if response.State != model.VmDeleteResponseStateEnumOk {
+			return errors.New(response.ErrorMessage)
 		} else {
-			err := errors.New(response.ErrorMessage)
-			return err
+			logs.Logger.Infof("[BatchDelete] requestId: %s", response.RequestId)
 		}
 
 	}
@@ -137,40 +163,35 @@ func (p *ECloud) BatchDelete(ids []string, regionId string) error {
 
 func (p *ECloud) StartInstances(ids []string) error {
 	for _, id := range ids {
-		request := &model.VmStartRequest{}
-		vmStartPath := &model.VmStartPath{}
-		vmStartPath.ServerId = id
-		request.VmStartPath = vmStartPath
+		request := &model.VmStartRequest{VmStartPath: &model.VmStartPath{
+			ServerId: id,
+		}}
 		response, err := p.ecsClient.VmStart(request)
 		if err != nil {
 			return err
 		}
-		if response.State == model.VmStartResponseStateEnumOk {
-			logs.Logger.Info("StartInstances %s", id)
+		if response.State != model.VmStartResponseStateEnumOk {
+			return errors.New(response.ErrorMessage)
 		} else {
-			err := errors.New(response.ErrorMessage)
-			return err
+			logs.Logger.Infof("[StartInstances] requestId: %s", response.RequestId)
 		}
-
 	}
 	return nil
 }
 
 func (p *ECloud) StopInstances(ids []string) error {
 	for _, id := range ids {
-		request := &model.VmStopRequest{}
-		vmStopPath := &model.VmStopPath{}
-		vmStopPath.ServerId = id
-		request.VmStopPath = vmStopPath
+		request := &model.VmStopRequest{VmStopPath: &model.VmStopPath{
+			ServerId: id,
+		}}
 		response, err := p.ecsClient.VmStop(request)
 		if err != nil {
 			return err
 		}
-		if response.State == model.VmStopResponseStateEnumOk {
-			logs.Logger.Info("StopInstances %s", id)
+		if response.State != model.VmStopResponseStateEnumOk {
+			return errors.New(response.ErrorMessage)
 		} else {
-			err := errors.New(response.ErrorMessage)
-			return err
+			logs.Logger.Infof("[StopInstances] requestId: %s", response.RequestId)
 		}
 	}
 	return nil

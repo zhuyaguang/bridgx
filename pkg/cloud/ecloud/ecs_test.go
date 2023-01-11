@@ -13,15 +13,28 @@ func TestECloud_BatchCreate(t *testing.T) {
 	}
 
 	res, err := client.BatchCreate(cloud.Params{
-		Provider:     "",
+		Provider:     "Provider",
 		InstanceType: "common",
-		ImageId:      "",
-		Network:      nil,
-		Zone:         "",
-		Region:       "ap-beijing",
-		Disks:        nil,
+		ImageId:      "testImageID",
+		Network: &cloud.Network{
+			VpcId: "VpcId",
+		},
+		Zone:   "Zone",
+		Region: "ap-beijing",
+		Disks: &cloud.Disks{
+			SystemDisk: cloud.DiskConf{
+				Category:         "highPerformance",
+				Size:             12,
+				PerformanceLevel: "performanceLevel",
+			},
+			DataDisk: []cloud.DiskConf{{
+				Category:         "highPerformance",
+				Size:             12,
+				PerformanceLevel: "performanceLevel",
+			}},
+		},
 		Charge: &cloud.Charge{
-			Period:     0,
+			Period:     12,
 			PeriodUnit: cloud.Year,
 			ChargeType: "",
 		},

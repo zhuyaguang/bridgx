@@ -230,7 +230,6 @@ type DescribeImagesRequest struct {
 	RegionId  string
 	InsType   string
 	ImageType string
-	ImageID   string
 }
 
 type DescribeImagesResponse struct {
